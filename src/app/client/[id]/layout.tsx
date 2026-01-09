@@ -48,9 +48,7 @@ export default async function ClientLayout({
                 <div className="flex-1 flex flex-col w-full lg:pl-64">
 
                     {/* Client Context Header */}
-                    <div className="bg-[#FEFAEA] border-b border-[#E7D6B8]">
-                        <ClientHeader client={MOCK_CLIENT} />
-                    </div>
+                    <ClientHeader client={MOCK_CLIENT} />
 
                     {/* Main Content */}
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">

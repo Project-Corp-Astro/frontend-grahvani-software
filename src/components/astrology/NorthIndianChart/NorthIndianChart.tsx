@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface Planet {
     name: string;
@@ -46,74 +47,83 @@ export default function NorthIndianChart({ planets, ascendantSign, className = "
 
 
     return (
-        <svg viewBox="0 0 400 400" className="w-full h-full border-2 border-[#3E2A1F] bg-[#FEFAEA]">
+        <svg viewBox="0 0 400 400" className={cn("w-full h-full drop-shadow-2xl overflow-visible", className)}>
+            <defs>
+                <linearGradient id="chartParchment" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFF9E9" />
+                    <stop offset="100%" stopColor="#FEFAEA" />
+                </linearGradient>
+                <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+                    <feOffset dy="1" dx="1" />
+                    <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
+                    <feFlood floodColor="#D08C60" floodOpacity="0.1" />
+                    <feComposite in2="shadowDiff" operator="in" />
+                    <feComposite in2="SourceGraphic" operator="over" />
+                </filter>
+            </defs>
 
-            {/* Outline Box */}
-            <rect x="0" y="0" width="400" height="400" fill="none" stroke="#3E2A1F" strokeWidth="2" />
+            {/* Background is handled by parent container */}
+            <g stroke="#3E2A1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6">
 
-            {/* Cross Lines (X) */}
-            <line x1="0" y1="0" x2="400" y2="400" stroke="#3E2A1F" strokeWidth="2" />
-            <line x1="400" y1="0" x2="0" y2="400" stroke="#3E2A1F" strokeWidth="2" />
+                {/* Cross Lines (X) */}
+                <line x1="0" y1="0" x2="400" y2="400" />
+                <line x1="400" y1="0" x2="0" y2="400" />
 
-            {/* Diamond Lines (Connect Midpoints) */}
-            <line x1="200" y1="0" x2="0" y2="200" stroke="#3E2A1F" strokeWidth="2" />
-            <line x1="0" y1="200" x2="200" y2="400" stroke="#3E2A1F" strokeWidth="2" />
-            <line x1="200" y1="400" x2="400" y2="200" stroke="#3E2A1F" strokeWidth="2" />
-            <line x1="400" y1="200" x2="200" y2="0" stroke="#3E2A1F" strokeWidth="2" />
+                {/* Diamond Lines */}
+                <line x1="200" y1="0" x2="0" y2="200" stroke="#D08C60" strokeWidth="2" />
+                <line x1="0" y1="200" x2="200" y2="400" stroke="#D08C60" strokeWidth="2" />
+                <line x1="200" y1="400" x2="400" y2="200" stroke="#D08C60" strokeWidth="2" />
+                <line x1="400" y1="200" x2="200" y2="0" stroke="#D08C60" strokeWidth="2" />
+            </g>
 
             {/* Render Houses & Planets */}
             {houseCenters.map((pos) => {
-                // Find sign for this house
-                // houseData is fixed length 12
-                const signId = ((ascSign + pos.h - 2) % 12) + 1; // Correct 1-based sign calc
-
+                const signId = ((ascSign + pos.h - 2) % 12) + 1;
                 const boxPlanets = planets.filter(p => p.signId === signId);
 
                 return (
                     <g key={pos.h}>
-                        {/* House Number (small, faint) - Optional, maybe show Sign Number instead */}
-                        {/* In North Chart, Sign Number is usually shown in corners of house */}
-
+                        {/* Sign Number - Positioned in corners/edges */}
                         <text
                             x={pos.x}
-                            y={pos.y + (pos.h === 1 || pos.h === 4 || pos.h === 7 || pos.h === 10 ? 35 : pos.h === 2 || pos.h === 12 ? 20 : -20)}
-                            // Adjust Y based on shape of house to put sign number near a corner or center
-                            // Just putting sign number in center with faint color for now
-                            fontSize="24"
+                            y={pos.y + (pos.h === 1 || pos.h === 4 || pos.h === 7 || pos.h === 10 ? 32 : pos.h === 2 || pos.h === 12 ? 22 : -22)}
+                            fontSize="22"
                             fontFamily="serif"
-                            fontWeight="bold"
-                            fill="#9C7A2F"
+                            fontWeight="900"
+                            fill="#D08C60"
                             textAnchor="middle"
                             dominantBaseline="central"
-                            opacity="0.9"
+                            className="select-none opacity-40 hover:opacity-100 transition-opacity cursor-default"
                         >
                             {signId}
                         </text>
 
-                        {/* Planets List */}
+                        {/* Planets List - Clustered in centers */}
                         {boxPlanets.map((p, i) => {
-                            // layout offset
                             const yOffset = (i * 14) - ((boxPlanets.length - 1) * 7);
                             return (
-                                <text
-                                    key={p.name}
-                                    x={pos.x}
-                                    y={pos.y + yOffset}
-                                    fontSize="12"
-                                    fontFamily="serif"
-                                    fontWeight="bold"
-                                    fill="#3E2A1F"
-                                    textAnchor="middle"
-                                    dominantBaseline="central"
-                                >
-                                    {p.name}
-                                </text>
+                                <g key={p.name} transform={`translate(${pos.x}, ${pos.y + yOffset})`}>
+                                    <text
+                                        fontSize="13"
+                                        fontFamily="serif"
+                                        fontWeight="900"
+                                        fill="#3E2A1F"
+                                        textAnchor="middle"
+                                        dominantBaseline="central"
+                                        className="select-none shadow-sm"
+                                    >
+                                        {p.name}
+                                    </text>
+                                    {p.isRetro && (
+                                        <text x="12" y="4" fontSize="6" fontWeight="black" fill="#D08C60">R</text>
+                                    )}
+                                </g>
                             );
                         })}
                     </g>
                 );
             })}
-
         </svg>
     );
 }

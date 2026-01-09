@@ -41,42 +41,42 @@ export default function ClientSidebar({ basePath }: ClientSidebarProps) {
 
     return (
         <aside
-            className="w-full lg:w-64 h-full py-6 px-4 flex flex-col gap-2 border-r border-[#D08C60]/30"
+            className="w-full lg:w-64 h-full py-8 px-5 flex flex-col gap-2 border-r border-[#D08C60]/30 z-40"
             style={{
-                background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
-                boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
+                background: 'linear-gradient(180deg, #2A1810 0%, #1A0A05 100%)',
+                boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
             }}
         >
+            {/* Glossy Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none opacity-40" />
 
-            <div className="mb-6 px-2">
-                <h3 className="text-xs font-bold text-[#D08C60] uppercase tracking-widest font-serif">
-                    Menu
+            <div className="mb-8 px-2 relative z-10">
+                <h3 className="text-[10px] font-black text-[#D08C60] uppercase tracking-[0.2em] font-serif">
+                    Workspace
                 </h3>
             </div>
 
-            <nav className="space-y-1">
+            <nav className="space-y-2 relative z-10">
                 {menuItems.map((item) => {
-                    // Always use relative path for client context pages
                     const fullPath = `${basePath}${item.path}`;
-
-                    const isActive = pathname.startsWith(fullPath) && (fullPath !== '/' || pathname === '/');
+                    const isActive = pathname.startsWith(fullPath);
 
                     return (
                         <Link
                             key={item.name}
                             href={fullPath}
                             className={cn(
-                                "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group",
+                                "flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
                                 isActive
-                                    ? "bg-[#FEFAEA]/10 text-white font-bold shadow-sm border border-[#D08C60]/50"
-                                    : "text-[#FEFAEA]/70 hover:bg-[#FEFAEA]/5 hover:text-white"
+                                    ? "bg-gradient-to-r from-[#FFD27D]/20 to-transparent text-[#FFD27D] font-bold border-l-4 border-[#FFD27D] shadow-[0_4px_20px_rgba(255,210,125,0.1)]"
+                                    : "text-white/50 hover:text-white hover:bg-white/5"
                             )}
                         >
-                            <div className="flex items-center gap-3">
-                                <item.icon className={cn("w-5 h-5", isActive ? "text-[#FFD27D]" : "text-[#D08C60] group-hover:text-[#FFD27D]")} />
-                                <span className="font-serif text-sm tracking-wide">{item.name}</span>
+                            <div className="flex items-center gap-4">
+                                <item.icon className={cn("w-5 h-5 transition-transform duration-300 group-hover:scale-110", isActive ? "text-[#FFD27D]" : "text-[#D08C60]")} />
+                                <span className="font-serif text-[13px] tracking-widest uppercase font-medium">{item.name}</span>
                             </div>
-                            {isActive && <ChevronRight className="w-4 h-4 text-[#FFD27D]" />}
+                            {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#FFD27D] animate-pulse" />}
                         </Link>
                     );
                 })}

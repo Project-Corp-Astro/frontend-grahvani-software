@@ -29,8 +29,12 @@ export default function ClientDetailsForm({ onSuccess }: { onSuccess?: () => voi
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#D08C60]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
             <div className="relative z-10">
-                <h2 className="text-3xl font-serif text-[#FEFAEA] mb-2 text-center">New Reading</h2>
-                <p className="text-[#FEFAEA]/60 text-center mb-8 font-light">Enter the birth details for the Vedic chart analysis</p>
+                <h2 className="text-3xl font-serif text-[#FEFAEA] mb-2 text-center">
+                    {clientDetails ? "Refine Cosmic Profile" : "Initiate New Reading"}
+                </h2>
+                <p className="text-[#FEFAEA]/60 text-center mb-8 font-light">
+                    {clientDetails ? "Update spiritual coordinates for the active session" : "Enter birth details for Vedic chart analysis"}
+                </p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4">
@@ -125,7 +129,7 @@ export default function ClientDetailsForm({ onSuccess }: { onSuccess?: () => voi
                         type="submit"
                         className="w-full bg-gradient-to-r from-[#D08C60] to-[#B36B3F] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#D08C60]/20 hover:shadow-[#D08C60]/40 hover:scale-[1.02] transform transition-all duration-300 font-serif tracking-wide uppercase mt-8"
                     >
-                        Generate Chart
+                        {clientDetails ? "Apply Changes" : "Generate Strategic Chart"}
                     </button>
                 </form>
             </div>

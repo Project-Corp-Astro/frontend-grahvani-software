@@ -1,6 +1,5 @@
 import React from 'react';
-import { Settings, PlusCircle, Pencil } from 'lucide-react';
-import GoldenButton from "@/components/GoldenButton";
+import { Pencil, Zap, Compass, Star } from 'lucide-react';
 import { Client } from '@/types/client';
 
 interface ClientHeaderProps {
@@ -9,60 +8,59 @@ interface ClientHeaderProps {
 
 export default function ClientHeader({ client }: ClientHeaderProps) {
     return (
-        <div className="bg-[#FEFAEA] border-b border-[#E7D6B8] pt-6 pb-0">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden bg-[#1A0A05] border-b border-[#D08C60]/30 shadow-2xl">
+            {/* Subtle Gradient Glow */}
+            <div className="absolute -left-20 -top-20 w-64 h-64 bg-[#D08C60]/10 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
-                {/* Top Row: Name & Main Actions */}
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
-                    <div>
-                        <h1 className="text-3xl font-serif font-bold text-[#3E2A1F] mb-1">
-                            {client.firstName} {client.lastName}
-                        </h1>
-                        <p className="font-serif text-[#7A5A43] italic flex items-center gap-2">
-                            <span>{new Date(client.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                            <span className="w-1 h-1 rounded-full bg-[#DCC9A6]" />
-                            <span>{client.timeOfBirth}</span>
-                            <span className="w-1 h-1 rounded-full bg-[#DCC9A6]" />
-                            <span>{client.placeOfBirth}</span>
-                        </p>
+            <div className="max-w-7xl mx-auto px-6 py-6 lg:py-8 relative z-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+                    {/* Header Left: Name & Birth Metadata */}
+                    <div className="flex items-center gap-6">
+                        <div className="hidden sm:flex w-14 h-14 rounded-full bg-gradient-to-br from-[#D08C60] to-[#3E2A1F] border border-[#FFD27D]/30 items-center justify-center text-white shadow-xl">
+                            <span className="text-2xl font-serif font-bold">{client.firstName.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3 mb-1.5">
+                                <h1 className="text-3xl font-serif font-bold text-white tracking-tight">
+                                    {client.firstName} {client.lastName}
+                                </h1>
+                                <div className="bg-[#FFD27D]/10 text-[#FFD27D] text-[9px] px-2 py-0.5 rounded-full border border-[#FFD27D]/30 font-black uppercase tracking-widest">
+                                    Primary Record
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 text-white/40 text-[11px] font-serif uppercase tracking-widest font-bold">
+                                <span>{new Date(client.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#D08C60]/40" />
+                                <span>{client.timeOfBirth} IST</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#D08C60]/40" />
+                                <span className="text-[#FFD27D]">{client.placeOfBirth}</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button className="p-2 text-[#7A5A43] hover:text-[#9C7A2F] hover:bg-[#FAF5E6] rounded-full transition-colors" title="Edit Profile">
-                            <Pencil className="w-5 h-5" />
+                    {/* Header Right: Quick State Indicators */}
+                    <div className="flex items-center gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <MetadataTag icon={Compass} label="Asc" value="Cancer" />
+                            <MetadataTag icon={Star} label="Rashi" value={client.rashi || "Unknown"} orange />
+                            <MetadataTag icon={Zap} label="Dasha" value="Jup-Sat" />
+                        </div>
+                        <button className="ml-2 p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/40 hover:text-[#FFD27D] transition-all" title="Modify Soul Record">
+                            <Pencil className="w-4 h-4" />
                         </button>
-
                     </div>
                 </div>
-
-                {/* Summary Cards Row (Rashi, Nakshatra, etc.) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    {/* Card 1: Rashi */}
-                    <div className="bg-[#FAF5E6] border border-[#E7D6B8] rounded p-3 flex flex-col">
-                        <span className="text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest">Moon Sign (Rashi)</span>
-                        <span className="font-serif text-lg font-bold text-[#3E2A1F] mt-1">{client.rashi}</span>
-                    </div>
-
-                    {/* Card 2: Nakshatra */}
-                    <div className="bg-[#FAF5E6] border border-[#E7D6B8] rounded p-3 flex flex-col">
-                        <span className="text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest">Nakshatra</span>
-                        <span className="font-serif text-lg font-bold text-[#3E2A1F] mt-1">{client.nakshatra || "Unknown"}</span>
-                    </div>
-
-                    {/* Card 3: Ascendant */}
-                    <div className="bg-[#FAF5E6] border border-[#E7D6B8] rounded p-3 flex flex-col">
-                        <span className="text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest">Ascendant</span>
-                        <span className="font-serif text-lg font-bold text-[#3E2A1F] mt-1">Cancer</span>
-                    </div>
-
-                    {/* Card 4: Current Dasha */}
-                    <div className="bg-[#FAF5E6] border border-[#E7D6B8] rounded p-3 flex flex-col">
-                        <span className="text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest">Current Dasha</span>
-                        <span className="font-serif text-lg font-bold text-[#3E2A1F] mt-1">Jup - Sat</span>
-                    </div>
-                </div>
-
             </div>
+        </div>
+    );
+}
+
+function MetadataTag({ icon: Icon, label, value, orange = false }: { icon: any, label: string, value: string, orange?: boolean }) {
+    return (
+        <div className={`px-4 py-2 rounded-xl border flex flex-col min-w-[90px] transition-all ${orange ? 'bg-[#D08C60]/10 border-[#D08C60]/40' : 'bg-white/5 border-white/10'}`}>
+            <span className="text-[8px] font-black uppercase tracking-tighter text-white/30 mb-0.5">{label}</span>
+            <span className={`text-xs font-serif font-black tracking-wide ${orange ? 'text-[#FFD27D]' : 'text-white/80'}`}>{value}</span>
         </div>
     );
 }

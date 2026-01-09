@@ -2,28 +2,61 @@ import React from 'react';
 import { Eye, Settings } from 'lucide-react';
 import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import GoldenButton from "@/components/GoldenButton";
+import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
+import { ChevronDown, Info } from 'lucide-react';
 
 
 export default function ChartControls() {
+    const { settings, updateAyanamsa } = useAstrologerSettings();
+    const [showAdvanced, setShowAdvanced] = React.useState(false);
+
     return (
         <div className="space-y-6">
-            <h3 className="font-serif text-[#9C7A2F] text-sm font-bold uppercase tracking-widest border-b border-[#E7D6B8] pb-2">
-                Chart Controls
-            </h3>
-
-            {/* Ayanamsa Selection */}
-            <div>
-                <ParchmentSelect
-                    label="Ayanamsa"
-                    defaultValue="lahiri"
-                    options={[
-                        { value: 'lahiri', label: 'Lahiri (Chitrapaksha)' },
-                        { value: 'raman', label: 'Raman' },
-                        { value: 'kp', label: 'KP' },
-
-                    ]}
-                />
+            <div className="flex items-center justify-between border-b border-[#E7D6B8] pb-2">
+                <h3 className="font-serif text-[#9C7A2F] text-sm font-bold uppercase tracking-widest">
+                    Chart Configuration
+                </h3>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#FFD27D]/20 rounded-full border border-[#FFD27D]/30">
+                    <span className="text-[10px] text-[#9C7A2F] font-serif font-bold uppercase tracking-tighter">{settings.ayanamsa}</span>
+                </div>
             </div>
+
+            {/* Ayanamsa Info / Toggle */}
+            <div className="bg-[#FAF5E6] border border-[#E7D6B8] rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-[#E7D6B8] flex items-center justify-center">
+                        <Info className="w-4 h-4 text-[#9C7A2F]" />
+                    </div>
+                    <div>
+                        <p className="text-[9px] text-[#7A5A43] uppercase tracking-widest font-bold">Current Ayanamsa</p>
+                        <p className="text-xs font-serif text-[#3E2A1F] font-bold">{settings.ayanamsa} (Default)</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-[10px] text-[#9C7A2F] font-bold uppercase hover:underline"
+                >
+                    {showAdvanced ? "Hide" : "Change"}
+                </button>
+            </div>
+
+            {/* Advanced Settings (Hidden by default) */}
+            {showAdvanced && (
+                <div className="bg-[#FEFAEA] border border-[#D08C60]/30 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300">
+                    <ParchmentSelect
+                        label="Override Ayanamsa"
+                        defaultValue={settings.ayanamsa.toLowerCase()}
+                        onChange={(e) => updateAyanamsa(e.target.value as any)}
+                        options={[
+                            { value: 'lahiri', label: 'Lahiri (Chitrapaksha)' },
+                            { value: 'raman', label: 'Raman' },
+                            { value: 'kp', label: 'KP' },
+                            { value: 'tropical', label: 'Tropical' },
+                        ]}
+                    />
+                    <p className="text-[9px] text-[#9C7A2F]/60 mt-2 italic">* This updates your global astrologer preferences.</p>
+                </div>
+            )}
 
             {/* Divisional Charts Select */}
             <div>

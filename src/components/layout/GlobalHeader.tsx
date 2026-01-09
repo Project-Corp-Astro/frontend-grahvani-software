@@ -3,10 +3,13 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, HelpCircle, Clock, User, Bell } from "lucide-react";
+import { Settings, HelpCircle, Clock, User, Bell, ChevronDown } from "lucide-react";
+import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
 
 export default function GlobalHeader() {
     const pathname = usePathname();
+    const { settings } = useAstrologerSettings();
+    const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
     // Hide header on authenticaton pages or header demo
     if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/header-demo")) {
@@ -55,7 +58,7 @@ export default function GlobalHeader() {
                     <nav className="hidden md:flex items-center gap-1">
                         <NavLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
                         <NavLink href="/clients" label="Clients" active={isActive("/clients")} />
-                        <NavLink href="/vedic-astrology" label="Vedic Astrology" active={isActive("/vedic-astrology")} />
+                        <NavLink href="/vedic-astrology" label="Chart Analytics" active={isActive("/vedic-astrology")} />
                         <NavLink href="/muhurta" label="Muhurta" active={isActive("/muhurta")} />
                         <NavLink href="/matchmaking" label="Matchmaking" active={isActive("/matchmaking")} />
                         <NavLink href="/calendar" label="Calendar" active={isActive("/calendar")} />
@@ -64,9 +67,9 @@ export default function GlobalHeader() {
 
                 {/* RIGHT ZONE: Utilities & Profile */}
                 <div className="flex items-center gap-4 lg:gap-6">
-                    {/* Time / Mode Indicator */}
-                    <div className="hidden lg:flex flex-col items-end mr-2">
-                        <span className="text-[10px] font-serif text-white tracking-widest uppercase">Lahiri Ayanamsa</span>
+                    {/* Time / Ayanamsa Display (Static) */}
+                    <div className="hidden lg:flex flex-col items-end mr-2 text-right">
+                        <span className="text-[10px] font-serif text-white tracking-widest uppercase">{settings.ayanamsa} Ayanamsa</span>
                         <div className="flex items-center gap-1.5 text-white/90">
                             <Clock className="w-3 h-3" />
                             <span className="text-xs font-serif tracking-wider">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -78,8 +81,13 @@ export default function GlobalHeader() {
 
                     {/* System Icons */}
                     <div className="flex items-center gap-3">
-                        <button className="text-white hover:text-[#FEFAEA] transition-colors" title="Settings">
-                            <Settings className="w-5 h-5" />
+                        <button
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="text-white hover:text-[#FEFAEA] transition-colors relative group"
+                            title="Global Settings"
+                        >
+                            <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
+                            <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#D08C60] rounded-full border border-[#763A1F]" />
                         </button>
                         <button className="text-white hover:text-[#FEFAEA] transition-colors" title="Help">
                             <HelpCircle className="w-5 h-5" />
@@ -94,6 +102,9 @@ export default function GlobalHeader() {
                     </button>
                 </div>
             </div>
+
+            {/* Global Settings Modal */}
+            <GlobalSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </header>
     );
 }
@@ -121,5 +132,114 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
                 </>
             )}
         </Link>
+    );
+}
+
+function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    const { settings, updateSettings } = useAstrologerSettings();
+    const [tempSettings, setTempSettings] = React.useState(settings);
+    const [isSaving, setIsSaving] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isOpen) setTempSettings(settings);
+    }, [isOpen, settings]);
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        setIsSaving(true);
+        // Simulate a brief delay for "processing" feel
+        setTimeout(() => {
+            updateSettings(tempSettings);
+            setIsSaving(false);
+            onClose();
+        }, 600);
+    };
+
+    const AYANAMSAS = [
+        { id: 'Lahiri', label: 'Lahiri (Chitra Paksha)', desc: 'Most widely used in Vedic Astrology' },
+        { id: 'KP', label: 'KP (Krishnamurti)', desc: 'Preferred for Stellar/Nakshatra precision' },
+        { id: 'Raman', label: 'Raman', desc: 'BV Raman traditional ayanamsa' },
+        { id: 'Tropical', label: 'Tropical (Sayana)', desc: 'Western Zodiac aligned' },
+    ];
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            {/* Modal Content */}
+            <div className="w-full max-w-2xl bg-[#FFF9F0] rounded-[2rem] shadow-2xl overflow-hidden border border-[#D08C60]/30 animate-in zoom-in-95 duration-500 flex flex-col max-h-[90vh]">
+
+                {/* Header */}
+                <div className="p-8 bg-gradient-to-r from-[#98522F] to-[#763A1F] flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 className="text-2xl font-serif text-white font-bold tracking-wide">Global Preference Matrix</h2>
+                        <p className="text-[#FFD27D]/80 text-[11px] uppercase tracking-widest mt-1">System-wide Astronomical Constants</p>
+                    </div>
+                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+                        <ChevronDown className="w-6 h-6 rotate-90" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-10 space-y-10">
+
+                    {/* Ayanamsa Section */}
+                    <section>
+                        <h3 className="text-[#D08C60] text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                            <span className="w-8 h-[1px] bg-[#D08C60]" />
+                            Ayanamsa System
+                            <span className="flex-1 h-[1px] bg-[#D08C60]/20" />
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {AYANAMSAS.map((a) => (
+                                <button
+                                    key={a.id}
+                                    onClick={() => setTempSettings(prev => ({ ...prev, ayanamsa: a.id as any }))}
+                                    className={`relative p-5 rounded-2xl border text-left transition-all hover:scale-[1.02] group ${tempSettings.ayanamsa === a.id
+                                        ? 'bg-[#98522F] border-[#98522F] shadow-lg'
+                                        : 'bg-white border-[#D08C60]/20 hover:border-[#D08C60] hover:bg-[#FFF4E6]'
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className={`text-sm font-serif font-bold ${tempSettings.ayanamsa === a.id ? 'text-white' : 'text-[#3E2A1F]'
+                                            }`}>{a.label}</span>
+                                        {tempSettings.ayanamsa === a.id && (
+                                            <div className="w-4 h-4 rounded-full bg-[#FFD27D] flex items-center justify-center">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#98522F]" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className={`text-[10px] font-medium leading-relaxed ${tempSettings.ayanamsa === a.id ? 'text-white/60' : 'text-[#8B5A2B]/60'
+                                        }`}>{a.desc}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+
+                {/* Footer */}
+                <div className="p-8 bg-[#FEFAEA] border-t border-[#D08C60]/10 flex items-center justify-between shrink-0">
+                    <span className="text-[10px] text-[#A8653A] font-medium italic">Changes reflect immediately across all open modules.</span>
+                    <div className="flex gap-4">
+                        <button onClick={onClose} className="px-6 py-3 rounded-xl text-[#8B5A2B] text-xs font-bold uppercase tracking-wider hover:bg-[#8B5A2B]/5 transition-colors">
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="px-8 py-3 rounded-xl bg-[#D08C60] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-[#B0724B] hover:scale-105 transition-all flex items-center gap-2"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Clock className="w-4 h-4 animate-spin" />
+                                    Synchronizing...
+                                </>
+                            ) : (
+                                "Update Global Matrix"
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

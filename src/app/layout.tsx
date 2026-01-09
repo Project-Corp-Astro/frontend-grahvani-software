@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import GlobalHeader from "@/components/layout/GlobalHeader";
 import { VedicClientProvider } from "@/context/VedicClientContext";
+import { AstrologerSettingsProvider } from "@/context/AstrologerSettingsContext";
 
 const playfair = Playfair_Display({
   variable: "--font-serif",
@@ -30,8 +31,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfair.variable} ${inter.variable} antialiased`}>
         <VedicClientProvider>
-          <GlobalHeader />
-          {children}
+          <AstrologerSettingsProvider>
+            <GlobalHeader />
+            {children}
+          </AstrologerSettingsProvider>
         </VedicClientProvider>
       </body>
     </html>

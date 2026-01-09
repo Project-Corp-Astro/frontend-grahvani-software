@@ -12,6 +12,11 @@ export interface VedicClientDetails {
         latitude?: number;
         longitude?: number;
     };
+    rashi?: string;
+    fatherName?: string;
+    motherName?: string;
+    occupation?: string;
+    notes?: string;
 }
 
 interface VedicClientContextType {
