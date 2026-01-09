@@ -23,9 +23,8 @@ export default function SectionSidebar({ title, basePath, items }: SectionSideba
 
     return (
         <aside
-            className="w-full lg:w-64 h-full py-6 px-4 flex flex-col gap-2 border-r border-[#D08C60]/30"
+            className="w-full lg:w-64 h-full py-6 px-4 flex flex-col gap-2 border-r border-[#D08C60]/30 bg-header-gradient"
             style={{
-                background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
                 boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
             }}
         >

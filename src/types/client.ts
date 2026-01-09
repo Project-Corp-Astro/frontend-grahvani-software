@@ -9,4 +9,9 @@ export interface Client {
     avatar?: string; // URL
     rashi?: string; // Moon Sign
     nakshatra?: string;
+    email?: string;
+    phone?: string;
+    tags?: string[]; // e.g. "VIP", "New", "Urgent"
+    nextConsultation?: string; // ISO string
+    lastConsultationType?: string; // e.g. "Natal Chart Reading"
 }

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useVedicClient, VedicClientDetails } from "@/context/VedicClientContext";
 import { Calendar, MapPin, Clock, User } from "lucide-react";
+import GoldenButton from "@/components/GoldenButton";
 
 export default function ClientDetailsForm({ onSuccess }: { onSuccess?: () => void }) {
     const { setClientDetails, clientDetails } = useVedicClient();
@@ -125,12 +126,13 @@ export default function ClientDetailsForm({ onSuccess }: { onSuccess?: () => voi
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="w-full bg-gradient-to-r from-[#D08C60] to-[#B36B3F] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#D08C60]/20 hover:shadow-[#D08C60]/40 hover:scale-[1.02] transform transition-all duration-300 font-serif tracking-wide uppercase mt-8"
-                    >
-                        {clientDetails ? "Apply Changes" : "Generate Strategic Chart"}
-                    </button>
+                    <div className="w-full flex justify-center mt-8">
+                        <GoldenButton
+                            topText={clientDetails ? "Apply" : "Generate"}
+                            bottomText={clientDetails ? "Changes" : "Chart"}
+                            type="submit"
+                        />
+                    </div>
                 </form>
             </div>
         </div>

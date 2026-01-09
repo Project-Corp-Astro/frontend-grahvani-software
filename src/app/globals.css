@@ -80,15 +80,6 @@
   --bronze-accent: #8b5a2b;
   --bronze-dark: #6b4423;
   --bronze-hover: #a0683c;
-
-  /* Ornamental Header Tokens */
-  --gold-light: #f3d7a3;
-  --gold-main: #c79a57;
-  --gold-dark: #8a5a2b;
-
-  --bronze-dark: #5b2e14;
-  --bronze-main: #7a3f1d;
-  --bronze-light: #a8653a;
 }
 
 @theme {
@@ -141,9 +132,25 @@
 }
 
 body {
+  background: radial-gradient(circle at 50% 40%, #FFF9F0 0%, #F2E6D0 40%, #E0CCAA 100%);
   background-color: var(--parchment);
+  /* Fallback */
   color: var(--text-body);
   font-family: var(--font-inter);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Global Texture Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+  background-blend-mode: multiply;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* ============================================ */
@@ -376,4 +383,15 @@ body {
 /* ============================================ */
 .bg-luxury-radial {
   background: radial-gradient(circle at 50% 40%, #FFF9F0 0%, #F2E6D0 40%, #E0CCAA 100%);
+}
+
+/* ============================================ */
+/* UNIFIED HEADER & SIDEBAR GRADIENT           */
+/* ============================================ */
+.bg-header-gradient {
+  background: linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%);
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 10px rgba(255, 210, 125, 0.5);
 }

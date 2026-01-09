@@ -12,20 +12,19 @@ export default function ParchmentInput({ className = '', icon, ...props }: Parch
             <input
                 {...props}
                 className={`
-                    w-full bg-transparent 
-                    border-b-2 border-[#DCC9A6] 
-                    text-[#3E2A1F] font-serif text-lg tracking-wide
-                    placeholder-[#7A5A43] placeholder-opacity-70
-                    focus:outline-none focus:border-[#C9A24D]
+                    w-full h-full bg-transparent 
+                    text-ink font-serif text-lg tracking-wide
+                    placeholder-muted placeholder-opacity-70
+                    focus:outline-none
                     transition-colors duration-300
-                    pb-2 pl-2
-                    ${icon ? 'pl-10' : ''}
+                    pl-2 rounded-xl
+                    ${icon ? 'pl-11' : ''}
                 `}
             />
 
             {/* Icon */}
             {icon && (
-                <div className="absolute left-0 bottom-3 text-[#C9A24D] group-focus-within:text-[#9C7A2F] transition-colors duration-300">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-dark group-focus-within:text-gold-primary transition-colors duration-300">
                     {icon}
                 </div>
             )}

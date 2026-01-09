@@ -52,8 +52,8 @@ export default function PremiumButton({
             >
                 {/* Inner button with Header background gradient */}
                 <div
+                    className="bg-header-gradient"
                     style={{
-                        background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
                         clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%)',
                         padding: '10px 28px',
                         minWidth: '200px',

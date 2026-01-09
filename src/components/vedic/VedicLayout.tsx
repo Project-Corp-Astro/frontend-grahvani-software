@@ -37,8 +37,9 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const [isEditing, setIsEditing] = React.useState(false);
 
-    // If client is not set, show the form in fullpage
-    if (!isClientSet) {
+    // If client is not set, allow access ONLY to the registry page
+    // Otherwise show the form
+    if (!isClientSet && pathname !== "/vedic-astrology") {
         return (
             <div className="min-h-[calc(100vh-64px)] w-full flex items-center justify-center p-4 bg-luxury-radial">
                 <ClientDetailsForm />
@@ -79,7 +80,7 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
     );
 
     return (
-        <div className="flex h-[calc(100vh-64px)] pt-[64px] bg-luxury-radial relative">
+        <div className="flex h-screen pt-[64px] bg-luxury-radial relative">
             {/* Subtle Texture Overlay - matching Dashboard Layout */}
             <div
                 className="absolute inset-0 opacity-15 pointer-events-none z-0"
@@ -90,61 +91,62 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
             />
 
             {/* Unified Professional Sidebar - Matching Dashboard SectionSidebar */}
-            <aside
-                className="w-full lg:w-72 h-full py-6 px-4 flex flex-col border-r border-[#D08C60]/30 hidden lg:flex relative z-10"
-                style={{
-                    background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
-                    boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
-                }}
-            >
+            {/* Show Sidebar ONLY if NOT on the main registry page */}
+            {pathname !== "/vedic-astrology" && (
+                <aside
+                    className="w-full lg:w-72 h-full py-6 px-4 flex flex-col border-r border-[#D08C60]/30 hidden lg:flex relative z-10"
+                    style={{
+                        background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
+                        boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
+                    }}
+                >
 
-                <div className="relative z-10">
-                    <ClientInfoCard />
-                </div>
+                    <div className="relative z-10">
+                        <ClientInfoCard />
+                    </div>
 
-                <div className="mb-4 px-4 relative z-10">
-                    <h3 className="text-[10px] font-black text-[#D08C60]/50 uppercase tracking-[0.3em] font-serif">
-                        Analytical Engine
-                    </h3>
-                </div>
+                    <div className="mb-4 px-4 relative z-10">
+                        <h3 className="text-[10px] font-black text-[#D08C60]/50 uppercase tracking-[0.3em] font-serif">
+                            Analytical Engine
+                        </h3>
+                    </div>
 
-                <nav className="space-y-1 flex-1 relative z-10">
-                    {VEDIC_NAV_ITEMS.map((item) => {
-                        const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
-                        const isActive = pathname === href;
+                    <nav className="space-y-1 flex-1 relative z-10">
+                        {VEDIC_NAV_ITEMS.map((item) => {
+                            const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
+                            const isActive = pathname === href;
 
-                        return (
-                            <Link
-                                key={item.name}
-                                href={href}
-                                className={cn(
-                                    "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group",
-                                    isActive
-                                        ? "bg-[#FEFAEA]/10 text-white font-bold shadow-sm border border-[#D08C60]/50"
-                                        : "text-[#FEFAEA]/70 hover:bg-[#FEFAEA]/5 hover:text-white"
-                                )}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <item.icon className={cn("w-5 h-5", isActive ? "text-[#FFD27D]" : "text-[#D08C60] group-hover:text-[#FFD27D]")} />
-                                    <span className="font-serif text-sm tracking-wide">{item.name}</span>
-                                </div>
-                                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#FFD27D]" />}
-                            </Link>
-                        )
-                    })}
-                </nav>
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={href}
+                                    className={cn(
+                                        "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group",
+                                        isActive
+                                            ? "bg-[#FEFAEA]/10 text-white font-bold shadow-sm border border-[#D08C60]/50"
+                                            : "text-[#FEFAEA]/70 hover:bg-[#FEFAEA]/5 hover:text-white"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <item.icon className={cn("w-5 h-5", isActive ? "text-[#FFD27D]" : "text-[#D08C60] group-hover:text-[#FFD27D]")} />
+                                        <span className="font-serif text-sm tracking-wide">{item.name}</span>
+                                    </div>
+                                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#FFD27D]" />}
+                                </Link>
+                            )
+                        })}
+                    </nav>
 
-                <div className="mt-auto px-4 relative z-10">
-                    <button
-                        onClick={() => setClientDetails(null)}
-                        className="w-full py-4 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 text-red-400/60 hover:text-red-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-                    >
-                        End Consultation session
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content Area - Matching Dashboard */}
+                    <div className="mt-auto px-4 relative z-10">
+                        <button
+                            onClick={() => setClientDetails(null)}
+                            className="w-full py-4 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 text-red-400/60 hover:text-red-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                        >
+                            End Consultation session
+                        </button>
+                    </div>
+                </aside>
+            )}            {/* Main Content Area - Matching Dashboard */}
             <main className="flex-1 overflow-auto relative z-10">
                 <div className="p-6 lg:p-8 max-w-7xl mx-auto">
                     {children}

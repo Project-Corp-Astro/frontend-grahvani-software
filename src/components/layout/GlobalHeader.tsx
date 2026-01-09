@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Settings, HelpCircle, Clock, User, Bell, ChevronDown } from "lucide-react";
+import GoldenButton from "@/components/GoldenButton";
 import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
 
 export default function GlobalHeader() {
@@ -11,8 +12,8 @@ export default function GlobalHeader() {
     const { settings } = useAstrologerSettings();
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-    // Hide header on authenticaton pages or header demo
-    if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/header-demo")) {
+    // Hide header on authenticaton pages
+    if (pathname === "/login" || pathname === "/register") {
         return null;
     }
 
@@ -27,9 +28,8 @@ export default function GlobalHeader() {
         <header className="fixed top-0 left-0 right-0 z-50 h-[64px]">
             {/* Main Header Container */}
             <div
-                className="relative h-full w-full flex items-center justify-between px-4 lg:px-8"
+                className="relative h-full w-full flex items-center justify-between px-4 lg:px-8 bg-header-gradient"
                 style={{
-                    background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
                 }}
             >
@@ -58,7 +58,9 @@ export default function GlobalHeader() {
                     <nav className="hidden md:flex items-center gap-1">
                         <NavLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
                         <NavLink href="/clients" label="Clients" active={isActive("/clients")} />
-                        <NavLink href="/vedic-astrology" label="Chart Analytics" active={isActive("/vedic-astrology")} />
+
+                        <NavLink href="/vedic-astrology" label="Vedic Astrology" active={isActive("/vedic-astrology")} />
+
                         <NavLink href="/muhurta" label="Muhurta" active={isActive("/muhurta")} />
                         <NavLink href="/matchmaking" label="Matchmaking" active={isActive("/matchmaking")} />
                         <NavLink href="/calendar" label="Calendar" active={isActive("/calendar")} />
@@ -105,6 +107,8 @@ export default function GlobalHeader() {
 
             {/* Global Settings Modal */}
             <GlobalSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+
         </header>
     );
 }
@@ -223,20 +227,12 @@ function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         <button onClick={onClose} className="px-6 py-3 rounded-xl text-[#8B5A2B] text-xs font-bold uppercase tracking-wider hover:bg-[#8B5A2B]/5 transition-colors">
                             Cancel
                         </button>
-                        <button
+                        <GoldenButton
+                            topText={isSaving ? "Saving" : "Update"}
+                            bottomText={isSaving ? "..." : "Matrix"}
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="px-8 py-3 rounded-xl bg-[#D08C60] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-[#B0724B] hover:scale-105 transition-all flex items-center gap-2"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Clock className="w-4 h-4 animate-spin" />
-                                    Synchronizing...
-                                </>
-                            ) : (
-                                "Update Global Matrix"
-                            )}
-                        </button>
+                        />
                     </div>
                 </div>
             </div>
