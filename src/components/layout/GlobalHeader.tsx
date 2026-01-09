@@ -8,8 +8,8 @@ import { Settings, HelpCircle, Clock, User, Bell } from "lucide-react";
 export default function GlobalHeader() {
     const pathname = usePathname();
 
-    // Hide header on authenticaton pages
-    if (pathname === "/login" || pathname === "/register") {
+    // Hide header on authenticaton pages or header demo
+    if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/header-demo")) {
         return null;
     }
 
@@ -55,6 +55,7 @@ export default function GlobalHeader() {
                     <nav className="hidden md:flex items-center gap-1">
                         <NavLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
                         <NavLink href="/clients" label="Clients" active={isActive("/clients")} />
+                        <NavLink href="/vedic-astrology" label="Vedic Astrology" active={isActive("/vedic-astrology")} />
                         <NavLink href="/muhurta" label="Muhurta" active={isActive("/muhurta")} />
                         <NavLink href="/matchmaking" label="Matchmaking" active={isActive("/matchmaking")} />
                         <NavLink href="/calendar" label="Calendar" active={isActive("/calendar")} />

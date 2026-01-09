@@ -80,6 +80,15 @@
   --bronze-accent: #8b5a2b;
   --bronze-dark: #6b4423;
   --bronze-hover: #a0683c;
+
+  /* Ornamental Header Tokens */
+  --gold-light: #f3d7a3;
+  --gold-main: #c79a57;
+  --gold-dark: #8a5a2b;
+
+  --bronze-dark: #5b2e14;
+  --bronze-main: #7a3f1d;
+  --bronze-light: #a8653a;
 }
 
 @theme {

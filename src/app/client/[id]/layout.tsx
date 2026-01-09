@@ -1,8 +1,6 @@
-"use client";
-
 import React from 'react';
 import ClientHeader from "@/components/clients/ClientHeader";
-import TabNavigation from "@/components/ui/TabNavigation";
+import ClientSidebar from "@/components/clients/ClientSidebar";
 import { Client } from '@/types/client';
 
 // MOCK DATA FOR LAYOUT
@@ -17,14 +15,15 @@ const MOCK_CLIENT: Client = {
     nakshatra: 'Magha'
 };
 
-export default function ClientLayout({
+export default async function ClientLayout({
     children,
     params
 }: {
     children: React.ReactNode;
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
     // In a real app, fetch client by params.id here
+    const { id } = await params;
 
     return (
         <div className="min-h-screen bg-luxury-radial relative">
@@ -38,18 +37,27 @@ export default function ClientLayout({
             />
 
             {/* Content starts below header */}
-            <div className="pt-[64px] relative z-10 w-full">
+            <div className="pt-[64px] relative z-10 w-full min-h-screen">
 
-                {/* Client Context Header */}
-                <ClientHeader client={MOCK_CLIENT} />
-
-                {/* Tab Navigation */}
-                <TabNavigation basePath={`/client/${params.id}`} />
-
-                {/* Sub-page Content (Charts, Dashas, etc.) */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {children}
+                {/* Sidebar - Fixed Position */}
+                <div className="hidden lg:block fixed left-0 top-[64px] bottom-0 w-64 overflow-y-auto z-20">
+                    <ClientSidebar basePath={`/client/${id}`} />
                 </div>
+
+                {/* Right Side: Header + Content */}
+                <div className="flex-1 flex flex-col w-full lg:pl-64">
+
+                    {/* Client Context Header */}
+                    <div className="bg-[#FEFAEA] border-b border-[#E7D6B8]">
+                        <ClientHeader client={MOCK_CLIENT} />
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                        {children}
+                    </main>
+                </div>
+
             </div>
         </div>
     );

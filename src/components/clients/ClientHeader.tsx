@@ -31,11 +31,7 @@ export default function ClientHeader({ client }: ClientHeaderProps) {
                         <button className="p-2 text-[#7A5A43] hover:text-[#9C7A2F] hover:bg-[#FAF5E6] rounded-full transition-colors" title="Edit Profile">
                             <Pencil className="w-5 h-5" />
                         </button>
-                        <GoldenButton
-                            topText="New"
-                            bottomText="Session"
-                            className="h-[40px] px-6 text-sm min-w-[140px]"
-                        />
+
                     </div>
                 </div>
 

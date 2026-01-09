@@ -1,29 +1,31 @@
 import React from 'react';
 
-export default function NorthIndianChart() {
+export interface Planet {
+    name: string;
+    signId: number;
+    degree: string;
+    isRetro?: boolean;
+}
+
+interface NorthIndianChartProps {
+    planets: Planet[];
+    ascendantSign: number;
+    className?: string; // Add className prop for flexibility
+}
+
+export default function NorthIndianChart({ planets, ascendantSign, className = "" }: NorthIndianChartProps) {
     // North Indian Style (Diamond Chart)
     // Signs are MUTABLE (Houses are fixed).
     // House 1 is always Top Diamond.
     // Count proceeds anti-clockwise usually.
 
-    // MOCK DATA for Signs in Houses (Ascendant = Leo = 5)
-    // House 1: 5 (Leo)
-    // House 2: 6
-    // House 3: 7
-    // ...
-    // House 12: 4
-
-    const ascendantSign = 5;
-
     const houses = Array.from({ length: 12 }, (_, i) => {
         const houseNum = i + 1; // 1 to 12
+        // Calculate sign in house based on Ascendant
         const signNum = ((ascendantSign + i - 1) % 12) || 12;
         return { house: houseNum, sign: signNum };
     });
 
-    // Positions for Labels in the diamond grid (approximate centers of houses)
-    // Viewbox 400x400
-    // H1 (Top Center)
     const houseCenters = [
         { h: 1, x: 200, y: 100 }, // Top Diamond
         { h: 2, x: 100, y: 50 },  // Top Left Triangle
@@ -39,28 +41,8 @@ export default function NorthIndianChart() {
         { h: 12, x: 300, y: 50 }, // Top Right Triangle
     ];
 
-    // MOCK PLANETS (Same as South to show consistency)
-    const planets = [
-        { name: 'Ju', signId: 4, degree: '12°' }, // Jupiter in Cancer
-        { name: 'Su', signId: 5, degree: '05°' }, // Sun in Leo
-        { name: 'Ma', signId: 5, degree: '22°' }, // Mars in Leo
-        { name: 'Ve', signId: 6, degree: '18°' }, // Venus in Virgo
-        { name: 'Me', signId: 6, degree: '02°' }, // Mercury in Virgo
-        { name: 'Ra', signId: 8, degree: '15°' }, // Rahu in Scorpio
-        { name: 'Ke', signId: 2, degree: '15°' }, // Ketu in Taurus
-        { name: 'Sa', signId: 11, degree: '29°' }, // Saturn in Aquarius
-        { name: 'Mo', signId: 5, degree: '10°' }, // Moon in Leo
-        { name: 'Asc', signId: 4, degree: '14°' }, // Ascendant (Matches Ju sign here just mock)
-    ];
-    // Wait, in previous component Asc was 4 (Cancer). So Ascendant Sign is 4.
-    // If Asc sign is 4, then House 1 = 4.
-    // Let's recalculate signs based on Asc = 4.
-    const ascSign = 4;
-    const houseData = houses.map(h => ({
-        ...h,
-        sign: ((ascSign + h.house - 1 - 1) % 12) + 1 // 1-based math is annoying
-        // ((4 + 0) % 12) = 4. Correct.
-    }));
+    const ascSign = ascendantSign;
+
 
 
     return (
@@ -100,10 +82,10 @@ export default function NorthIndianChart() {
                             fontSize="24"
                             fontFamily="serif"
                             fontWeight="bold"
-                            fill="#E7D6B8"
+                            fill="#9C7A2F"
                             textAnchor="middle"
                             dominantBaseline="central"
-                            opacity="0.8"
+                            opacity="0.9"
                         >
                             {signId}
                         </text>
