@@ -15,7 +15,10 @@ import {
     Star,
     Moon,
     CreditCard,
-    PlusCircle
+    PlusCircle,
+    History,
+    AlertCircle,
+    Gem
 } from 'lucide-react';
 import { SidebarItem } from '@/components/layout/SectionSidebar';
 
@@ -27,9 +30,12 @@ export const DASHBOARD_Sidebar: SidebarItem[] = [
 ];
 
 export const CLIENTS_General_Sidebar: SidebarItem[] = [
-    { name: "Clients List", path: "/clients", icon: Users },
-    { name: "Bookings", path: "/clients/bookings", icon: Calendar },
+    { name: "All Clients", path: "/clients", icon: Users },
+    { name: "Follow-Ups Due", path: "/clients/follow-ups", icon: AlertCircle },
+    { name: "Recent Sessions", path: "/clients/recent", icon: History },
+    { name: "Upcoming Bookings", path: "/clients/bookings", icon: Calendar },
     { name: "Payments", path: "/clients/payments", icon: CreditCard },
+    { name: "Pending Remedies", path: "/clients/remedies", icon: Gem },
     { name: "Add New Client", path: "/clients/new", icon: PlusCircle },
 ];
 

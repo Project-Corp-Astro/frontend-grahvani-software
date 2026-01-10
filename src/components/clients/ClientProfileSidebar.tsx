@@ -5,9 +5,16 @@ import {
     User,
     Heart,
     StickyNote,
-    Link as LinkIcon,
     ArrowLeft,
-    Briefcase
+    Map,
+    Clock,
+    History,
+    Target,
+    Gem,
+    Users,
+    FileText,
+    CreditCard,
+    Edit3
 } from 'lucide-react';
 import { Client } from "@/types/client";
 import Link from 'next/link';
@@ -22,10 +29,14 @@ interface ClientProfileSidebarProps {
 export default function ClientProfileSidebar({ client, activeTab, onTabChange }: ClientProfileSidebarProps) {
 
     const menuItems = [
-        { id: 'profile', label: 'Profile Details', icon: User },
-        { id: 'relationships', label: 'Relationships', icon: Heart },
-        { id: 'notes', label: 'Sticky Notes', icon: StickyNote },
-        { id: 'consultations', label: 'Consultation Log', icon: Briefcase },
+        { id: 'profile', label: 'Birth Details', icon: User },
+        { id: 'sessions', label: 'Past Sessions', icon: History },
+        { id: 'predictions', label: 'Predictions Made', icon: Target },
+        { id: 'remedies', label: 'Remedies Given', icon: Gem },
+        { id: 'family', label: 'Family Links', icon: Users },
+        { id: 'documents', label: 'Documents', icon: FileText },
+        { id: 'payments', label: 'Payment History', icon: CreditCard },
+        { id: 'notes', label: 'Session Notes', icon: Edit3 },
     ];
 
     return (

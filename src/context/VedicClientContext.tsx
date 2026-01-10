@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 export interface VedicClientDetails {
+    id?: string;
     name: string;
     gender: "male" | "female" | "other";
     dateOfBirth: string; // YYYY-MM-DD

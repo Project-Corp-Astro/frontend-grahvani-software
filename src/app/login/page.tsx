@@ -93,7 +93,7 @@ export default function LoginPage() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: isUnfurled ? "auto" : 0, opacity: 1 }}
                     transition={{ duration: 1.2, ease: "easeInOut" }} // Matched timing precisely
-                    className="relative z-20 w-[92%] bg-[#FFFDF7] overflow-hidden origin-top"
+                    className="relative z-20 w-[92%] bg-softwhite overflow-hidden origin-top"
                     style={{
                         backgroundImage: `url('https://www.transparenttextures.com/patterns/cream-paper.png')`,
                         boxShadow: '0 10px 40px -10px rgba(61, 38, 24, 0.3), inset 0 0 40px rgba(139,90,43,0.1)',
@@ -119,13 +119,13 @@ export default function LoginPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <h1 className="text-3xl font-serif font-bold tracking-[0.15em] text-[#3D2618] uppercase">
+                                <h1 className="text-3xl font-serif font-bold tracking-[0.15em] text-ink uppercase">
                                     Grahvani
                                 </h1>
                                 <div className="flex items-center gap-2 mt-2 opacity-80">
-                                    <div className="h-[1px] w-6 bg-[#8B5A2B]" />
-                                    <span className="text-[10px] font-serif uppercase tracking-widest text-[#8B5A2B]">Wisdom of Stars</span>
-                                    <div className="h-[1px] w-6 bg-[#8B5A2B]" />
+                                    <div className="h-[1px] w-6 bg-gold-dark" />
+                                    <span className="text-[10px] font-serif uppercase tracking-widest text-gold-dark">Wisdom of Stars</span>
+                                    <div className="h-[1px] w-6 bg-gold-dark" />
                                 </div>
                             </div>
 
@@ -134,16 +134,16 @@ export default function LoginPage() {
                                 <div className="space-y-5">
                                     {/* Inputs - Designed to look like lines on a ledger */}
                                     <div className="relative group">
-                                        <label className="block text-[10px] font-bold font-serif text-[#8B5A2B] uppercase tracking-widest mb-1">
+                                        <label className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
                                             Cosmic Identity
                                         </label>
                                         <div className="relative flex items-center">
-                                            <Mail className="absolute left-0 w-4 h-4 text-[#D4A574]" />
+                                            <Mail className="absolute left-0 w-4 h-4 text-gold-primary" />
                                             <input
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
-                                                className="w-full pl-8 pr-2 py-2 bg-transparent border-b-2 border-[#D4A574]/40 text-[#3D2618] font-serif placeholder-[#8B5A2B]/30 focus:outline-none focus:border-[#8B5A2B] transition-colors"
+                                                className="w-full pl-8 pr-2 py-2 bg-transparent border-b-2 border-gold-primary/40 text-ink font-serif placeholder-muted focus:outline-none focus:border-gold-dark transition-colors"
                                                 placeholder="seeker@cosmos.com"
                                                 required
                                             />
@@ -151,16 +151,16 @@ export default function LoginPage() {
                                     </div>
 
                                     <div className="relative group">
-                                        <label className="block text-[10px] font-bold font-serif text-[#8B5A2B] uppercase tracking-widest mb-1">
-                                            Secret Key
+                                        <label className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
+                                            Password
                                         </label>
                                         <div className="relative flex items-center">
-                                            <Lock className="absolute left-0 w-4 h-4 text-[#D4A574]" />
+                                            <Lock className="absolute left-0 w-4 h-4 text-gold-primary" />
                                             <input
                                                 type="password"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                className="w-full pl-8 pr-2 py-2 bg-transparent border-b-2 border-[#D4A574]/40 text-[#3D2618] font-serif placeholder-[#8B5A2B]/30 focus:outline-none focus:border-[#8B5A2B] transition-colors"
+                                                className="w-full pl-8 pr-2 py-2 bg-transparent border-b-2 border-gold-primary/40 text-ink font-serif placeholder-muted focus:outline-none focus:border-gold-dark transition-colors"
                                                 placeholder="••••••••"
                                                 required
                                             />
@@ -170,13 +170,13 @@ export default function LoginPage() {
 
                                 <div className="flex items-center justify-between pt-2">
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <div className="w-3.5 h-3.5 border border-[#8B5A2B] rounded-[2px] flex items-center justify-center">
-                                            <div className="w-1.5 h-1.5 bg-[#8B5A2B] opacity-0" />
+                                        <div className="w-3.5 h-3.5 border border-gold-dark rounded-[2px] flex items-center justify-center">
+                                            <div className="w-1.5 h-1.5 bg-gold-dark opacity-0" />
                                         </div>
-                                        <span className="text-[10px] font-serif text-[#5D3A29] uppercase tracking-wide">Remember Fate</span>
+                                        <span className="text-[10px] font-serif text-body uppercase tracking-wide">Remember me</span>
                                     </label>
-                                    <a href="#" className="text-[10px] font-serif text-[#8B5A2B] font-bold uppercase tracking-wide hover:underline">
-                                        Lost Path?
+                                    <a href="#" className="text-[10px] font-serif text-gold-dark font-bold uppercase tracking-wide hover:underline">
+                                        Forgot Password?
                                     </a>
                                 </div>
 
@@ -210,8 +210,8 @@ export default function LoginPage() {
                             </form>
 
                             <div className="mt-8">
-                                <p className="text-[10px] font-serif text-[#8B5A2B]/80 italic">
-                                    New seeker? <Link href="/register" className="font-bold text-[#6B4423] hover:underline decoration-[#6B4423]/50">Begin your Journey</Link>
+                                <p className="text-[10px] font-serif text-muted italic">
+                                    New to Grahvani? <Link href="/register" className="font-bold text-gold-dark hover:underline">Create an account</Link>
                                 </p>
                             </div>
                         </motion.div>
