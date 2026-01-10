@@ -6,11 +6,15 @@ import { usePathname } from "next/navigation";
 import { Settings, HelpCircle, Clock, User, Bell, ChevronDown } from "lucide-react";
 import GoldenButton from "@/components/GoldenButton";
 import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
+import { useAuth } from "@/context/AuthContext";
+import { LogOut } from "lucide-react";
 
 export default function GlobalHeader() {
     const pathname = usePathname();
     const { settings } = useAstrologerSettings();
+    const { user, logout } = useAuth();
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+    const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
     // Hide header on authenticaton pages
     if (pathname === "/login" || pathname === "/register") {
@@ -96,12 +100,71 @@ export default function GlobalHeader() {
                         </button>
                     </div>
 
-                    {/* User Profile */}
-                    <button className="flex items-center gap-3 pl-2 border-l border-[#D08C60]/30 group">
-                        <div className="w-8 h-8 rounded-full bg-[#2A1810] border border-[#D08C60] flex items-center justify-center text-[#FEFAEA] font-serif text-sm group-hover:bg-[#3E2A1F] transition-colors">
-                            AS
-                        </div>
-                    </button>
+                    {/* User Profile Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsProfileOpen(!isProfileOpen)}
+                            className="flex items-center gap-3 pl-2 border-l border-[#D08C60]/30 group"
+                        >
+                            <div className="w-8 h-8 rounded-full bg-[#2A1810] border border-[#D08C60] flex items-center justify-center text-[#FEFAEA] font-serif text-sm group-hover:bg-[#3E2A1F] transition-colors overflow-hidden">
+                                {user?.avatarUrl ? (
+                                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span>{(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</span>
+                                )}
+                            </div>
+                            <ChevronDown className={`w-4 h-4 text-[#D08C60] transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Profile Dropdown Menu */}
+                        {isProfileOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setIsProfileOpen(false)}
+                                />
+                                <div className="absolute right-0 mt-2 w-64 bg-[#FFF9F0] rounded-2xl shadow-2xl border border-[#D08C60]/20 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-5 bg-gradient-to-br from-[#98522F] to-[#763A1F] text-white">
+                                        <p className="font-serif font-bold text-lg leading-tight truncate">
+                                            {user?.name || user?.email}
+                                        </p>
+                                        <p className="text-[#FFD27D]/70 text-[10px] uppercase tracking-widest mt-1 truncate">
+                                            {user?.role || 'Astro Seeker'} • {user?.email}
+                                        </p>
+                                    </div>
+                                    <div className="p-2">
+                                        <Link
+                                            href="/profile"
+                                            className="flex items-center gap-3 px-4 py-3 text-sm text-[#3E2A1F] hover:bg-[#FFF4E6] rounded-xl transition-colors font-medium"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <User className="w-4 h-4 text-[#D08C60]" />
+                                            <span>My Journey</span>
+                                        </Link>
+                                        <Link
+                                            href="/settings"
+                                            className="flex items-center gap-3 px-4 py-3 text-sm text-[#3E2A1F] hover:bg-[#FFF4E6] rounded-xl transition-colors font-medium"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <Settings className="w-4 h-4 text-[#D08C60]" />
+                                            <span>Sanctum Settings</span>
+                                        </Link>
+                                        <div className="h-[1px] bg-[#D08C60]/10 my-2 mx-2" />
+                                        <button
+                                            onClick={() => {
+                                                setIsProfileOpen(false);
+                                                logout();
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-xl transition-colors font-bold"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            <span>Leave Sanctum</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

@@ -29,6 +29,8 @@ export const viewport = {
   userScalable: false,
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,12 +39,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${inter.variable} antialiased`}>
-        <VedicClientProvider>
-          <AstrologerSettingsProvider>
-            <GlobalHeader />
-            {children}
-          </AstrologerSettingsProvider>
-        </VedicClientProvider>
+        <AuthProvider>
+          <VedicClientProvider>
+            <AstrologerSettingsProvider>
+              <GlobalHeader />
+              {children}
+            </AstrologerSettingsProvider>
+          </VedicClientProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -13,9 +13,11 @@ export default function VedicClientSelectionPage() {
     const [clients] = useState<Client[]>(MOCK_CLIENTS);
 
     const filteredClients = clients.filter(client =>
-        client.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.placeOfBirth.toLowerCase().includes(searchQuery.toLowerCase())
+        (client.firstName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (client.lastName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (client.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (client.placeOfBirth?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (client.birthPlace?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
     return (

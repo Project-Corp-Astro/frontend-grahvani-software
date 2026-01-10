@@ -1,43 +1,317 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MOCK_CLIENTS } from "@/data/mockClients";
 import ClientProfileSidebar from "@/components/clients/ClientProfileSidebar";
-import { Sparkles, Calendar, Clock, MapPin, User, Mail, Phone, Heart, Plus, Search, X, ChevronRight, StickyNote, Save, Edit2 } from 'lucide-react';
-import { Client } from '@/types/client';
+import { Sparkles, Calendar, Clock, MapPin, User, Mail, Phone, Heart, Plus, Search, X, ChevronRight, StickyNote, Save, Edit2, Loader2, Trash2 } from 'lucide-react';
+import { Client, FamilyLink, RelationshipType, ClientListResponse, FamilyLinkPayload, LocationSuggestion } from '@/types/client';
+import { clientApi, familyApi } from '@/lib/api';
 import Link from 'next/link';
+
+// Helper to strip ISO dates/times for clean input display
+const formatDate = (date?: string) => date?.includes('T') ? date.split('T')[0] : date;
+const formatTime = (time?: string) => time?.includes('T') ? time.split('T')[1].split('.')[0] : time;
+
+// Helper to derive firstName/lastName from fullName
+const deriveNames = (c: Client): Client => {
+    if (c.firstName && c.lastName) return c;
+    if (c.fullName) {
+        const parts = c.fullName.split(' ');
+        return {
+            ...c,
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' ') || '',
+            birthPlace: c.birthPlace || c.placeOfBirth,
+            birthDate: formatDate(c.birthDate || c.dateOfBirth),
+            birthTime: formatTime(c.birthTime || c.timeOfBirth),
+            placeOfBirth: c.birthPlace || c.placeOfBirth,
+            dateOfBirth: formatDate(c.birthDate || c.dateOfBirth),
+            timeOfBirth: formatTime(c.birthTime || c.timeOfBirth),
+            phone: c.phonePrimary || c.phone,
+        };
+    }
+    return c;
+};
+
+const RELATIONSHIP_OPTIONS: { value: RelationshipType; label: string }[] = [
+    { value: 'spouse', label: 'Spouse' },
+    { value: 'parent', label: 'Parent' },
+    { value: 'child', label: 'Child' },
+    { value: 'sibling', label: 'Sibling' },
+    { value: 'grandparent', label: 'Grandparent' },
+    { value: 'grandchild', label: 'Grandchild' },
+    { value: 'in_law', label: 'In-Law' },
+    { value: 'uncle_aunt', label: 'Uncle/Aunt' },
+    { value: 'nephew_niece', label: 'Nephew/Niece' },
+    { value: 'cousin', label: 'Cousin' },
+    { value: 'other', label: 'Other' },
+];
 
 export default function ClientProfilePage() {
     const params = useParams();
     const router = useRouter();
     const clientId = params.id as string;
-    const client = MOCK_CLIENTS.find(c => c.id === clientId);
 
+    // Core state
+    const [client, setClient] = useState<Client | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("profile");
     const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState<Partial<Client>>({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [notes, setNotes] = useState("");
+    const [isSavingNotes, setIsSavingNotes] = useState(false);
 
-    // --- LOGIC MOVED FROM SIDEBAR ---
-    const [relationships, setRelationships] = useState<Client[]>([]);
+    // Location suggestions state
+    const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+    const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
+    // Family links state
+    const [familyLinks, setFamilyLinks] = useState<FamilyLink[]>([]);
+    const [loadingFamily, setLoadingFamily] = useState(false);
     const [isAddingRel, setIsAddingRel] = useState(false);
     const [searchRel, setSearchRel] = useState("");
-    const [notes, setNotes] = useState("");
+    const [availableClients, setAvailableClients] = useState<Client[]>([]);
+    const [selectedRelType, setSelectedRelType] = useState<RelationshipType>('spouse');
+    const [addingFamily, setAddingFamily] = useState(false);
 
-    const availableRelations = MOCK_CLIENTS.filter(c =>
-        client && c.id !== client.id &&
-        !relationships.find(r => r.id === c.id) &&
-        (c.firstName.toLowerCase().includes(searchRel.toLowerCase()) ||
-            c.lastName.toLowerCase().includes(searchRel.toLowerCase()))
-    );
+    // Fetch client data
+    const fetchClient = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await clientApi.getClient(clientId);
+            const derived = deriveNames(data);
+            setClient(derived);
+            setEditData(derived);
 
-    const addRelationship = (newRel: Client) => {
-        setRelationships([...relationships, newRel]);
-        setIsAddingRel(false);
-        setSearchRel("");
+            // Set initial notes from metadata or first note
+            if (data.metadata?.quickNotes) {
+                setNotes(data.metadata.quickNotes);
+            } else if (data.notes && data.notes.length > 0) {
+                setNotes(data.notes[0].noteContent);
+            }
+        } catch (err: any) {
+            console.error('Failed to fetch client:', err);
+            setError('Client not found or server unavailable. Please ensure client-service is running.');
+        } finally {
+            setLoading(false);
+        }
+    }, [clientId]);
+
+    // Fetch family links
+    const fetchFamilyLinks = useCallback(async () => {
+        setLoadingFamily(true);
+        try {
+            const links = await familyApi.getFamilyLinks(clientId);
+            setFamilyLinks(links);
+        } catch (err) {
+            console.error('Failed to fetch family links:', err);
+        } finally {
+            setLoadingFamily(false);
+        }
+    }, [clientId]);
+
+    // Search available clients for family linking
+    const searchClients = useCallback(async (query: string) => {
+        if (query.length < 2) {
+            setAvailableClients([]);
+            return;
+        }
+        try {
+            const response: ClientListResponse = await clientApi.getClients({ search: query, limit: 10 });
+            // Filter out current client and already linked
+            const linkedIds = familyLinks.map(f => f.relatedClientId);
+            const filtered = response.clients
+                .filter(c => c.id !== clientId && !linkedIds.includes(c.id))
+                .map(deriveNames);
+            setAvailableClients(filtered);
+        } catch (err) {
+            console.error('Failed to search clients:', err);
+            // Show error - no fallback to mock data
+            setAvailableClients([]);
+        }
+    }, [clientId, familyLinks]);
+
+    // Add family link
+    const addFamilyLink = async (relatedClient: Client) => {
+        setAddingFamily(true);
+        try {
+            const payload: FamilyLinkPayload = {
+                relatedClientId: relatedClient.id,
+                relationshipType: selectedRelType,
+            };
+            await familyApi.linkFamily(clientId, payload);
+            await fetchFamilyLinks();
+            setIsAddingRel(false);
+            setSearchRel("");
+            setAvailableClients([]);
+        } catch (err: any) {
+            console.error('Failed to add family link:', err);
+            setError(err.message || 'Failed to add family member');
+        } finally {
+            setAddingFamily(false);
+        }
     };
-    // -------------------------------
 
-    if (!client) return null; // Or loading/error state
+    // Remove family link
+    const removeFamilyLink = async (relatedClientId: string) => {
+        try {
+            await familyApi.unlinkFamily(clientId, relatedClientId);
+            await fetchFamilyLinks();
+        } catch (err: any) {
+            console.error('Failed to remove family link:', err);
+        }
+    };
+
+    // Save client changes
+    const handleSave = async () => {
+        if (!client) return;
+        setIsSaving(true);
+        setError(null);
+        try {
+            // Re-derive fullName if first/last name changed
+            const updatedFullName = `${editData.firstName || ''} ${editData.lastName || ''}`.trim();
+
+            // Scrub derived fields that don't belong in the backend update schema
+            const {
+                firstName, lastName, phone, dateOfBirth, timeOfBirth, placeOfBirth, avatar,
+                familyLinksFrom, familyLinksTo, consultations, notes: clientNotes, remedies,
+                ...cleanData
+            } = editData as any;
+
+            const payload = {
+                ...cleanData,
+                fullName: updatedFullName
+            };
+
+            // Cast coords to numbers if they exist
+            if (payload.birthLatitude !== undefined && payload.birthLatitude !== null) {
+                payload.birthLatitude = Number(payload.birthLatitude);
+            }
+            if (payload.birthLongitude !== undefined && payload.birthLongitude !== null) {
+                payload.birthLongitude = Number(payload.birthLongitude);
+            }
+
+            // Ensure birthTime has seconds if it's HH:MM string
+            if (typeof payload.birthTime === 'string' && payload.birthTime.length === 5) {
+                payload.birthTime = `${payload.birthTime}:00`;
+            }
+
+            const updated = await clientApi.updateClient(clientId, payload);
+            const derived = deriveNames(updated);
+            setClient(derived);
+            setEditData(derived);
+            setIsEditing(false);
+        } catch (err: any) {
+            console.error('Failed to update client:', err);
+            setError(err.message || 'Failed to update client profile');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Save notes
+    const handleSaveNotes = async () => {
+        if (!clientId) return;
+        setIsSavingNotes(true);
+        try {
+            // Safe-save notes in metadata.quickNotes
+            await clientApi.updateClient(clientId, {
+                metadata: { ...client?.metadata, quickNotes: notes }
+            });
+
+            // Re-fetch to confirm
+            await fetchClient();
+        } catch (err: any) {
+            console.error('Failed to save notes:', err);
+            setError(err.message || 'Failed to save notes');
+        } finally {
+            setIsSavingNotes(false);
+        }
+    };
+
+    // Handle location search
+    const handleLocationSearch = async (query: string) => {
+        setEditData(prev => ({ ...prev, birthPlace: query }));
+        if (query.length < 3) {
+            setLocationSuggestions([]);
+            return;
+        }
+
+        setIsSearchingLocation(true);
+        try {
+            const response = await clientApi.getSuggestions(query);
+            setLocationSuggestions(response.suggestions || []);
+        } catch (err) {
+            console.error('Failed to fetch location suggestions:', err);
+        } finally {
+            setIsSearchingLocation(false);
+        }
+    };
+
+    // Handle location selection
+    const handleLocationSelect = (suggestion: LocationSuggestion) => {
+        setEditData(prev => ({
+            ...prev,
+            birthPlace: suggestion.formatted,
+            birthLatitude: suggestion.latitude,
+            birthLongitude: suggestion.longitude,
+            birthTimezone: suggestion.timezone,
+            city: suggestion.city || prev.city,
+            state: suggestion.state || prev.state,
+            country: suggestion.country || prev.country
+        }));
+        setLocationSuggestions([]);
+    };
+
+    // Initial fetch
+    useEffect(() => {
+        fetchClient();
+    }, [fetchClient]);
+
+    // Fetch family when client loads
+    useEffect(() => {
+        if (client && activeTab === 'family') {
+            fetchFamilyLinks();
+        }
+    }, [client, activeTab, fetchFamilyLinks]);
+
+    // Debounced search for family
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchRel.length >= 2) {
+                searchClients(searchRel);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchRel, searchClients]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="fixed inset-0 pt-[64px] flex items-center justify-center bg-parchment">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 text-gold-primary mx-auto mb-4 animate-spin" />
+                    <p className="font-serif text-xl text-muted">Loading soul record...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!client) {
+        return (
+            <div className="fixed inset-0 pt-[64px] flex items-center justify-center bg-parchment">
+                <div className="text-center">
+                    <p className="font-serif text-xl text-red-600 mb-4">{error || 'Client not found'}</p>
+                    <button onClick={() => router.push('/clients')} className="text-gold-dark hover:underline">
+                        Return to Registry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 pt-[64px] flex animate-in fade-in duration-500 bg-parchment">
@@ -67,6 +341,21 @@ export default function ClientProfilePage() {
                         </h1>
                     </div>
 
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50/50 border border-red-200/50 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
+                            <div className="flex items-center gap-3">
+                                <X className="w-5 h-5 text-red-500" />
+                                <p className="text-red-700 font-medium">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setError(null)}
+                                className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                            >
+                                <X className="w-4 h-4 text-red-400" />
+                            </button>
+                        </div>
+                    )}
+
                     {/* --- BIRTH DETAILS TAB --- */}
                     {activeTab === 'profile' && (
                         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
@@ -82,19 +371,20 @@ export default function ClientProfilePage() {
                                             Cancel
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                // Save logic here
-                                                setIsEditing(false);
-                                            }}
-                                            className="px-5 py-2.5 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2"
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="px-5 py-2.5 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
                                         >
-                                            <Save className="w-4 h-4" />
-                                            Save Changes
+                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            {isSaving ? 'Saving...' : 'Save Changes'}
                                         </button>
                                     </>
                                 ) : (
                                     <button
-                                        onClick={() => setIsEditing(true)}
+                                        onClick={() => {
+                                            setEditData(client);
+                                            setIsEditing(true);
+                                        }}
                                         className="px-5 py-2.5 bg-softwhite border border-antique text-ink rounded-lg font-medium text-sm hover:bg-gold-primary/10 hover:border-gold-primary/50 transition-colors flex items-center gap-2"
                                     >
                                         <Edit2 className="w-4 h-4" />
@@ -112,10 +402,39 @@ export default function ClientProfilePage() {
                                     Personal Details
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <DetailItem label="Full Name" value={`${client.firstName} ${client.lastName}`} isEditing={isEditing} />
-                                    <DetailItem label="Gender" value={"Male"} isEditing={isEditing} />
-                                    <DetailItem label="Date of Birth" value={new Date(client.dateOfBirth).toLocaleDateString()} isEditing={isEditing} />
-                                    <DetailItem label="Time of Birth" value={client.timeOfBirth || "Unknown"} isEditing={isEditing} />
+                                    <DetailItem
+                                        label="First Name"
+                                        value={client.firstName || ''}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, firstName: val }))}
+                                    />
+                                    <DetailItem
+                                        label="Last Name"
+                                        value={client.lastName || ''}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, lastName: val }))}
+                                    />
+                                    <DetailItem
+                                        label="Gender"
+                                        value={client.gender || "female"}
+                                        isEditing={isEditing}
+                                        type="select"
+                                        options={[{ v: 'male', l: 'Male' }, { v: 'female', l: 'Female' }, { v: 'other', l: 'Other' }]}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, gender: val as any }))}
+                                    />
+                                    <DetailItem
+                                        label="Date of Birth"
+                                        value={client.birthDate || ''}
+                                        isEditing={isEditing}
+                                        type="date"
+                                        onChange={(val) => setEditData(prev => ({ ...prev, birthDate: val }))}
+                                    />
+                                    <DetailItem
+                                        label="Time of Birth"
+                                        value={client.birthTime || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, birthTime: val }))}
+                                    />
                                 </div>
                             </div>
 
@@ -128,13 +447,68 @@ export default function ClientProfilePage() {
                                     Birth Location
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div className="md:col-span-2">
-                                        <DetailItem label="Place of Birth" value={client.placeOfBirth} isEditing={isEditing} />
+                                    <div className="md:col-span-2 relative">
+                                        <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Place of Birth</p>
+                                        {isEditing ? (
+                                            <>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={editData.birthPlace || ''}
+                                                        onChange={(e) => handleLocationSearch(e.target.value)}
+                                                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                                                        placeholder="Search birth city..."
+                                                    />
+                                                    {isSearchingLocation && (
+                                                        <Loader2 className="absolute right-3 top-2.5 w-4 h-4 text-gold-primary animate-spin" />
+                                                    )}
+                                                </div>
+
+                                                {/* Suggestions Dropdown */}
+                                                {locationSuggestions.length > 0 && (
+                                                    <div className="absolute z-50 w-full mt-1 bg-white border border-antique shadow-xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                        {locationSuggestions.map((s, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                onClick={() => handleLocationSelect(s)}
+                                                                className="w-full text-left px-4 py-3 hover:bg-parchment transition-colors border-b border-antique last:border-0 flex items-center gap-3"
+                                                            >
+                                                                <MapPin className="w-4 h-4 text-gold-dark" />
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-ink">{s.formatted}</p>
+                                                                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider">
+                                                                        {s.latitude.toFixed(4)}°, {s.longitude.toFixed(4)}° • {s.timezone}
+                                                                    </p>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="text-base font-serif text-ink font-medium border-b border-antique pb-2">
+                                                {client.birthPlace || 'N/A'}
+                                            </p>
+                                        )}
                                     </div>
-                                    <DetailItem label="Latitude" value={"28.6139° N"} isEditing={isEditing} />
-                                    <DetailItem label="Longitude" value={"77.2090° E"} isEditing={isEditing} />
-                                    <DetailItem label="Timezone" value={"IST (UTC +5:30)"} isEditing={isEditing} />
-                                    <DetailItem label="DST Applied" value={"No"} isEditing={isEditing} />
+                                    <DetailItem
+                                        label="Latitude"
+                                        value={editData.birthLatitude?.toString() || client.birthLatitude?.toString() || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, birthLatitude: parseFloat(val) || 0 }))}
+                                    />
+                                    <DetailItem
+                                        label="Longitude"
+                                        value={editData.birthLongitude?.toString() || client.birthLongitude?.toString() || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, birthLongitude: parseFloat(val) || 0 }))}
+                                    />
+                                    <DetailItem
+                                        label="Timezone"
+                                        value={editData.birthTimezone || client.birthTimezone || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, birthTimezone: val }))}
+                                    />
                                 </div>
                             </div>
 
@@ -165,8 +539,18 @@ export default function ClientProfilePage() {
                                     Contact Information
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <DetailItem label="Email Address" value={client.email || "N/A"} isEditing={isEditing} />
-                                    <DetailItem label="Phone Number" value={client.phone || "N/A"} isEditing={isEditing} />
+                                    <DetailItem
+                                        label="Email Address"
+                                        value={client.email || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, email: val }))}
+                                    />
+                                    <DetailItem
+                                        label="Phone Number"
+                                        value={client.phonePrimary || ""}
+                                        isEditing={isEditing}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, phonePrimary: val }))}
+                                    />
                                 </div>
                             </div>
 
@@ -204,62 +588,107 @@ export default function ClientProfilePage() {
                             {isAddingRel && (
                                 <div className="mb-6 p-5 bg-softwhite rounded-xl border border-antique">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-ink font-serif font-bold">Search Archives</h4>
-                                        <button onClick={() => setIsAddingRel(false)} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
+                                        <h4 className="text-ink font-serif font-bold">Add Family Connection</h4>
+                                        <button onClick={() => { setIsAddingRel(false); setSearchRel(''); setAvailableClients([]); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
                                     </div>
+
+                                    {/* Relationship Type Selector */}
+                                    <div className="mb-4">
+                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Relationship Type</label>
+                                        <select
+                                            value={selectedRelType}
+                                            onChange={(e) => setSelectedRelType(e.target.value as RelationshipType)}
+                                            className="w-full bg-parchment border border-antique rounded-lg py-2.5 px-4 text-ink text-sm focus:outline-none focus:border-gold-primary"
+                                        >
+                                            {RELATIONSHIP_OPTIONS.map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Client Search */}
                                     <div className="relative mb-4">
                                         <Search className="absolute left-4 top-3 w-4 h-4 text-muted" />
                                         <input
                                             type="text"
-                                            placeholder="Type name..."
+                                            placeholder="Search clients by name..."
                                             value={searchRel}
                                             onChange={(e) => setSearchRel(e.target.value)}
                                             autoFocus
                                             className="w-full bg-parchment border border-antique rounded-lg py-2.5 pl-10 pr-4 text-ink text-sm placeholder:text-muted focus:outline-none focus:border-gold-primary"
                                         />
                                     </div>
+
+                                    {/* Available Clients List */}
                                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                                        {availableRelations.map(rel => (
+                                        {availableClients.length > 0 ? availableClients.map((c: Client) => (
                                             <button
-                                                key={rel.id}
-                                                onClick={() => addRelationship(rel)}
-                                                className="w-full flex items-center gap-3 p-3 hover:bg-parchment rounded-lg transition-colors text-left"
+                                                key={c.id}
+                                                onClick={() => addFamilyLink(c)}
+                                                disabled={addingFamily}
+                                                className="w-full flex items-center gap-3 p-3 hover:bg-parchment rounded-lg transition-colors text-left disabled:opacity-50"
                                             >
                                                 <div className="w-8 h-8 rounded-lg bg-gold-primary/10 flex items-center justify-center text-gold-dark font-serif font-bold text-sm">
-                                                    {rel.firstName[0]}
+                                                    {(c.firstName || c.fullName || '?')[0]}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-ink font-medium text-sm">{rel.firstName} {rel.lastName}</p>
-                                                    <p className="text-muted text-xs">{rel.placeOfBirth}</p>
+                                                    <p className="text-ink font-medium text-sm">{c.firstName || ''} {c.lastName || ''}</p>
+                                                    <p className="text-muted text-xs">{c.placeOfBirth || c.birthPlace || 'No location'}</p>
                                                 </div>
-                                                <span className="text-gold-dark text-xs font-medium">Select</span>
+                                                <span className="text-gold-dark text-xs font-medium">
+                                                    {addingFamily ? 'Adding...' : `Add as ${RELATIONSHIP_OPTIONS.find(o => o.value === selectedRelType)?.label}`}
+                                                </span>
                                             </button>
-                                        ))}
+                                        )) : searchRel.length >= 2 ? (
+                                            <p className="text-muted text-sm text-center py-4">No clients found</p>
+                                        ) : (
+                                            <p className="text-muted text-sm text-center py-4">Type at least 2 characters to search</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {/* List Area */}
+                            {/* Family Links List */}
                             <div className="space-y-3">
-                                {relationships.length > 0 ? (
-                                    relationships.map(rel => (
-                                        <div key={rel.id} className="flex items-center p-5 bg-softwhite border border-antique rounded-xl hover:border-gold-primary/50 transition-all">
+                                {loadingFamily ? (
+                                    <div className="text-center py-16">
+                                        <Loader2 className="w-8 h-8 text-gold-primary mx-auto mb-3 animate-spin" />
+                                        <p className="text-muted font-serif">Loading family connections...</p>
+                                    </div>
+                                ) : familyLinks.length > 0 ? (
+                                    familyLinks.map((link: FamilyLink) => (
+                                        <div key={link.id} className="flex items-center p-5 bg-softwhite border border-antique rounded-xl hover:border-gold-primary/50 transition-all">
                                             <div className="w-12 h-12 rounded-lg bg-gold-primary/10 flex items-center justify-center font-serif text-lg text-gold-dark mr-4">
-                                                {rel.firstName[0]}
+                                                {(link.relatedClient?.firstName || link.relatedClient?.fullName || '?')[0]}
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="font-serif font-bold text-ink">{rel.firstName} {rel.lastName}</h3>
-                                                <p className="text-muted text-sm">{rel.placeOfBirth}</p>
+                                                <h3 className="font-serif font-bold text-ink">
+                                                    {link.relatedClient?.firstName || ''} {link.relatedClient?.lastName || link.relatedClient?.fullName || ''}
+                                                </h3>
+                                                <p className="text-muted text-sm">
+                                                    {RELATIONSHIP_OPTIONS.find(o => o.value === link.relationshipType)?.label || link.relationshipType}
+                                                    {link.relatedClient?.birthPlace && ` • ${link.relatedClient.birthPlace}`}
+                                                </p>
                                             </div>
-                                            <Link href={`/clients/${rel.id}`} className="px-4 py-2 rounded-lg border border-antique text-gold-dark text-xs font-semibold hover:bg-gold-primary hover:text-white transition-all">
-                                                View Chart
-                                            </Link>
+                                            <div className="flex items-center gap-2">
+                                                <Link href={`/clients/${link.relatedClientId}`} className="px-4 py-2 rounded-lg border border-antique text-gold-dark text-xs font-semibold hover:bg-gold-primary hover:text-white transition-all">
+                                                    View Chart
+                                                </Link>
+                                                <button
+                                                    onClick={() => removeFamilyLink(link.relatedClientId)}
+                                                    className="p-2 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                    title="Remove connection"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
                                     <div className="text-center py-16 border border-dashed border-antique rounded-xl bg-parchment/30">
                                         <Heart className="w-10 h-10 text-muted/30 mx-auto mb-3" />
                                         <p className="text-muted font-serif">No family connections mapped yet.</p>
+                                        <p className="text-muted/70 text-sm mt-1">Click "Add Connection" to link family members for Kundali matching.</p>
                                     </div>
                                 )}
                             </div>
@@ -272,9 +701,13 @@ export default function ClientProfilePage() {
                             <div className="bg-softwhite rounded-xl border border-antique p-6 min-h-[500px]">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="font-serif font-bold text-ink">Quick Notes</h3>
-                                    <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
-                                        <Save className="w-4 h-4" />
-                                        Save
+                                    <button
+                                        onClick={handleSaveNotes}
+                                        disabled={isSavingNotes}
+                                        className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isSavingNotes ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                        {isSavingNotes ? "Saving..." : "Save"}
                                     </button>
                                 </div>
                                 <textarea
@@ -459,18 +892,45 @@ export default function ClientProfilePage() {
     );
 }
 
-function DetailItem({ label, value, isEditing = false }: { label: string, value: string, isEditing?: boolean }) {
+function DetailItem({
+    label,
+    value,
+    isEditing = false,
+    onChange,
+    type = 'text',
+    options = []
+}: {
+    label: string,
+    value: string,
+    isEditing?: boolean,
+    onChange?: (val: string) => void,
+    type?: 'text' | 'select' | 'date',
+    options?: { v: string, l: string }[]
+}) {
     return (
         <div>
             <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">{label}</p>
             {isEditing ? (
-                <input
-                    type="text"
-                    defaultValue={value}
-                    className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
-                />
+                type === 'select' ? (
+                    <select
+                        onChange={(e) => onChange?.(e.target.value)}
+                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                        defaultValue={value}
+                    >
+                        {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                    </select>
+                ) : (
+                    <input
+                        type={type}
+                        defaultValue={value}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                    />
+                )
             ) : (
-                <p className="text-base font-serif text-ink font-medium border-b border-antique pb-2">{value}</p>
+                <p className="text-base font-serif text-ink font-medium border-b border-antique pb-2">
+                    {type === 'select' ? (options.find(o => o.v === value)?.l || value) : value || 'N/A'}
+                </p>
             )}
         </div>
     );

@@ -53,14 +53,14 @@ export default function ClientProfileSidebar({ client, activeTab, onTabChange }:
                     <div className="w-20 h-20 rounded-full border border-[#D08C60]/40 p-1 mb-3 relative">
                         <div className="w-full h-full rounded-full bg-[#3E2A1F] flex items-center justify-center overflow-hidden border border-white/10">
                             {client.avatar ? (
-                                <img src={client.avatar} alt={client.firstName} className="w-full h-full object-cover" />
+                                <img src={client.avatar} alt={client.firstName || client.fullName || 'Client'} className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-2xl font-serif text-[#FFD27D]">{client.firstName[0]}</span>
+                                <span className="text-2xl font-serif text-[#FFD27D]">{(client.firstName || client.fullName || '?')[0]}</span>
                             )}
                         </div>
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#1A0A05] rounded-full" />
                     </div>
-                    <h2 className="text-xl font-serif text-white font-bold text-center leading-none mb-1">{client.firstName}</h2>
+                    <h2 className="text-xl font-serif text-white font-bold text-center leading-none mb-1">{client.firstName || client.fullName || 'Client'}</h2>
                     <p className="text-[#D08C60] text-[10px] uppercase tracking-widest">#{client.id}</p>
                 </div>
             </div>
@@ -91,6 +91,6 @@ export default function ClientProfileSidebar({ client, activeTab, onTabChange }:
             <div className="px-6 py-4 border-t border-[#D08C60]/10 text-center">
                 <p className="text-[9px] text-white/20 uppercase tracking-widest">Grahvani v2.0</p>
             </div>
-        </aside>
+        </aside >
     );
 }
