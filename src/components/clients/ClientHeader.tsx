@@ -18,23 +18,23 @@ export default function ClientHeader({ client }: ClientHeaderProps) {
                     {/* Header Left: Name & Birth Metadata */}
                     <div className="flex items-center gap-6">
                         <div className="hidden sm:flex w-14 h-14 rounded-full bg-gradient-to-br from-[#D08C60] to-[#3E2A1F] border border-[#FFD27D]/30 items-center justify-center text-white shadow-xl">
-                            <span className="text-2xl font-serif font-bold">{client.firstName.charAt(0)}</span>
+                            <span className="text-2xl font-serif font-bold">{(client.firstName || client.fullName || '?').charAt(0)}</span>
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1.5">
                                 <h1 className="text-3xl font-serif font-bold text-white tracking-tight">
-                                    {client.firstName} {client.lastName}
+                                    {client.firstName || ''} {client.lastName || client.fullName || ''}
                                 </h1>
                                 <div className="bg-[#FFD27D]/10 text-[#FFD27D] text-[9px] px-2 py-0.5 rounded-full border border-[#FFD27D]/30 font-black uppercase tracking-widest">
                                     Primary Record
                                 </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-3 text-white/40 text-[11px] font-serif uppercase tracking-widest font-bold">
-                                <span>{new Date(client.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                <span>{(client.dateOfBirth || client.birthDate) ? new Date(client.dateOfBirth || client.birthDate || '').toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown'}</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#D08C60]/40" />
-                                <span>{client.timeOfBirth} IST</span>
+                                <span>{client.timeOfBirth || client.birthTime || 'Unknown'} IST</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#D08C60]/40" />
-                                <span className="text-[#FFD27D]">{client.placeOfBirth}</span>
+                                <span className="text-[#FFD27D]">{client.placeOfBirth || client.birthPlace || 'Unknown'}</span>
                             </div>
                         </div>
                     </div>

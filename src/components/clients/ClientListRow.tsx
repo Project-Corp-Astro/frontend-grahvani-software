@@ -6,9 +6,11 @@ import { useVedicClient } from '@/context/VedicClientContext';
 interface ClientListRowProps {
     client: Client;
     onSelect?: (client: Client) => void;
+    onEdit?: (client: Client) => void;
+    onDelete?: (client: Client) => void;
 }
 
-export default function ClientListRow({ client, onSelect }: ClientListRowProps) {
+export default function ClientListRow({ client, onSelect, onEdit, onDelete }: ClientListRowProps) {
     const router = useRouter();
     const { setClientDetails } = useVedicClient();
 
@@ -20,12 +22,12 @@ export default function ClientListRow({ client, onSelect }: ClientListRowProps) 
 
         // Default legacy behavior (Vedic flow)
         setClientDetails({
-            name: `${client.firstName} ${client.lastName}`,
-            gender: "male", // Fallback for mock
-            dateOfBirth: client.dateOfBirth,
-            timeOfBirth: client.timeOfBirth || "12:00",
+            name: `${client.firstName || ''} ${client.lastName || client.fullName || ''}`.trim(),
+            gender: client.gender || "male", // Fallback for mock
+            dateOfBirth: client.dateOfBirth || client.birthDate || '',
+            timeOfBirth: client.timeOfBirth || client.birthTime || "12:00",
             placeOfBirth: {
-                city: client.placeOfBirth,
+                city: client.placeOfBirth || client.birthPlace || '',
             },
             rashi: client.rashi
         });
@@ -56,7 +58,7 @@ export default function ClientListRow({ client, onSelect }: ClientListRowProps) 
                             <img src={client.avatar} alt={client.firstName} className="w-full h-full object-cover" />
                         ) : (
                             <span className="font-serif text-2xl text-gold-dark font-bold tracking-tight">
-                                {client.firstName[0]}
+                                {(client.firstName || client.fullName || '?')[0]}
                             </span>
                         )}
                     </div>
@@ -67,24 +69,24 @@ export default function ClientListRow({ client, onSelect }: ClientListRowProps) 
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-serif text-2xl font-bold text-ink group-hover:text-gold-dark transition-colors tracking-tight">
-                                {client.firstName} {client.lastName}
+                                {client.firstName || ''} {client.lastName || client.fullName || ''}
                             </h3>
                             <div className="flex items-center gap-6 mt-2">
                                 <div className="flex items-center text-muted text-[11px] font-serif uppercase tracking-[0.2em] font-bold">
                                     <MapPin className="w-3.5 h-3.5 mr-2 text-gold-dark" />
-                                    {client.placeOfBirth}
+                                    {client.placeOfBirth || client.birthPlace || 'Unknown'}
                                 </div>
                                 <div className="hidden sm:flex items-center text-muted text-[11px] font-serif uppercase tracking-[0.2em] font-bold">
                                     <Calendar className="w-3.5 h-3.5 mr-2 text-gold-dark" />
-                                    {new Date(client.dateOfBirth).toLocaleDateString('en-US', {
+                                    {(client.dateOfBirth || client.birthDate) ? new Date(client.dateOfBirth || client.birthDate || '').toLocaleDateString('en-US', {
                                         day: 'numeric', month: 'long', year: 'numeric'
-                                    })}
+                                    }) : 'Unknown'}
                                 </div>
                             </div>
                         </div>
 
                         {/* 3. Right Side: Indicators */}
-                        <div className="flex items-center gap-12">
+                        <div className="flex items-center gap-6">
                             <div className="hidden lg:block text-right">
                                 <span className="block text-[8px] font-black uppercase tracking-[0.3em] text-muted mb-1">Soul Signature</span>
                                 <span className="text-xs font-serif font-bold text-gold-dark">
@@ -95,32 +97,35 @@ export default function ClientListRow({ client, onSelect }: ClientListRowProps) 
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                                 <span className="text-[10px] font-bold text-ink/70 uppercase tracking-widest leading-none">Active</span>
                             </div>
+
+                            {/* Embedded Actions - Moved here for better alignment and visibility */}
+                            <div className="flex items-center gap-2 ml-4">
+                                <button
+                                    className="p-2.5 rounded-xl bg-white border border-antique text-muted hover:text-gold-dark hover:border-gold-primary shadow-sm transition-all"
+                                    title="Edit Record"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit?.(client);
+                                    }}
+                                >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    className="p-2.5 rounded-xl bg-white border border-antique text-muted hover:text-red-600 hover:border-red-200 shadow-sm transition-all"
+                                    title="Purge Record"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete?.(client);
+                                    }}
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+
                             <ChevronRight className="w-5 h-5 text-muted group-hover:text-gold-dark group-hover:translate-x-1 transition-all" />
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Floating Actions - Redesigned for Light Theme */}
-            <div className="absolute right-24 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto z-20">
-                <button
-                    className="p-3 rounded-xl bg-white border border-antique text-muted hover:text-gold-dark hover:border-gold-primary shadow-lg transition-all"
-                    title="Edit Record"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
-                >
-                    <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                    className="p-3 rounded-xl bg-white border border-antique text-muted hover:text-red-600 hover:border-red-200 shadow-lg transition-all"
-                    title="Purge Record"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
-                >
-                    <Trash2 className="w-4 h-4" />
-                </button>
             </div>
         </div>
     );

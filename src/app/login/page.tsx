@@ -8,8 +8,11 @@ import { motion } from "framer-motion";
 import { authApi } from "@/lib/api";
 import PremiumButton from "@/components/GoldenButton";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function LoginPage() {
     const router = useRouter();
+    const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -30,18 +33,8 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const response = await authApi.login({ email, password });
-
-            // Store auth data
-            if (response.tokens?.accessToken) {
-                localStorage.setItem('accessToken', response.tokens.accessToken);
-                localStorage.setItem('user', JSON.stringify(response.user));
-
-                // Redirect on success
-                router.push("/dashboard");
-            } else {
-                throw new Error("Invalid response from server");
-            }
+            await login({ email, password });
+            // AuthContext handles redirecting to /dashboard on success
         } catch (err: any) {
             console.error("Login failed:", err);
             setError(err.message || "Failed to enter the sanctum. Please verify your cosmic credentials.");

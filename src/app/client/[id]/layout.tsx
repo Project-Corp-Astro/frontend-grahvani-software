@@ -6,11 +6,15 @@ import { Client } from '@/types/client';
 // MOCK DATA FOR LAYOUT
 const MOCK_CLIENT: Client = {
     id: '1',
+    fullName: 'Ananya Sharma',
     firstName: 'Ananya',
     lastName: 'Sharma',
     dateOfBirth: '1992-08-15',
+    birthDate: '1992-08-15',
     timeOfBirth: '14:30',
+    birthTime: '14:30',
     placeOfBirth: 'New Delhi, India',
+    birthPlace: 'New Delhi, India',
     rashi: 'Leo',
     nakshatra: 'Magha'
 };
