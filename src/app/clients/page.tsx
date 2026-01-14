@@ -100,7 +100,10 @@ export default function ClientsPage() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-700 py-12 px-6">
+        <div className="w-full space-y-6 animate-in fade-in duration-700 py-4 px-2 lg:px-4">
+            <div className="text-xs font-serif uppercase tracking-widest font-bold text-[#6B4423]">
+                Client Almanac
+            </div>
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>

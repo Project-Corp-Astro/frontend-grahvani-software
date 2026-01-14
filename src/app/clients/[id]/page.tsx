@@ -317,29 +317,86 @@ export default function ClientProfilePage() {
     return (
         <div className="fixed inset-0 pt-[64px] flex animate-in fade-in duration-500 bg-parchment">
             {/* Sidebar */}
-            <ClientsNavigationSidebar />
+            <ClientsNavigationSidebar activeClientName={`${client.firstName || ''} ${client.lastName || client.fullName || ''}`.trim()} />
 
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto">
-                <div className="relative p-8 md:p-12 custom-scrollbar max-w-6xl mx-auto">
+                <div className="relative p-2 lg:p-4 custom-scrollbar">
                     {/* Background FX - Subtle Watermark */}
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
-                    {/* Page Header */}
+                    {/* Breadcrumb Navigation */}
+                    <div className="relative z-10 mb-4 flex items-center gap-2 text-xs font-serif uppercase tracking-widest font-bold">
+                        <Link href="/clients" className="text-[#6B4423] hover:text-[#2B1510] transition-colors">
+                            Clients
+                        </Link>
+                        <ChevronRight className="w-3 h-3 text-[#6B4423]" />
+                        <span className="text-[#2B1510]">Client Profile</span>
+                    </div>
+
+                    {/* Page Header - Full Width Bar */}
                     <div className="relative z-10">
-                        <div className="mb-10 flex items-center justify-between">
-                            <div>
-                                <span className="text-gold-dark text-xs font-black uppercase tracking-[0.2em] mb-2 block">
-                                    Client Profile
-                                </span>
-                                <h1 className="text-4xl font-serif text-ink font-bold">
-                                    {client.firstName || client.fullName || 'Client'} {client.lastName || ''}
-                                </h1>
-                                <p className="text-muted text-sm mt-2">#{client.id}</p>
+                        <div className="mb-6 flex items-center justify-between bg-softwhite border border-antique rounded-2xl p-5">
+                            <div className="flex items-center gap-5">
+                                {/* Avatar */}
+                                <div className="w-14 h-14 rounded-xl bg-gold-primary/10 border border-gold-primary/30 flex items-center justify-center">
+                                    <span className="text-2xl font-serif font-bold text-gold-dark">
+                                        {(client.firstName || client.fullName || 'C')[0]}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-serif text-ink font-bold">
+                                        {client.firstName || client.fullName || 'Client'} {client.lastName || ''}
+                                    </h1>
+                                    <p className="text-muted text-xs mt-0.5 flex items-center gap-2">
+                                        <span className="text-gold-dark">#{client.id.slice(0, 8)}...</span>
+                                        <span>•</span>
+                                        <span>{client.rashi || 'Leo'} Rashi</span>
+                                        {client.birthPlace && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {client.birthPlace}</span>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
                             </div>
-                            <Link href="/clients" className="px-4 py-2 border border-antique rounded-lg text-muted hover:text-ink hover:border-gold-primary transition-colors">
-                                Back to Registry
-                            </Link>
+                            <div className="flex items-center gap-3">
+                                {isEditing ? (
+                                    <>
+                                        <button
+                                            onClick={() => setIsEditing(false)}
+                                            className="px-4 py-2 bg-parchment border border-antique text-muted rounded-lg font-medium text-sm hover:bg-softwhite transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="px-4 py-2 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
+                                        >
+                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            {isSaving ? 'Saving...' : 'Save'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setEditData(client);
+                                                setIsEditing(true);
+                                            }}
+                                            className="px-4 py-2 bg-softwhite border border-antique text-ink rounded-lg font-medium text-sm hover:bg-gold-primary/10 hover:border-gold-primary/50 transition-colors flex items-center gap-2"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                        <Link href="/clients" className="px-4 py-2 border border-antique rounded-lg text-muted hover:text-ink hover:border-gold-primary transition-colors text-sm">
+                                            Back
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
                         {error && (
@@ -357,51 +414,18 @@ export default function ClientProfilePage() {
                             </div>
                         )}
 
-                        {/* === BIRTH DETAILS SECTION === */}
-                        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-
-                            {/* Action Buttons */}
-                            <div className="flex items-center justify-end gap-3">
-                                {isEditing ? (
-                                    <>
-                                        <button
-                                            onClick={() => setIsEditing(false)}
-                                            className="px-5 py-2.5 bg-parchment border border-antique text-muted rounded-lg font-medium text-sm hover:bg-softwhite transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={isSaving}
-                                            className="px-5 py-2.5 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
-                                        >
-                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                            {isSaving ? 'Saving...' : 'Save Changes'}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={() => {
-                                            setEditData(client);
-                                            setIsEditing(true);
-                                        }}
-                                        className="px-5 py-2.5 bg-softwhite border border-antique text-ink rounded-lg font-medium text-sm hover:bg-gold-primary/10 hover:border-gold-primary/50 transition-colors flex items-center gap-2"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                        Edit Details
-                                    </button>
-                                )}
-                            </div>
+                        {/* === TOP ROW: Personal Details, Birth Location, Astrological Signature === */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 animate-in slide-in-from-bottom-4 duration-500">
 
                             {/* Personal Details Card */}
-                            <div className="bg-softwhite border border-antique rounded-2xl p-6">
-                                <h3 className="text-lg font-serif text-ink mb-5 flex items-center gap-3 font-semibold">
-                                    <div className="p-2 bg-parchment rounded-lg border border-antique">
-                                        <User className="w-4 h-4 text-gold-dark" />
+                            <div className="bg-softwhite border border-antique rounded-2xl p-5 h-fit">
+                                <h3 className="text-base font-serif text-ink mb-4 flex items-center gap-2 font-semibold">
+                                    <div className="p-1.5 bg-parchment rounded-lg border border-antique">
+                                        <User className="w-3.5 h-3.5 text-gold-dark" />
                                     </div>
                                     Personal Details
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-3">
                                     <DetailItem
                                         label="First Name"
                                         value={client.firstName || ''}
@@ -438,16 +462,16 @@ export default function ClientProfilePage() {
                                 </div>
                             </div>
 
-                            {/* Birth Location Card - Critical for astrology */}
-                            <div className="bg-softwhite border border-antique rounded-2xl p-6">
-                                <h3 className="text-lg font-serif text-ink mb-5 flex items-center gap-3 font-semibold">
-                                    <div className="p-2 bg-parchment rounded-lg border border-antique">
-                                        <MapPin className="w-4 h-4 text-gold-dark" />
+                            {/* Birth Location Card */}
+                            <div className="bg-softwhite border border-antique rounded-2xl p-5 h-fit">
+                                <h3 className="text-base font-serif text-ink mb-4 flex items-center gap-2 font-semibold">
+                                    <div className="p-1.5 bg-parchment rounded-lg border border-antique">
+                                        <MapPin className="w-3.5 h-3.5 text-gold-dark" />
                                     </div>
                                     Birth Location
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div className="md:col-span-2 relative">
+                                <div className="space-y-3">
+                                    <div className="relative">
                                         <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Place of Birth</p>
                                         {isEditing ? (
                                             <>
@@ -456,7 +480,7 @@ export default function ClientProfilePage() {
                                                         type="text"
                                                         value={editData.birthPlace || ''}
                                                         onChange={(e) => handleLocationSearch(e.target.value)}
-                                                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                                                        className="w-full text-sm font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                                                         placeholder="Search birth city..."
                                                     />
                                                     {isSearchingLocation && (
@@ -471,13 +495,13 @@ export default function ClientProfilePage() {
                                                             <button
                                                                 key={idx}
                                                                 onClick={() => handleLocationSelect(s)}
-                                                                className="w-full text-left px-4 py-3 hover:bg-parchment transition-colors border-b border-antique last:border-0 flex items-center gap-3"
+                                                                className="w-full text-left px-3 py-2 hover:bg-parchment transition-colors border-b border-antique last:border-0 flex items-center gap-2"
                                                             >
-                                                                <MapPin className="w-4 h-4 text-gold-dark" />
+                                                                <MapPin className="w-3 h-3 text-gold-dark" />
                                                                 <div>
-                                                                    <p className="text-sm font-medium text-ink">{s.formatted}</p>
-                                                                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider">
-                                                                        {s.latitude.toFixed(4)}°, {s.longitude.toFixed(4)}° • {s.timezone}
+                                                                    <p className="text-xs font-medium text-ink">{s.formatted}</p>
+                                                                    <p className="text-[9px] text-muted font-bold uppercase tracking-wider">
+                                                                        {s.latitude.toFixed(4)}°, {s.longitude.toFixed(4)}°
                                                                     </p>
                                                                 </div>
                                                             </button>
@@ -486,7 +510,7 @@ export default function ClientProfilePage() {
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-base font-serif text-ink font-medium border-b border-antique pb-2">
+                                            <p className="text-sm font-serif text-ink font-medium border-b border-antique pb-2">
                                                 {client.birthPlace || 'N/A'}
                                             </p>
                                         )}
@@ -513,14 +537,14 @@ export default function ClientProfilePage() {
                             </div>
 
                             {/* Astrological Signature Card */}
-                            <div className="bg-softwhite border border-antique rounded-2xl p-6">
-                                <h3 className="text-lg font-serif text-ink mb-5 flex items-center gap-3 font-semibold">
-                                    <div className="p-2 bg-parchment rounded-lg border border-antique">
-                                        <Sparkles className="w-4 h-4 text-gold-dark" />
+                            <div className="bg-softwhite border border-antique rounded-2xl p-5 h-fit">
+                                <h3 className="text-base font-serif text-ink mb-4 flex items-center gap-2 font-semibold">
+                                    <div className="p-1.5 bg-parchment rounded-lg border border-antique">
+                                        <Sparkles className="w-3.5 h-3.5 text-gold-dark" />
                                     </div>
                                     Astrological Signature
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div className="space-y-3">
                                     <DetailItem label="Rashi (Moon Sign)" value={client.rashi || "Leo"} isEditing={isEditing} />
                                     <DetailItem label="Nakshatra" value={client.nakshatra || "Magha"} isEditing={isEditing} />
                                     <DetailItem label="Pada" value={"3"} isEditing={isEditing} />
@@ -529,16 +553,19 @@ export default function ClientProfilePage() {
                                     <DetailItem label="Nakshatra Lord" value={"Ketu"} isEditing={isEditing} />
                                 </div>
                             </div>
+                        </div>
 
+                        {/* === SECOND ROW: Contact Info & Tags === */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                             {/* Contact Card */}
-                            <div className="bg-softwhite border border-antique rounded-2xl p-6">
-                                <h3 className="text-lg font-serif text-ink mb-5 flex items-center gap-3 font-semibold">
-                                    <div className="p-2 bg-parchment rounded-lg border border-antique">
-                                        <Phone className="w-4 h-4 text-gold-dark" />
+                            <div className="bg-softwhite border border-antique rounded-2xl p-5">
+                                <h3 className="text-base font-serif text-ink mb-4 flex items-center gap-2 font-semibold">
+                                    <div className="p-1.5 bg-parchment rounded-lg border border-antique">
+                                        <Phone className="w-3.5 h-3.5 text-gold-dark" />
                                     </div>
                                     Contact Information
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-2 gap-4">
                                     <DetailItem
                                         label="Email Address"
                                         value={client.email || ""}
@@ -555,8 +582,8 @@ export default function ClientProfilePage() {
                             </div>
 
                             {/* Tags */}
-                            <div className="bg-softwhite border border-antique rounded-2xl p-6">
-                                <h3 className="text-lg font-serif text-ink mb-4 font-semibold">Tags</h3>
+                            <div className="bg-softwhite border border-antique rounded-2xl p-5">
+                                <h3 className="text-base font-serif text-ink mb-4 font-semibold">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {client.tags?.map(t => (
                                         <span key={t} className="px-3 py-1.5 rounded-full bg-parchment border border-antique text-gold-dark text-xs font-bold">{t}</span>
@@ -566,6 +593,9 @@ export default function ClientProfilePage() {
                                             + Add Tag
                                         </button>
                                     )}
+                                    {(!client.tags || client.tags.length === 0) && !isEditing && (
+                                        <span className="text-muted text-sm italic">No tags yet</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -573,7 +603,7 @@ export default function ClientProfilePage() {
                         {/* === FAMILY LINKS SECTION === */}
                         <div className="mt-16">
                             <h2 className="text-2xl font-serif text-ink font-bold mb-6">Family Connections</h2>
-                            <div className="animate-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+                            <div className="animate-in slide-in-from-bottom-4 duration-500">
                                 <div className="flex items-center justify-between mb-8">
                                     <p className="text-muted">Manage known connections for this soul record.</p>
                                     <button
@@ -916,12 +946,12 @@ function DetailItem({
 }) {
     return (
         <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">{label}</p>
+            <p className="text-[10px] uppercase tracking-widest text-[#6B4423] font-bold mb-1">{label}</p>
             {isEditing ? (
                 type === 'select' ? (
                     <select
                         onChange={(e) => onChange?.(e.target.value)}
-                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                        className="w-full text-base font-serif text-[#2B1510] font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                         defaultValue={value}
                     >
                         {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
@@ -931,11 +961,11 @@ function DetailItem({
                         type={type}
                         defaultValue={value}
                         onChange={(e) => onChange?.(e.target.value)}
-                        className="w-full text-base font-serif text-ink font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                        className="w-full text-base font-serif text-[#2B1510] font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                     />
                 )
             ) : (
-                <p className="text-base font-serif text-ink font-medium border-b border-antique pb-2">
+                <p className="text-base font-serif text-[#2B1510] font-semibold border-b border-antique pb-2">
                     {type === 'select' ? (options.find(o => o.v === value)?.l || value) : value || 'N/A'}
                 </p>
             )}

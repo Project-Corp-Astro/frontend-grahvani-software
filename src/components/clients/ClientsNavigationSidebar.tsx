@@ -1,16 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import { Users, AlertCircle, Clock, Calendar, CreditCard, Gem, Plus, ChevronRight } from 'lucide-react';
+import { Users, AlertCircle, Clock, Calendar, CreditCard, Gem, Plus, ChevronRight, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function ClientsNavigationSidebar() {
+interface ClientsNavigationSidebarProps {
+    activeClientName?: string;
+}
+
+export default function ClientsNavigationSidebar({ activeClientName }: ClientsNavigationSidebarProps) {
     const menuItems = [
         {
             id: 'all-clients',
             label: 'All Clients',
             icon: Users,
             href: '/clients',
-            highlighted: true
+            highlighted: !activeClientName
         },
         {
             id: 'follow-ups',
@@ -54,9 +58,24 @@ export default function ClientsNavigationSidebar() {
         <aside className="w-72 h-full flex flex-col bg-header-gradient border-r border-[#D08C60]/20 shadow-2xl">
             {/* Header */}
             <div className="p-6 pb-4">
-                <h2 className="text-[#D08C60] text-xs font-black uppercase tracking-[0.2em] mb-6">
+                <h2 className="text-[#D08C60] text-xs font-black uppercase tracking-[0.2em] mb-4">
                     Clients
                 </h2>
+
+                {/* Active Client Indicator */}
+                {activeClientName && (
+                    <div className="bg-white/10 border border-[#FFD27D]/30 rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#FFD27D]/20 flex items-center justify-center border border-[#FFD27D]/40">
+                                <User className="w-5 h-5 text-[#FFD27D]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#D08C60] mb-0.5">Viewing Profile</p>
+                                <p className="text-white font-serif font-semibold text-sm truncate">{activeClientName}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Navigation Menu */}

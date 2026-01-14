@@ -111,7 +111,7 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
                         </div>
 
                         {/* Sign Info */}
-                        <div className="bg-parchment rounded-xl p-3 mb-3 border border-antique">
+                        <div className="bg-parchment rounded-xl p-3 mb-0 border border-antique">
                             <div className="flex items-center gap-2 mb-2">
                                 <Star className="w-4 h-4 text-gold-primary" />
                                 <span className="text-xs font-bold text-muted uppercase tracking-wider">Sign</span>
@@ -129,45 +129,7 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
                             </div>
                         </div>
 
-                        {/* Signification */}
-                        <div className="mb-3">
-                            <p className="text-xs font-bold text-gold-dark mb-1">{houseDetails.signification}</p>
-                            <p className="text-xs text-body leading-relaxed line-clamp-2">{houseDetails.description}</p>
-                        </div>
 
-                        {/* Keywords */}
-                        <div className="flex flex-wrap gap-1 mb-3">
-                            {houseDetails.keywords.slice(0, 4).map((keyword, idx) => (
-                                <span
-                                    key={idx}
-                                    className="px-2 py-0.5 bg-gold-primary/10 border border-gold-primary/20 rounded-full text-[9px] font-bold text-gold-dark"
-                                >
-                                    {keyword}
-                                </span>
-                            ))}
-                        </div>
-
-                        {/* Planets in House */}
-                        {planetsInHouse.length > 0 && (
-                            <div className="bg-gold-primary/5 rounded-xl p-3 border border-gold-primary/20">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles className="w-4 h-4 text-gold-primary" />
-                                    <span className="text-xs font-bold text-muted uppercase tracking-wider">Planets</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {planetsInHouse.map((planet, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-antique"
-                                        >
-                                            <span className="font-serif font-bold text-ink text-sm">{planet.name}</span>
-                                            <span className="text-[10px] text-muted">{planet.degree}</span>
-                                            {planet.isRetro && <span className="text-[8px] text-gold-dark font-bold">R</span>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </>
             )}

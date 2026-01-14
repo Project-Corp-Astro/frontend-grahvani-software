@@ -41,7 +41,7 @@ export default function ClientListRow({ client, onSelect, onEdit, onDelete }: Cl
             <div
                 onClick={handleSelectClient}
                 className="
-                    relative flex items-center p-6
+                    relative flex items-center p-4
                     bg-softwhite border border-antique rounded-3xl
                     transition-all duration-300
                     hover:border-gold-primary hover:shadow-card
@@ -68,34 +68,46 @@ export default function ClientListRow({ client, onSelect, onEdit, onDelete }: Cl
                 <div className="flex-1 relative z-10">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-serif text-2xl font-bold text-ink group-hover:text-gold-dark transition-colors tracking-tight">
+                            <h3 className="font-serif text-2xl font-bold text-[#2B1510] group-hover:text-gold-dark transition-colors tracking-tight">
                                 {client.firstName || ''} {client.lastName || client.fullName || ''}
                             </h3>
-                            <div className="flex items-center gap-6 mt-2">
-                                <div className="flex items-center text-muted text-[11px] font-serif uppercase tracking-[0.2em] font-bold">
-                                    <MapPin className="w-3.5 h-3.5 mr-2 text-gold-dark" />
+                            <div className="flex items-center flex-wrap gap-4 xl:gap-6 mt-2">
+                                <div className="flex items-center text-[#2B1510] text-xs font-sans uppercase tracking-widest font-bold">
+                                    <MapPin className="w-3.5 h-3.5 mr-2 text-[#8B5A2B]" />
                                     {client.placeOfBirth || client.birthPlace || 'Unknown'}
                                 </div>
-                                <div className="hidden sm:flex items-center text-muted text-[11px] font-serif uppercase tracking-[0.2em] font-bold">
-                                    <Calendar className="w-3.5 h-3.5 mr-2 text-gold-dark" />
+                                <div className="flex items-center text-[#2B1510] text-xs font-sans uppercase tracking-widest font-bold">
+                                    <Calendar className="w-3.5 h-3.5 mr-2 text-[#8B5A2B]" />
                                     {(client.dateOfBirth || client.birthDate) ? new Date(client.dateOfBirth || client.birthDate || '').toLocaleDateString('en-US', {
                                         day: 'numeric', month: 'long', year: 'numeric'
                                     }) : 'Unknown'}
                                 </div>
+                                {(client.timeOfBirth || client.birthTime) && (
+                                    <div className="hidden xl:flex items-center text-[#2B1510] text-xs font-sans uppercase tracking-widest font-bold">
+                                        <span className="text-[#8B5A2B] mr-2">⏰</span>
+                                        {client.timeOfBirth || client.birthTime}
+                                    </div>
+                                )}
+                                {(client.phone || client.phonePrimary) && (
+                                    <div className="hidden 2xl:flex items-center text-[#2B1510] text-xs font-sans uppercase tracking-widest font-bold">
+                                        <span className="text-[#8B5A2B] mr-2">📞</span>
+                                        {client.phone || client.phonePrimary}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* 3. Right Side: Indicators */}
                         <div className="flex items-center gap-6">
-                            <div className="hidden lg:block text-right">
-                                <span className="block text-[8px] font-black uppercase tracking-[0.3em] text-muted mb-1">Soul Signature</span>
-                                <span className="text-xs font-serif font-bold text-gold-dark">
+                            <div className="hidden md:block text-right">
+                                <span className="block text-[8px] font-black uppercase tracking-[0.3em] text-[#6B4423] mb-1">Soul Signature</span>
+                                <span className="text-xs font-serif font-bold text-[#2B1510]">
                                     {client.rashi} Rashi
                                 </span>
                             </div>
                             <div className="flex items-center gap-2 px-4 py-2 bg-parchment rounded-full border border-antique group-hover:border-gold-primary/30 transition-all">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] font-bold text-ink/70 uppercase tracking-widest leading-none">Active</span>
+                                <span className="text-[10px] font-bold text-[#2B1510] uppercase tracking-widest leading-none">Active</span>
                             </div>
 
                             {/* Embedded Actions - Moved here for better alignment and visibility */}
