@@ -15,6 +15,9 @@ export interface DetailedPlanetInfo {
     isRetro?: boolean;
     dignity?: 'Exalted' | 'Debilitated' | 'Moolatrikona' | 'Own Sign' | 'Friend' | 'Neutral' | 'Enemy';
     isCombust?: boolean;
+    shadbala?: number; // In Rupas
+    avastha?: string; // e.g., Jagrat
+    karaka?: string; // e.g., Atmakaraka
 }
 
 interface PlanetaryAnalyticsProps {
@@ -41,9 +44,11 @@ export default function PlanetaryAnalytics({ planets }: PlanetaryAnalyticsProps)
                             <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Graha</th>
                             <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Longitude</th>
                             <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Sign (Rashi)</th>
-                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Nakshatra (Lord)</th>
+                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Nakshatra</th>
+                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Shadbala</th>
+                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Avastha</th>
                             <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Dignity</th>
-                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Status</th>
+                            <th className="p-4 px-6 text-[9px] font-black uppercase tracking-widest text-[#5A3E2B]/70">Karaka</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#D08C60]/10">
@@ -74,15 +79,41 @@ export default function PlanetaryAnalytics({ planets }: PlanetaryAnalyticsProps)
                                         <span className="text-[9px] text-[#A8653A] uppercase font-black tracking-widest">Lord: {planet.nakshatraLord}</span>
                                     </div>
                                 </td>
+
+                                {/* Shadbala Cell */}
+                                <td className="p-4 px-6">
+                                    <div className="flex flex-col gap-1 w-24">
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs font-bold text-[#3E2A1F]">{planet.shadbala || 0}</span>
+                                            <span className="text-[8px] text-[#8B5A2B] uppercase">Rupas</span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-[#3E2A1F]/10 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-[#D08C60] to-[#8B5A2B] rounded-full"
+                                                style={{ width: `${Math.min(((planet.shadbala || 0) / 8) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </td>
+
+                                {/* Avastha Cell */}
+                                <td className="p-4 px-6">
+                                    <span className="text-xs font-serif font-medium text-[#3E2A1F] italic">{planet.avastha || "—"}</span>
+                                </td>
+
                                 <td className="p-4 px-6">
                                     <DignityBadge dignity={planet.dignity} />
                                 </td>
+
+                                {/* Karaka Cell */}
                                 <td className="p-4 px-6">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {planet.isRetro && <span className="bg-red-500/10 text-red-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-red-500/20 uppercase tracking-tighter">Retrograde</span>}
-                                        {planet.isCombust && <span className="bg-orange-500/10 text-orange-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-orange-500/20 uppercase tracking-tighter">Combust</span>}
-                                        {!planet.isRetro && !planet.isCombust && <span className="text-[#3E2A1F]/20 text-[8px] font-black uppercase tracking-tighter">—</span>}
-                                    </div>
+                                    {planet.karaka ? (
+                                        <span className="bg-[#3E2A1F] text-[#FEFAEA] text-[9px] font-black px-2 py-0.5 rounded border border-[#D08C60]/50 uppercase tracking-widest shadow-sm">
+                                            {planet.karaka}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[#3E2A1F]/20 text-[8px] font-black uppercase tracking-tighter">—</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}

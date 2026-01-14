@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ClientProfileSidebar from "@/components/clients/ClientProfileSidebar";
+import ClientsNavigationSidebar from '@/components/clients/ClientsNavigationSidebar';
+
 import { Sparkles, Calendar, Clock, MapPin, User, Mail, Phone, Heart, Plus, Search, X, ChevronRight, StickyNote, Save, Edit2, Loader2, Trash2 } from 'lucide-react';
 import { Client, FamilyLink, RelationshipType, ClientListResponse, FamilyLinkPayload, LocationSuggestion } from '@/types/client';
 import { clientApi, familyApi } from '@/lib/api';
@@ -56,7 +57,7 @@ export default function ClientProfilePage() {
     const [client, setClient] = useState<Client | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState("profile");
+
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<Partial<Client>>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -273,10 +274,10 @@ export default function ClientProfilePage() {
 
     // Fetch family when client loads
     useEffect(() => {
-        if (client && activeTab === 'family') {
+        if (client) {
             fetchFamilyLinks();
         }
-    }, [client, activeTab, fetchFamilyLinks]);
+    }, [client, fetchFamilyLinks]);
 
     // Debounced search for family
     useEffect(() => {
@@ -315,49 +316,48 @@ export default function ClientProfilePage() {
 
     return (
         <div className="fixed inset-0 pt-[64px] flex animate-in fade-in duration-500 bg-parchment">
+            {/* Sidebar */}
+            <ClientsNavigationSidebar />
 
-            {/* 1. Sidebar (Menu) */}
-            <ClientProfileSidebar
-                client={client}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-            />
+            {/* Main Content */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="relative p-8 md:p-12 custom-scrollbar max-w-6xl mx-auto">
+                    {/* Background FX - Subtle Watermark */}
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
-            {/* 2. Main Content Area */}
-            <main className="flex-1 relative overflow-y-auto p-12 custom-scrollbar">
-                {/* Background FX - Subtle Watermark */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold-primary/5 rounded-full blur-[120px] pointer-events-none" />
-
-                {/* CONTENT SWITCHER */}
-                <div className="max-w-4xl mx-auto min-h-full relative z-10">
-
-                    {/* Header for every tab */}
-                    <div className="mb-10">
-                        <span className="text-gold-dark text-xs font-black uppercase tracking-[0.2em] mb-2 block">
-                            Active Module
-                        </span>
-                        <h1 className="text-4xl font-serif text-ink font-bold capitalize">
-                            {activeTab.replace('-', ' ')}
-                        </h1>
-                    </div>
-
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50/50 border border-red-200/50 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
-                            <div className="flex items-center gap-3">
-                                <X className="w-5 h-5 text-red-500" />
-                                <p className="text-red-700 font-medium">{error}</p>
+                    {/* Page Header */}
+                    <div className="relative z-10">
+                        <div className="mb-10 flex items-center justify-between">
+                            <div>
+                                <span className="text-gold-dark text-xs font-black uppercase tracking-[0.2em] mb-2 block">
+                                    Client Profile
+                                </span>
+                                <h1 className="text-4xl font-serif text-ink font-bold">
+                                    {client.firstName || client.fullName || 'Client'} {client.lastName || ''}
+                                </h1>
+                                <p className="text-muted text-sm mt-2">#{client.id}</p>
                             </div>
-                            <button
-                                onClick={() => setError(null)}
-                                className="p-1 hover:bg-red-100 rounded-full transition-colors"
-                            >
-                                <X className="w-4 h-4 text-red-400" />
-                            </button>
+                            <Link href="/clients" className="px-4 py-2 border border-antique rounded-lg text-muted hover:text-ink hover:border-gold-primary transition-colors">
+                                Back to Registry
+                            </Link>
                         </div>
-                    )}
 
-                    {/* --- BIRTH DETAILS TAB --- */}
-                    {activeTab === 'profile' && (
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-50/50 border border-red-200/50 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
+                                <div className="flex items-center gap-3">
+                                    <X className="w-5 h-5 text-red-500" />
+                                    <p className="text-red-700 font-medium">{error}</p>
+                                </div>
+                                <button
+                                    onClick={() => setError(null)}
+                                    className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                                >
+                                    <X className="w-4 h-4 text-red-400" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* === BIRTH DETAILS SECTION === */}
                         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
 
                             {/* Action Buttons */}
@@ -569,325 +569,332 @@ export default function ClientProfilePage() {
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* --- FAMILY LINKS TAB --- */}
-                    {activeTab === 'family' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500 max-w-2xl">
-                            <div className="flex items-center justify-between mb-8">
-                                <p className="text-muted">Manage known connections for this soul record.</p>
-                                <button
-                                    onClick={() => setIsAddingRel(!isAddingRel)}
-                                    className="px-5 py-2.5 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2"
-                                >
-                                    <Plus className="w-4 h-4" /> Add Connection
-                                </button>
-                            </div>
-
-                            {/* Add Area */}
-                            {isAddingRel && (
-                                <div className="mb-6 p-5 bg-softwhite rounded-xl border border-antique">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-ink font-serif font-bold">Add Family Connection</h4>
-                                        <button onClick={() => { setIsAddingRel(false); setSearchRel(''); setAvailableClients([]); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
-                                    </div>
-
-                                    {/* Relationship Type Selector */}
-                                    <div className="mb-4">
-                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Relationship Type</label>
-                                        <select
-                                            value={selectedRelType}
-                                            onChange={(e) => setSelectedRelType(e.target.value as RelationshipType)}
-                                            className="w-full bg-parchment border border-antique rounded-lg py-2.5 px-4 text-ink text-sm focus:outline-none focus:border-gold-primary"
-                                        >
-                                            {RELATIONSHIP_OPTIONS.map(opt => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Client Search */}
-                                    <div className="relative mb-4">
-                                        <Search className="absolute left-4 top-3 w-4 h-4 text-muted" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search clients by name..."
-                                            value={searchRel}
-                                            onChange={(e) => setSearchRel(e.target.value)}
-                                            autoFocus
-                                            className="w-full bg-parchment border border-antique rounded-lg py-2.5 pl-10 pr-4 text-ink text-sm placeholder:text-muted focus:outline-none focus:border-gold-primary"
-                                        />
-                                    </div>
-
-                                    {/* Available Clients List */}
-                                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                                        {availableClients.length > 0 ? availableClients.map((c: Client) => (
-                                            <button
-                                                key={c.id}
-                                                onClick={() => addFamilyLink(c)}
-                                                disabled={addingFamily}
-                                                className="w-full flex items-center gap-3 p-3 hover:bg-parchment rounded-lg transition-colors text-left disabled:opacity-50"
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-gold-primary/10 flex items-center justify-center text-gold-dark font-serif font-bold text-sm">
-                                                    {(c.firstName || c.fullName || '?')[0]}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-ink font-medium text-sm">{c.firstName || ''} {c.lastName || ''}</p>
-                                                    <p className="text-muted text-xs">{c.placeOfBirth || c.birthPlace || 'No location'}</p>
-                                                </div>
-                                                <span className="text-gold-dark text-xs font-medium">
-                                                    {addingFamily ? 'Adding...' : `Add as ${RELATIONSHIP_OPTIONS.find(o => o.value === selectedRelType)?.label}`}
-                                                </span>
-                                            </button>
-                                        )) : searchRel.length >= 2 ? (
-                                            <p className="text-muted text-sm text-center py-4">No clients found</p>
-                                        ) : (
-                                            <p className="text-muted text-sm text-center py-4">Type at least 2 characters to search</p>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Family Links List */}
-                            <div className="space-y-3">
-                                {loadingFamily ? (
-                                    <div className="text-center py-16">
-                                        <Loader2 className="w-8 h-8 text-gold-primary mx-auto mb-3 animate-spin" />
-                                        <p className="text-muted font-serif">Loading family connections...</p>
-                                    </div>
-                                ) : familyLinks.length > 0 ? (
-                                    familyLinks.map((link: FamilyLink) => (
-                                        <div key={link.id} className="flex items-center p-5 bg-softwhite border border-antique rounded-xl hover:border-gold-primary/50 transition-all">
-                                            <div className="w-12 h-12 rounded-lg bg-gold-primary/10 flex items-center justify-center font-serif text-lg text-gold-dark mr-4">
-                                                {(link.relatedClient?.firstName || link.relatedClient?.fullName || '?')[0]}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-serif font-bold text-ink">
-                                                    {link.relatedClient?.firstName || ''} {link.relatedClient?.lastName || link.relatedClient?.fullName || ''}
-                                                </h3>
-                                                <p className="text-muted text-sm">
-                                                    {RELATIONSHIP_OPTIONS.find(o => o.value === link.relationshipType)?.label || link.relationshipType}
-                                                    {link.relatedClient?.birthPlace && ` • ${link.relatedClient.birthPlace}`}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Link href={`/clients/${link.relatedClientId}`} className="px-4 py-2 rounded-lg border border-antique text-gold-dark text-xs font-semibold hover:bg-gold-primary hover:text-white transition-all">
-                                                    View Chart
-                                                </Link>
-                                                <button
-                                                    onClick={() => removeFamilyLink(link.relatedClientId)}
-                                                    className="p-2 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                    title="Remove connection"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-16 border border-dashed border-antique rounded-xl bg-parchment/30">
-                                        <Heart className="w-10 h-10 text-muted/30 mx-auto mb-3" />
-                                        <p className="text-muted font-serif">No family connections mapped yet.</p>
-                                        <p className="text-muted/70 text-sm mt-1">Click "Add Connection" to link family members for Kundali matching.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* --- SESSION NOTES TAB --- */}
-                    {activeTab === 'notes' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500">
-                            <div className="bg-softwhite rounded-xl border border-antique p-6 min-h-[500px]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-serif font-bold text-ink">Quick Notes</h3>
+                        {/* === FAMILY LINKS SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Family Connections</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+                                <div className="flex items-center justify-between mb-8">
+                                    <p className="text-muted">Manage known connections for this soul record.</p>
                                     <button
-                                        onClick={handleSaveNotes}
-                                        disabled={isSavingNotes}
-                                        className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
+                                        onClick={() => setIsAddingRel(!isAddingRel)}
+                                        className="px-5 py-2.5 bg-gold-primary text-white rounded-lg font-semibold text-sm hover:bg-gold-dark transition-colors flex items-center gap-2"
                                     >
-                                        {isSavingNotes ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                        {isSavingNotes ? "Saving..." : "Save"}
+                                        <Plus className="w-4 h-4" /> Add Connection
                                     </button>
                                 </div>
-                                <textarea
-                                    value={notes}
-                                    onChange={e => setNotes(e.target.value)}
-                                    placeholder="Write your observations, notes, and reminders for this client..."
-                                    className="w-full h-[400px] bg-parchment border border-antique rounded-lg p-4 resize-none focus:outline-none focus:border-gold-primary font-serif text-ink leading-relaxed placeholder:text-muted/50"
-                                />
-                            </div>
-                        </div>
-                    )}
 
-                    {/* --- PAST SESSIONS TAB --- */}
-                    {activeTab === 'sessions' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
-                            {[
-                                { id: 1, date: "2026-01-05", topic: "Career Guidance", notes: "Discussed job change during Saturn Antardasha", duration: "45 min" },
-                                { id: 2, date: "2025-11-20", topic: "Marriage Timing", notes: "Favorable periods in 2026 identified", duration: "30 min" },
-                                { id: 3, date: "2025-09-15", topic: "Health Concerns", notes: "Rahu transit impact on 6th house reviewed", duration: "40 min" },
-                            ].map(session => (
-                                <div key={session.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div>
-                                            <h3 className="font-serif font-bold text-ink">{session.topic}</h3>
-                                            <p className="text-xs text-muted flex items-center gap-2 mt-1">
-                                                <Calendar className="w-3 h-3" /> {session.date} • {session.duration}
-                                            </p>
+                                {/* Add Area */}
+                                {isAddingRel && (
+                                    <div className="mb-6 p-5 bg-softwhite rounded-xl border border-antique">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-ink font-serif font-bold">Add Family Connection</h4>
+                                            <button onClick={() => { setIsAddingRel(false); setSearchRel(''); setAvailableClients([]); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
                                         </div>
-                                        <button className="text-xs text-gold-dark font-medium hover:underline">View Full</button>
-                                    </div>
-                                    <p className="text-sm text-body">{session.notes}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
 
-                    {/* --- PREDICTIONS MADE TAB --- */}
-                    {activeTab === 'predictions' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
-                            <div className="flex items-center justify-end mb-2">
-                                <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
-                                    <Plus className="w-4 h-4" />
-                                    Add Prediction
-                                </button>
-                            </div>
-                            {[
-                                { id: 1, date: "2026-01-05", prediction: "Job change expected by Feb 2025", status: "pending", category: "Career" },
-                                { id: 2, date: "2025-11-20", prediction: "Marriage likely between June-August 2026", status: "pending", category: "Marriage" },
-                                { id: 3, date: "2025-09-15", prediction: "Health improvement after Oct 2025", status: "verified", category: "Health" },
-                            ].map(pred => (
-                                <div key={pred.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="px-2 py-0.5 text-xs font-semibold bg-gold-primary/10 text-gold-dark rounded">{pred.category}</span>
-                                                <span className="text-xs text-muted">{pred.date}</span>
+                                        {/* Relationship Type Selector */}
+                                        <div className="mb-4">
+                                            <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Relationship Type</label>
+                                            <select
+                                                value={selectedRelType}
+                                                onChange={(e) => setSelectedRelType(e.target.value as RelationshipType)}
+                                                className="w-full bg-parchment border border-antique rounded-lg py-2.5 px-4 text-ink text-sm focus:outline-none focus:border-gold-primary"
+                                            >
+                                                {RELATIONSHIP_OPTIONS.map(opt => (
+                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Client Search */}
+                                        <div className="relative mb-4">
+                                            <Search className="absolute left-4 top-3 w-4 h-4 text-muted" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search clients by name..."
+                                                value={searchRel}
+                                                onChange={(e) => setSearchRel(e.target.value)}
+                                                autoFocus
+                                                className="w-full bg-parchment border border-antique rounded-lg py-2.5 pl-10 pr-4 text-ink text-sm placeholder:text-muted focus:outline-none focus:border-gold-primary"
+                                            />
+                                        </div>
+
+                                        {/* Available Clients List */}
+                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                            {availableClients.length > 0 ? availableClients.map((c: Client) => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => addFamilyLink(c)}
+                                                    disabled={addingFamily}
+                                                    className="w-full flex items-center gap-3 p-3 hover:bg-parchment rounded-lg transition-colors text-left disabled:opacity-50"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-gold-primary/10 flex items-center justify-center text-gold-dark font-serif font-bold text-sm">
+                                                        {(c.firstName || c.fullName || '?')[0]}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-ink font-medium text-sm">{c.firstName || ''} {c.lastName || ''}</p>
+                                                        <p className="text-muted text-xs">{c.placeOfBirth || c.birthPlace || 'No location'}</p>
+                                                    </div>
+                                                    <span className="text-gold-dark text-xs font-medium">
+                                                        {addingFamily ? 'Adding...' : `Add as ${RELATIONSHIP_OPTIONS.find(o => o.value === selectedRelType)?.label}`}
+                                                    </span>
+                                                </button>
+                                            )) : searchRel.length >= 2 ? (
+                                                <p className="text-muted text-sm text-center py-4">No clients found</p>
+                                            ) : (
+                                                <p className="text-muted text-sm text-center py-4">Type at least 2 characters to search</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Family Links List */}
+                                <div className="space-y-3">
+                                    {loadingFamily ? (
+                                        <div className="text-center py-16">
+                                            <Loader2 className="w-8 h-8 text-gold-primary mx-auto mb-3 animate-spin" />
+                                            <p className="text-muted font-serif">Loading family connections...</p>
+                                        </div>
+                                    ) : familyLinks.length > 0 ? (
+                                        familyLinks.map((link: FamilyLink) => (
+                                            <div key={link.id} className="flex items-center p-5 bg-softwhite border border-antique rounded-xl hover:border-gold-primary/50 transition-all">
+                                                <div className="w-12 h-12 rounded-lg bg-gold-primary/10 flex items-center justify-center font-serif text-lg text-gold-dark mr-4">
+                                                    {(link.relatedClient?.firstName || link.relatedClient?.fullName || '?')[0]}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-serif font-bold text-ink">
+                                                        {link.relatedClient?.firstName || ''} {link.relatedClient?.lastName || link.relatedClient?.fullName || ''}
+                                                    </h3>
+                                                    <p className="text-muted text-sm">
+                                                        {RELATIONSHIP_OPTIONS.find(o => o.value === link.relationshipType)?.label || link.relationshipType}
+                                                        {link.relatedClient?.birthPlace && ` • ${link.relatedClient.birthPlace}`}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Link href={`/clients/${link.relatedClientId}`} className="px-4 py-2 rounded-lg border border-antique text-gold-dark text-xs font-semibold hover:bg-gold-primary hover:text-white transition-all">
+                                                        View Chart
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => removeFamilyLink(link.relatedClientId)}
+                                                        className="p-2 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                        title="Remove connection"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <p className="font-medium text-ink">{pred.prediction}</p>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-16 border border-dashed border-antique rounded-xl bg-parchment/30">
+                                            <Heart className="w-10 h-10 text-muted/30 mx-auto mb-3" />
+                                            <p className="text-muted font-serif">No family connections mapped yet.</p>
+                                            <p className="text-muted/70 text-sm mt-1">Click "Add Connection" to link family members for Kundali matching.</p>
                                         </div>
-                                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${pred.status === 'verified' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-orange-50 text-orange-600 border border-orange-200'}`}>
-                                            {pred.status === 'verified' ? 'Verified' : 'Pending'}
-                                        </span>
-                                    </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* --- REMEDIES GIVEN TAB --- */}
-                    {activeTab === 'remedies' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
-                            <div className="flex items-center justify-end mb-2">
-                                <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
-                                    <Plus className="w-4 h-4" />
-                                    Add Remedy
-                                </button>
                             </div>
-                            {[
-                                { id: 1, date: "2026-01-05", remedy: "Blue Sapphire (Neelam)", type: "Gemstone", status: "active", notes: "Wear on Saturday morning after puja" },
-                                { id: 2, date: "2025-11-20", remedy: "Shani Mantra - 23,000 Japa", type: "Mantra", status: "completed", notes: "Complete within 40 days" },
-                                { id: 3, date: "2025-09-15", remedy: "Donate black sesame on Saturdays", type: "Donation", status: "ongoing", notes: "Every Saturday for 11 weeks" },
-                            ].map(remedy => (
-                                <div key={remedy.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="px-2 py-0.5 text-xs font-semibold bg-gold-primary/10 text-gold-dark rounded">{remedy.type}</span>
-                                            </div>
-                                            <h3 className="font-serif font-bold text-ink">{remedy.remedy}</h3>
-                                        </div>
-                                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${remedy.status === 'completed' ? 'bg-green-50 text-green-700' : remedy.status === 'active' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                                            {remedy.status.charAt(0).toUpperCase() + remedy.status.slice(1)}
-                                        </span>
+                        </div>
+
+                        {/* === SESSION NOTES SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Session Notes</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500">
+                                <div className="bg-softwhite rounded-xl border border-antique p-6 min-h-[500px]">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-serif font-bold text-ink">Quick Notes</h3>
+                                        <button
+                                            onClick={handleSaveNotes}
+                                            disabled={isSavingNotes}
+                                            className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2 disabled:opacity-50"
+                                        >
+                                            {isSavingNotes ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            {isSavingNotes ? "Saving..." : "Save"}
+                                        </button>
                                     </div>
-                                    <p className="text-sm text-muted">{remedy.notes}</p>
-                                    <p className="text-xs text-muted mt-2">Prescribed: {remedy.date}</p>
+                                    <textarea
+                                        value={notes}
+                                        onChange={e => setNotes(e.target.value)}
+                                        placeholder="Write your observations, notes, and reminders for this client..."
+                                        className="w-full h-[400px] bg-parchment border border-antique rounded-lg p-4 resize-none focus:outline-none focus:border-gold-primary font-serif text-ink leading-relaxed placeholder:text-muted/50"
+                                    />
                                 </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* --- DOCUMENTS TAB --- */}
-                    {activeTab === 'documents' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex items-center justify-end mb-4">
-                                <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
-                                    <Plus className="w-4 h-4" />
-                                    Upload Document
-                                </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        </div>
+
+                        {/* === PAST SESSIONS SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Past Sessions</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
                                 {[
-                                    { id: 1, name: "Birth Chart Analysis.pdf", date: "2026-01-05", size: "245 KB" },
-                                    { id: 2, name: "Yearly Prediction 2026.pdf", date: "2025-12-20", size: "180 KB" },
-                                    { id: 3, name: "Marriage Compatibility.pdf", date: "2025-11-15", size: "320 KB" },
-                                ].map(doc => (
-                                    <div key={doc.id} className="bg-softwhite border border-antique rounded-xl p-4 hover:border-gold-primary/50 transition-colors group cursor-pointer">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
-                                                <StickyNote className="w-5 h-5" />
+                                    { id: 1, date: "2026-01-05", topic: "Career Guidance", notes: "Discussed job change during Saturn Antardasha", duration: "45 min" },
+                                    { id: 2, date: "2025-11-20", topic: "Marriage Timing", notes: "Favorable periods in 2026 identified", duration: "30 min" },
+                                    { id: 3, date: "2025-09-15", topic: "Health Concerns", notes: "Rahu transit impact on 6th house reviewed", duration: "40 min" },
+                                ].map(session => (
+                                    <div key={session.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <h3 className="font-serif font-bold text-ink">{session.topic}</h3>
+                                                <p className="text-xs text-muted flex items-center gap-2 mt-1">
+                                                    <Calendar className="w-3 h-3" /> {session.date} • {session.duration}
+                                                </p>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-medium text-ink text-sm truncate group-hover:text-gold-dark">{doc.name}</h4>
-                                                <p className="text-xs text-muted mt-1">{doc.date} • {doc.size}</p>
-                                            </div>
+                                            <button className="text-xs text-gold-dark font-medium hover:underline">View Full</button>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                            {/* Empty State */}
-                            <div className="mt-4 text-center py-12 border border-dashed border-antique rounded-xl bg-parchment/30">
-                                <StickyNote className="w-10 h-10 text-muted/30 mx-auto mb-3" />
-                                <p className="text-muted font-serif text-sm">Drop files here or click Upload</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* --- PAYMENT HISTORY TAB --- */}
-                    {activeTab === 'payments' && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-500">
-                            {/* Stats */}
-                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                                    <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Paid</p>
-                                    <p className="text-xl font-serif font-bold text-ink">₹8,500</p>
-                                </div>
-                                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                                    <p className="text-xs text-muted uppercase tracking-wider mb-1">Pending</p>
-                                    <p className="text-xl font-serif font-bold text-orange-600">₹0</p>
-                                </div>
-                                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                                    <p className="text-xs text-muted uppercase tracking-wider mb-1">Sessions</p>
-                                    <p className="text-xl font-serif font-bold text-ink">5</p>
-                                </div>
-                            </div>
-
-                            {/* Payment List */}
-                            <div className="space-y-3">
-                                {[
-                                    { id: 1, date: "2026-01-05", amount: 2500, type: "Consultation Fee", method: "UPI", status: "paid" },
-                                    { id: 2, date: "2025-11-20", amount: 3500, type: "Full Chart Analysis", method: "Card", status: "paid" },
-                                    { id: 3, date: "2025-09-15", amount: 2500, type: "Follow-up Session", method: "Cash", status: "paid" },
-                                ].map(payment => (
-                                    <div key={payment.id} className="bg-softwhite border border-antique rounded-xl p-4 flex items-center justify-between hover:border-gold-primary/50 transition-colors">
-                                        <div>
-                                            <p className="font-medium text-ink">{payment.type}</p>
-                                            <p className="text-xs text-muted mt-1">{payment.date} • {payment.method}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-serif font-bold text-ink">₹{payment.amount.toLocaleString()}</p>
-                                            <span className="text-xs text-green-600 font-semibold">Paid</span>
-                                        </div>
+                                        <p className="text-sm text-body">{session.notes}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    )}
 
+                        {/* === PREDICTIONS MADE SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Predictions Made</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
+                                <div className="flex items-center justify-end mb-2">
+                                    <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
+                                        <Plus className="w-4 h-4" />
+                                        Add Prediction
+                                    </button>
+                                </div>
+                                {[
+                                    { id: 1, date: "2026-01-05", prediction: "Job change expected by Feb 2025", status: "pending", category: "Career" },
+                                    { id: 2, date: "2025-11-20", prediction: "Marriage likely between June-August 2026", status: "pending", category: "Marriage" },
+                                    { id: 3, date: "2025-09-15", prediction: "Health improvement after Oct 2025", status: "verified", category: "Health" },
+                                ].map(pred => (
+                                    <div key={pred.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="px-2 py-0.5 text-xs font-semibold bg-gold-primary/10 text-gold-dark rounded">{pred.category}</span>
+                                                    <span className="text-xs text-muted">{pred.date}</span>
+                                                </div>
+                                                <p className="font-medium text-ink">{pred.prediction}</p>
+                                            </div>
+                                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${pred.status === 'verified' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-orange-50 text-orange-600 border border-orange-200'}`}>
+                                                {pred.status === 'verified' ? 'Verified' : 'Pending'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* === REMEDIES GIVEN SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Remedies Given</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-4">
+                                <div className="flex items-center justify-end mb-2">
+                                    <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
+                                        <Plus className="w-4 h-4" />
+                                        Add Remedy
+                                    </button>
+                                </div>
+                                {[
+                                    { id: 1, date: "2026-01-05", remedy: "Blue Sapphire (Neelam)", type: "Gemstone", status: "active", notes: "Wear on Saturday morning after puja" },
+                                    { id: 2, date: "2025-11-20", remedy: "Shani Mantra - 23,000 Japa", type: "Mantra", status: "completed", notes: "Complete within 40 days" },
+                                    { id: 3, date: "2025-09-15", remedy: "Donate black sesame on Saturdays", type: "Donation", status: "ongoing", notes: "Every Saturday for 11 weeks" },
+                                ].map(remedy => (
+                                    <div key={remedy.id} className="bg-softwhite border border-antique rounded-xl p-5 hover:border-gold-primary/50 transition-colors">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="px-2 py-0.5 text-xs font-semibold bg-gold-primary/10 text-gold-dark rounded">{remedy.type}</span>
+                                                </div>
+                                                <h3 className="font-serif font-bold text-ink">{remedy.remedy}</h3>
+                                            </div>
+                                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${remedy.status === 'completed' ? 'bg-green-50 text-green-700' : remedy.status === 'active' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                {remedy.status.charAt(0).toUpperCase() + remedy.status.slice(1)}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-muted">{remedy.notes}</p>
+                                        <p className="text-xs text-muted mt-2">Prescribed: {remedy.date}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* === DOCUMENTS SECTION === */}
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Documents</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center justify-end mb-4">
+                                    <button className="px-4 py-2 bg-gold-primary text-white rounded-lg text-sm font-semibold hover:bg-gold-dark transition-colors flex items-center gap-2">
+                                        <Plus className="w-4 h-4" />
+                                        Upload Document
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { id: 1, name: "Birth Chart Analysis.pdf", date: "2026-01-05", size: "245 KB" },
+                                        { id: 2, name: "Yearly Prediction 2026.pdf", date: "2025-12-20", size: "180 KB" },
+                                        { id: 3, name: "Marriage Compatibility.pdf", date: "2025-11-15", size: "320 KB" },
+                                    ].map(doc => (
+                                        <div key={doc.id} className="bg-softwhite border border-antique rounded-xl p-4 hover:border-gold-primary/50 transition-colors group cursor-pointer">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+                                                    <StickyNote className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-medium text-ink text-sm truncate group-hover:text-gold-dark">{doc.name}</h4>
+                                                    <p className="text-xs text-muted mt-1">{doc.date} • {doc.size}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Empty State */}
+                                <div className="mt-4 text-center py-12 border border-dashed border-antique rounded-xl bg-parchment/30">
+                                    <StickyNote className="w-10 h-10 text-muted/30 mx-auto mb-3" />
+                                    <p className="text-muted font-serif text-sm">Drop files here or click Upload</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* === PAYMENT HISTORY SECTION === */}
+                        <div className="mt-16 mb-16">
+                            <h2 className="text-2xl font-serif text-ink font-bold mb-6">Payment History</h2>
+                            <div className="animate-in slide-in-from-bottom-4 duration-500">
+                                {/* Stats */}
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-softwhite border border-antique rounded-xl p-4">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Paid</p>
+                                        <p className="text-xl font-serif font-bold text-ink">₹8,500</p>
+                                    </div>
+                                    <div className="bg-softwhite border border-antique rounded-xl p-4">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Pending</p>
+                                        <p className="text-xl font-serif font-bold text-orange-600">₹0</p>
+                                    </div>
+                                    <div className="bg-softwhite border border-antique rounded-xl p-4">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Sessions</p>
+                                        <p className="text-xl font-serif font-bold text-ink">5</p>
+                                    </div>
+                                </div>
+
+                                {/* Payment List */}
+                                <div className="space-y-3">
+                                    {[
+                                        { id: 1, date: "2026-01-05", amount: 2500, type: "Consultation Fee", method: "UPI", status: "paid" },
+                                        { id: 2, date: "2025-11-20", amount: 3500, type: "Full Chart Analysis", method: "Card", status: "paid" },
+                                        { id: 3, date: "2025-09-15", amount: 2500, type: "Follow-up Session", method: "Cash", status: "paid" },
+                                    ].map(payment => (
+                                        <div key={payment.id} className="bg-softwhite border border-antique rounded-xl p-4 flex items-center justify-between hover:border-gold-primary/50 transition-colors">
+                                            <div>
+                                                <p className="font-medium text-ink">{payment.type}</p>
+                                                <p className="text-xs text-muted mt-1">{payment.date} • {payment.method}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-serif font-bold text-ink">₹{payment.amount.toLocaleString()}</p>
+                                                <span className="text-xs text-green-600 font-semibold">Paid</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

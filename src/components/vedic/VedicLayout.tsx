@@ -69,7 +69,7 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
             {/* Unified Professional Sidebar - Fixed Height within Flex Container */}
             {pathname !== "/vedic-astrology" && (
                 <aside
-                    className="w-full lg:w-72 h-full py-6 px-4 flex flex-col border-r border-[#D08C60]/30 hidden lg:flex relative z-10 overflow-y-auto no-scrollbar"
+                    className="w-full lg:w-72 h-full py-6 px-4 flex flex-col border-r border-[#D08C60]/30 hidden lg:flex relative z-10 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
                     style={{
                         background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
                         boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
@@ -119,17 +119,20 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
                                     key={item.name}
                                     href={href}
                                     className={cn(
-                                        "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group",
+                                        "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-300 group relative overflow-hidden",
                                         isActive
-                                            ? "bg-[#FFD27D]/20 text-white font-bold shadow-sm border border-[#FFD27D]/40"
-                                            : "text-[#FFF5E6] hover:bg-[#FEFAEA]/10 hover:text-white"
+                                            ? "bg-gradient-to-r from-[#FFD27D]/25 via-[#FFD27D]/15 to-[#FFD27D]/15 text-white font-bold shadow-[0_0_20px_rgba(255,210,125,0.5),inset_0_0_10px_rgba(255,210,125,0.1)]"
+                                            : "text-[#FFF5E6] hover:bg-[#FEFAEA]/10 hover:text-white hover:pl-4"
                                     )}
                                 >
+                                    {/* Active Indicator Line - Tab Style */}
+                                    {isActive && <div className="absolute left-0 top-1 bottom-1 w-1 bg-[#FFD27D] shadow-[0_0_10px_#FFD27D] rounded-r-sm" />}
+
                                     <div className="flex items-center gap-3">
-                                        <item.icon className={cn("w-5 h-5", isActive ? "text-[#FFD27D]" : "text-[#FFD27D]/70 group-hover:text-[#FFD27D]")} />
+                                        <item.icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "text-[#FFD27D] scale-110" : "text-[#FFD27D]/70 group-hover:text-[#FFD27D] group-hover:scale-105")} />
                                         <span className="font-serif text-sm tracking-wide">{item.name}</span>
                                     </div>
-                                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#FFD27D]" />}
+                                    {/* {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#FFD27D] shadow-[0_0_8px_#FFD27D]" />} */}
                                 </Link>
                             )
                         })}

@@ -151,14 +151,23 @@ export default function AnalyticalWorkbenchPage() {
 
 function QuickToolCard({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
     return (
-        <Link href={href} className="bg-softwhite border border-antique rounded-xl p-4 hover:border-gold-primary/50 hover:bg-gold-primary/5 transition-all group">
-            <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 rounded-lg bg-gold-primary/10 flex items-center justify-center text-gold-primary group-hover:bg-gold-primary group-hover:text-white transition-colors">
-                    {icon}
+        <Link href={href} className="relative group overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FFF9F0] to-[#FDFBF7] z-0" />
+            <div className="absolute inset-0 border border-[#D08C60]/20 rounded-xl z-20 group-hover:border-[#D08C60]/50 transition-colors" />
+
+            {/* Inner Glow */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 bg-[radial-gradient(circle_at_center,_rgba(255,210,125,0.15),_transparent_70%)]" />
+
+            <div className="relative z-30 p-4 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#D08C60] to-[#8B5A2B] flex items-center justify-center text-white shadow-lg group-hover:shadow-[0_0_12px_#D08C60] transition-all">
+                        {icon}
+                    </div>
                 </div>
+
+                <h3 className="font-serif font-bold text-[#3E2A1F] text-sm mb-1 group-hover:text-[#D08C60] transition-colors">{title}</h3>
+                <p className="text-[10px] text-[#8B5A2B]/70 font-medium uppercase tracking-wide">{desc}</p>
             </div>
-            <h3 className="font-serif font-bold text-ink text-sm">{title}</h3>
-            <p className="text-xs text-muted">{desc}</p>
         </Link>
     );
 }

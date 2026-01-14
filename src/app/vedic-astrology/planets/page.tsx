@@ -6,9 +6,15 @@ import { useVedicClient } from '@/context/VedicClientContext';
 import PlanetaryAnalytics, { DetailedPlanetInfo } from '@/components/astrology/PlanetaryAnalytics';
 
 const MOCK_DETAILED_PLANETS: DetailedPlanetInfo[] = [
-    { planet: 'Sun', sign: 'Leo', degree: '22° 14\' 30"', nakshatra: 'Purva Phalguni', pada: 3, nakshatraLord: 'Venus', house: 1, dignity: 'Own Sign' },
-    { planet: 'Moon', sign: 'Leo', degree: '05° 10\' 12"', nakshatra: 'Magha', pada: 2, nakshatraLord: 'Ketu', house: 1, dignity: 'Friend' },
-    // Simplified for placeholder
+    { planet: 'Sun', sign: 'Scorpio', degree: '22° 14\' 30"', nakshatra: 'Jyeshtha', pada: 3, nakshatraLord: 'Mercury', house: 1, dignity: 'Friend', shadbala: 6.8, avastha: 'Jagrat (Awake)', karaka: 'AmtK' },
+    { planet: 'Moon', sign: 'Scorpio', degree: '05° 10\' 12"', nakshatra: 'Anuradha', pada: 2, nakshatraLord: 'Saturn', house: 1, dignity: 'Debilitated', shadbala: 5.2, avastha: 'Swapna (Dreaming)', karaka: 'GnK' },
+    { planet: 'Mars', sign: 'Scorpio', degree: '12° 45\' 00"', nakshatra: 'Anuradha', pada: 4, nakshatraLord: 'Saturn', house: 1, dignity: 'Own Sign', shadbala: 7.5, avastha: 'Jagrat (Awake)', karaka: 'BK' },
+    { planet: 'Mercury', sign: 'Sagittarius', degree: '08° 12\' 10"', nakshatra: 'Mula', pada: 1, nakshatraLord: 'Ketu', house: 2, dignity: 'Neutral', shadbala: 5.9, avastha: 'Sushupti (Asleep)', karaka: 'MK' },
+    { planet: 'Jupiter', sign: 'Gemini', degree: '15° 10\' 22"', nakshatra: 'Ardra', pada: 3, nakshatraLord: 'Rahu', house: 8, dignity: 'Enemy', shadbala: 4.5, avastha: 'Swapna (Dreaming)', karaka: 'PiK' },
+    { planet: 'Venus', sign: 'Virgo', degree: '18° 22\' 05"', nakshatra: 'Hasta', pada: 2, nakshatraLord: 'Moon', house: 11, dignity: 'Debilitated', shadbala: 3.8, avastha: 'Sushupti (Asleep)', karaka: 'DK' },
+    { planet: 'Saturn', sign: 'Aquarius', degree: '03° 55\' 18"', nakshatra: 'Dhanishta', pada: 4, nakshatraLord: 'Mars', house: 4, dignity: 'Moolatrikona', shadbala: 8.2, avastha: 'Jagrat (Awake)', karaka: 'AK' },
+    { planet: 'Rahu', sign: 'Scorpio', degree: '25° 12\' 00"', nakshatra: 'Jyeshtha', pada: 4, nakshatraLord: 'Mercury', house: 1, dignity: 'Neutral', shadbala: 0, avastha: '—' },
+    { planet: 'Ketu', sign: 'Taurus', degree: '25° 12\' 00"', nakshatra: 'Mrigashira', pada: 2, nakshatraLord: 'Mars', house: 7, dignity: 'Neutral', shadbala: 0, avastha: '—' },
 ];
 
 export default function VedicPlanetsPage() {
@@ -17,31 +23,20 @@ export default function VedicPlanetsPage() {
     if (!clientDetails) return null;
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="bg-[#FFFFFa]/40 border border-[#D08C60]/30 p-10 rounded-[3rem] shadow-xl backdrop-blur-sm">
-                <div className="flex items-center gap-4 mb-6">
-                    <Compass className="w-10 h-10 text-[#D08C60]" />
-                    <h1 className="text-4xl font-serif text-[#3E2A1F] font-black tracking-tight">Celectial Coordinates</h1>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="bg-[#FFFFFa]/80 border border-[#D08C60]/30 p-8 rounded-[2rem] shadow-xl backdrop-blur-sm">
+                <div className="flex items-center gap-4 mb-4">
+                    <Compass className="w-8 h-8 text-[#D08C60]" />
+                    <div>
+                        <h1 className="text-3xl font-serif text-[#3E2A1F] font-black tracking-tight">Planetary Diagnostics</h1>
+                        <p className="text-[#8B5A2B] font-serif text-sm">Quantitative strength analysis of the natal field</p>
+                    </div>
                 </div>
-                <p className="text-[#5A3E2B]/80 italic font-serif text-lg max-w-2xl mb-10">
-                    Precision coordinates and mathematical dignity for every graha in {clientDetails.name}'s natal field.
-                </p>
 
                 <PlanetaryAnalytics planets={MOCK_DETAILED_PLANETS} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-10 bg-[#3E2A1F]/5 border border-[#D08C60]/10 rounded-[2.5rem] hover:border-[#D08C60]/40 transition-all hover:bg-[#3E2A1F]/10 hover:shadow-lg group">
-                    <Orbit className="w-8 h-8 text-[#D08C60] mb-6 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-2xl font-serif text-[#3E2A1F] font-black mb-4">Graha Drishti</h3>
-                    <p className="text-[#5A3E2B]/70 font-serif">Mapping the aspect fields and mutual planetary interactions across the 12 houses.</p>
-                </div>
-                <div className="p-10 bg-[#3E2A1F]/5 border border-[#D08C60]/10 rounded-[2.5rem] hover:border-[#D08C60]/40 transition-all hover:bg-[#3E2A1F]/10 hover:shadow-lg group">
-                    <Zap className="w-8 h-8 text-[#C9A24D] mb-6 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-2xl font-serif text-[#3E2A1F] font-black mb-4">Shadbala Strength</h3>
-                    <p className="text-[#5A3E2B]/70 font-serif">Calculation of the six-fold strength index for determining active cosmic power.</p>
-                </div>
-            </div>
+            {/* Additional Expert Metrics could go here (e.g. Bhava Chalit chart) */}
         </div>
     );
 }
