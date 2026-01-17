@@ -57,6 +57,8 @@ export default function VedicOverviewPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [notes, setNotes] = React.useState("Client anxious about job change. Saturn return approaching in 2026. Focus on career stability.");
+    const [dashaData, setDashaData] = useState<any>(null);
+    const [dashaLoading, setDashaLoading] = useState(false);
 
     // Fetch Charts
     const fetchCharts = async () => {
@@ -102,6 +104,31 @@ export default function VedicOverviewPage() {
         if (!clientDetails?.id) return;
         fetchCharts();
     }, [clientDetails?.id]);
+
+    // Fetch Dasha data
+    const fetchDasha = async () => {
+        const clientId = clientDetails?.id;
+        if (!clientId) return;
+
+        try {
+            setDashaLoading(true);
+            const data = await clientApi.generateDasha(
+                clientId,
+                'mahadasha',
+                settings.ayanamsa.toLowerCase()
+            );
+            setDashaData(data);
+        } catch (err) {
+            console.error('Failed to fetch dasha:', err);
+        } finally {
+            setDashaLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!clientDetails?.id) return;
+        fetchDasha();
+    }, [clientDetails?.id, settings.ayanamsa]);
 
     // Calculate age from DOB
     const calculateAge = (dob: string) => {
@@ -231,17 +258,35 @@ export default function VedicOverviewPage() {
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="font-serif font-bold text-lg text-ink">Vimshottari Dasha</h3>
-                            <p className="text-[10px] text-gold-dark uppercase tracking-widest">Active Lifecycle</p>
+                            <p className="text-[10px] text-gold-dark uppercase tracking-widest">Active Lifecycle ({settings.ayanamsa})</p>
                         </div>
-                        <div className="bg-red-50 border border-red-200 px-3 py-1 rounded-lg">
-                            <span className="text-red-600 text-xs font-semibold">Change in 45 days</span>
-                        </div>
+                        {dashaData?.data?.current_dasha && (
+                            <div className="bg-red-50 border border-red-200 px-3 py-1 rounded-lg">
+                                <span className="text-red-600 text-xs font-semibold">Current Period</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-3">
-                        <DashaRow level="Mahadasha" planet="Ketu" ends="Dec 2026" active />
-                        <DashaRow level="Antardasha" planet="Mars" ends="Jun 2025" active />
-                        <DashaRow level="Pratyantardasha" planet="Mercury" ends="Feb 2025" />
+                        {dashaLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                                <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
+                            </div>
+                        ) : dashaData?.data?.mahadashas?.slice(0, 3).map((md: any, idx: number) => (
+                            <DashaRow
+                                key={idx}
+                                level={idx === 0 ? "Mahadasha" : idx === 1 ? "Antardasha" : "Pratyantardasha"}
+                                planet={md.planet || md.lord}
+                                ends={md.end_date ? new Date(md.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}
+                                active={md.is_current || md.isCurrent || false}
+                            />
+                        )) || (
+                            <>
+                                <DashaRow level="Mahadasha" planet="—" ends="—" />
+                                <DashaRow level="Antardasha" planet="—" ends="—" />
+                                <DashaRow level="Pratyantardasha" planet="—" ends="—" />
+                            </>
+                        )}
                     </div>
 
                     <Link href="/vedic-astrology/dashas" className="mt-4 flex items-center justify-center gap-2 text-gold-dark text-sm hover:text-gold-primary transition-colors py-2 border-t border-antique">
