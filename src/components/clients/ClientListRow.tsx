@@ -22,6 +22,7 @@ export default function ClientListRow({ client, onSelect, onEdit, onDelete }: Cl
 
         // Default legacy behavior (Vedic flow)
         setClientDetails({
+            id: client.id,
             name: `${client.firstName || ''} ${client.lastName || client.fullName || ''}`.trim(),
             gender: client.gender || "male", // Fallback for mock
             dateOfBirth: client.dateOfBirth || client.birthDate || '',

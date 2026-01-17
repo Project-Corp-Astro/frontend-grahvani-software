@@ -131,6 +131,29 @@ export const clientApi = {
      */
     getSuggestions: (query: string, limit: number = 5): Promise<{ suggestions: LocationSuggestion[] }> =>
         apiFetch(`${CLIENT_URL}/geocode/suggest?q=${encodeURIComponent(query)}&limit=${limit}`),
+
+    /**
+     * Get saved charts for a client
+     */
+    getCharts: (clientId: string): Promise<any[]> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts`),
+
+    /**
+     * Trigger chart generation for a client
+     */
+    generateChart: (clientId: string, chartType: string = 'D1', ayanamsa: string = 'lahiri'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({ chartType, ayanamsa }),
+        }),
+
+    /**
+     * Trigger bulk core chart generation (D1, D9 for all systems)
+     */
+    generateCoreCharts: (clientId: string): Promise<{ success: boolean; count: number }> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate-core`, {
+            method: 'POST',
+        }),
 };
 
 // ============ FAMILY API ============

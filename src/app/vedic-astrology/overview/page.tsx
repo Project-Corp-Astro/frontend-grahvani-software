@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import NorthIndianChart, { ChartWithPopup } from "@/components/astrology/NorthIndianChart";
+import React, { useEffect, useState } from 'react';
+import NorthIndianChart, { ChartWithPopup, Planet } from "@/components/astrology/NorthIndianChart";
 import { cn } from "@/lib/utils";
 import {
     Calendar,
@@ -15,18 +15,93 @@ import {
     AlertTriangle,
     CheckCircle2,
     User,
-    Edit3
+    Edit3,
+    Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
+import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { clientApi } from '@/lib/api';
+
+const signNameToId: Record<string, number> = {
+    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
+    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
+};
+
+const indexToSignId = (varga: string) => {
+    if (varga === "D9") return 5;
+    return 8;
+};
+
+const MOCK_PLANETS = [
+    { name: 'Su', signId: 8, degree: '22°' },
+    { name: 'Mo', signId: 8, degree: '05°' },
+    { name: 'Ma', signId: 8, degree: '12°', retrograde: true },
+    { name: 'Me', signId: 9, degree: '08°', combust: true },
+    { name: 'Ju', signId: 3, degree: '15°', exalted: true },
+    { name: 'Ve', signId: 6, degree: '18°' },
+    { name: 'Sa', signId: 11, degree: '03°', retrograde: true },
+    { name: 'Ra', signId: 8, degree: '25°' },
+    { name: 'Ke', signId: 2, degree: '25°' },
+];
 
 export default function VedicOverviewPage() {
     const { clientDetails } = useVedicClient();
+    const { settings } = useAstrologerSettings();
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
 
+    if (!clientDetails) return null;
+
+    // Data States
+    const [charts, setCharts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const [notes, setNotes] = React.useState("Client anxious about job change. Saturn return approaching in 2026. Focus on career stability.");
 
-    if (!clientDetails) return null;
+    // Fetch Charts
+    const fetchCharts = async () => {
+        const clientId = clientDetails?.id;
+        if (!clientId) return;
+
+        try {
+            setIsLoading(true);
+            const data = await clientApi.getCharts(clientId);
+            setCharts(data || []);
+
+            // AUTO-GENERATE if no charts found for any system
+            if (!data || data.length === 0) {
+                await handleGenerateCharts();
+            }
+        } catch (err) {
+            console.error("Failed to fetch charts:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGenerateCharts = async () => {
+        const clientId = clientDetails?.id;
+        if (!clientId || isGenerating) return;
+
+        try {
+            setIsGenerating(true);
+            // Trigger bulk core generation (D1, D9 all systems)
+            await clientApi.generateCoreCharts(clientId);
+
+            // Refresh charts after generation
+            const updatedData = await clientApi.getCharts(clientId);
+            setCharts(updatedData || []);
+        } catch (err) {
+            console.error("Failed to generate charts:", err);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!clientDetails?.id) return;
+        fetchCharts();
+    }, [clientDetails?.id]);
 
     // Calculate age from DOB
     const calculateAge = (dob: string) => {
@@ -40,26 +115,55 @@ export default function VedicOverviewPage() {
 
     const age = calculateAge(clientDetails.dateOfBirth);
 
-    const indexToSignId = (varga: string) => {
-        if (varga === "D9") return 5;
-        return 8;
+    // Filter charts based on Settings
+    const activeSystem = settings.ayanamsa.toLowerCase(); // 'lahiri', 'raman', 'kp'
+
+    const getChartData = (varga: string): { planets: Planet[], ascendant: number } => {
+        const chart = charts.find(c => {
+            // Check system in config or fallback (legacy charts might not have config)
+            const sys = c.chartConfig?.system || 'lahiri';
+            return c.chartType === varga && sys.toLowerCase() === activeSystem;
+        });
+
+        if (!chart || !chart.chartData) return { planets: [], ascendant: 1 };
+
+        // Mapper logic
+        try {
+            const data = chart.chartData;
+            if (!data) return { planets: [], ascendant: 1 };
+
+            const planetaryPositions = data.planetary_positions || {};
+            const planets: Planet[] = Object.keys(planetaryPositions).map(key => {
+                const p = planetaryPositions[key];
+                return {
+                    name: key.substring(0, 2), // 'Sun' -> 'Su', 'Moon' -> 'Mo'
+                    signId: signNameToId[p.sign] || 1,
+                    degree: p.degrees || '0°',
+                    retrograde: p.retrograde || false
+                };
+            });
+
+            const ascendantSign = signNameToId[data.ascendant?.sign] || 1;
+
+            return { planets, ascendant: ascendantSign };
+        } catch (e) {
+            console.error("Failed to map chart data", e);
+            return { planets: [], ascendant: 1 };
+        }
     };
 
-    const MOCK_PLANETS = [
-        { name: 'Su', signId: 8, degree: '22°' },
-        { name: 'Mo', signId: 8, degree: '05°' },
-        { name: 'Ma', signId: 8, degree: '12°', retrograde: true },
-        { name: 'Me', signId: 9, degree: '08°', combust: true },
-        { name: 'Ju', signId: 3, degree: '15°', exalted: true },
-        { name: 'Ve', signId: 6, degree: '18°' },
-        { name: 'Sa', signId: 11, degree: '03°', retrograde: true },
-        { name: 'Ra', signId: 8, degree: '25°' },
-        { name: 'Ke', signId: 2, degree: '25°' },
-    ];
+    const d1Data = getChartData("D1");
+    const d9Data = getChartData("D9");
+
+    const displayPlanetsD1 = d1Data.planets.length > 0 ? d1Data.planets : MOCK_PLANETS;
+    const displayAscendantD1 = d1Data.planets.length > 0 ? d1Data.ascendant : 8;
+
+    const displayPlanetsD9 = d9Data.planets.length > 0 ? d9Data.planets : MOCK_PLANETS;
+    const displayAscendantD9 = d9Data.planets.length > 0 ? d9Data.ascendant : 5; // Default Leo for D9 demo
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-
+            {/* ... Existing JSX ... */}
             {/* 1. COMPACT CLIENT HEADER */}
             <div className="bg-softwhite border border-antique rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -74,7 +178,7 @@ export default function VedicOverviewPage() {
                             </span>
                             <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] font-semibold text-green-700 uppercase">Active</span>
+                                <span className="text-[10px] font-semibold text-green-700 uppercase">Active • {settings.ayanamsa}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted mt-1">
@@ -105,20 +209,21 @@ export default function VedicOverviewPage() {
                 <div className="lg:col-span-7 grid grid-cols-2 gap-4">
                     <ChartCard
                         varga="D1"
-                        label="Rashi Chart"
-                        ascendantSign={indexToSignId("D1")}
-                        planets={MOCK_PLANETS}
+                        label={`Rashi Chart (${settings.ayanamsa})`}
+                        ascendantSign={displayAscendantD1}
+                        planets={displayPlanetsD1}
                         onZoom={() => setZoomedChart({ varga: "D1", label: "Rashi Chart" })}
 
                     />
-                    <ChartCard
-                        varga="D9"
-                        label="Navamsha"
-                        ascendantSign={indexToSignId("D9")}
-                        planets={MOCK_PLANETS}
-                        onZoom={() => setZoomedChart({ varga: "D9", label: "Navamsha Chart" })}
-
-                    />
+                    {settings.ayanamsa !== 'KP' && (
+                        <ChartCard
+                            varga="D9"
+                            label="Navamsha"
+                            ascendantSign={displayAscendantD9}
+                            planets={displayPlanetsD9}
+                            onZoom={() => setZoomedChart({ varga: "D9", label: "Navamsha Chart" })}
+                        />
+                    )}
                 </div>
 
                 {/* RIGHT: Dasha Timeline */}
@@ -208,7 +313,7 @@ export default function VedicOverviewPage() {
                         <div className="aspect-square w-full max-w-md mx-auto bg-parchment rounded-2xl p-6 border border-antique">
                             <ChartWithPopup
                                 ascendantSign={indexToSignId(zoomedChart.varga)}
-                                planets={MOCK_PLANETS}
+                                planets={zoomedChart.varga === 'D9' ? displayPlanetsD9 : displayPlanetsD1}
                                 className="bg-transparent border-none"
                             />
                         </div>
@@ -219,6 +324,7 @@ export default function VedicOverviewPage() {
         </div>
     );
 }
+
 
 // COMPACT HELPER COMPONENTS
 

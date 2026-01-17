@@ -372,20 +372,38 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                     </div>
                 </div>
 
-                {/* Coordinates Display (Read-only) */}
-                {formData.birthLatitude && formData.birthLongitude && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[#F5EFE0] rounded-lg border border-[#DCC9A6]">
-                        <div>
-                            <p className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider mb-1">Latitude</p>
-                            <p className="text-[#3E2A1F] font-serif">{formData.birthLatitude.toFixed(4)}°</p>
+                {/* Coordinates Display (Editable) */}
+                {formData.birthLatitude !== undefined && formData.birthLongitude !== undefined && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-[#FEFAEA] rounded-xl border border-[#DCC9A6] shadow-sm">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Latitude</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={formData.birthLatitude}
+                                onChange={(e) => handleChange('birthLatitude', parseFloat(e.target.value))}
+                                className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                            />
                         </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider mb-1">Longitude</p>
-                            <p className="text-[#3E2A1F] font-serif">{formData.birthLongitude.toFixed(4)}°</p>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Longitude</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={formData.birthLongitude}
+                                onChange={(e) => handleChange('birthLongitude', parseFloat(e.target.value))}
+                                className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                            />
                         </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider mb-1">Timezone</p>
-                            <p className="text-[#3E2A1F] font-serif">{formData.birthTimezone || 'Auto-detected'}</p>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Timezone</label>
+                            <input
+                                type="text"
+                                value={formData.birthTimezone}
+                                onChange={(e) => handleChange('birthTimezone', e.target.value)}
+                                placeholder="e.g. Asia/Kolkata"
+                                className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                            />
                         </div>
                     </div>
                 )}
