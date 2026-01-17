@@ -3,6 +3,94 @@
 
 import { CreateClientPayload, FamilyLinkPayload, Client, ClientListResponse, FamilyLink, LocationSuggestion } from '@/types/client';
 
+// ============ TYPE DEFINITIONS ============
+
+export interface DashaPeriod {
+    planet: string;
+    startDate: string;
+    endDate: string;
+    isCurrent?: boolean;
+    ageAtStart?: number;
+    subPeriods?: DashaPeriod[];
+}
+
+export interface DashaResponse {
+    clientId: string;
+    clientName: string;
+    level: string;
+    ayanamsa: string;
+    data: {
+        mahadashas?: DashaPeriod[];
+        current_dasha?: DashaPeriod;
+    };
+    cached: boolean;
+    calculatedAt: string;
+}
+
+export interface AshtakavargaResponse {
+    clientId: string;
+    clientName: string;
+    ayanamsa: string;
+    data: {
+        sarvashtakavarga?: Record<string, number[]>;
+        bhinnashtakavarga?: Record<string, Record<string, number[]>>;
+        total_points?: number;
+    };
+    cached: boolean;
+    calculatedAt: string;
+}
+
+export interface SystemCapabilities {
+    charts: {
+        divisional: string[];
+        special: string[];
+        lagna: string[];
+    };
+    features: {
+        dasha: string[];
+        ashtakavarga: string[];
+        compatibility: string[];
+        numerology: string[];
+    };
+    hasDivisional: boolean;
+    hasAshtakavarga: boolean;
+    hasNumerology: boolean;
+    hasCompatibility: boolean;
+    hasHorary: boolean;
+}
+
+// Chart metadata for display
+export const CHART_METADATA: Record<string, { name: string; desc: string; category: string }> = {
+    'D1': { name: 'Rashi', desc: 'Physical Body & General Destiny', category: 'divisional' },
+    'D2': { name: 'Hora', desc: 'Wealth & Financial Prospects', category: 'divisional' },
+    'D3': { name: 'Drekkana', desc: 'Siblings & Courage', category: 'divisional' },
+    'D4': { name: 'Chaturthamsha', desc: 'Fortune & Property', category: 'divisional' },
+    'D7': { name: 'Saptamsha', desc: 'Children & Progeny', category: 'divisional' },
+    'D9': { name: 'Navamsha', desc: 'Marriage & Spiritual Core', category: 'divisional' },
+    'D10': { name: 'Dashamsha', desc: 'Career & Profession', category: 'divisional' },
+    'D12': { name: 'Dwadashamsha', desc: 'Parents & Ancestry', category: 'divisional' },
+    'D16': { name: 'Shodashamsha', desc: 'Vehicles & Comforts', category: 'divisional' },
+    'D20': { name: 'Vimshamsha', desc: 'Spiritual Progress', category: 'divisional' },
+    'D24': { name: 'Chaturvimshamsha', desc: 'Education & Learning', category: 'divisional' },
+    'D27': { name: 'Saptavimshamsha', desc: 'Strength & Vitality', category: 'divisional' },
+    'D30': { name: 'Trimshamsha', desc: 'Misfortunes & Evil', category: 'divisional' },
+    'D40': { name: 'Khavedamsha', desc: 'Auspicious Effects', category: 'divisional' },
+    'D45': { name: 'Akshavedamsha', desc: 'General Indications', category: 'divisional' },
+    'D60': { name: 'Shashtiamsha', desc: 'Past Karma & Results', category: 'divisional' },
+    'moon': { name: 'Moon Chart', desc: 'Emotional & Mental State', category: 'special' },
+    'sun': { name: 'Sun Chart', desc: 'Soul Purpose & Father', category: 'special' },
+    'sudarshan': { name: 'Sudarshan Chakra', desc: 'Triple View Analysis', category: 'special' },
+    'transit': { name: 'Transit', desc: 'Current Planetary Positions', category: 'special' },
+    'arudha': { name: 'Arudha Lagna', desc: 'Worldly Image & Perception', category: 'lagna' },
+    'bhava': { name: 'Bhava Lagna', desc: 'House Strengths', category: 'lagna' },
+    'hora': { name: 'Hora Lagna', desc: 'Wealth Indicator', category: 'lagna' },
+    'sripathi': { name: 'Sripathi Bhava', desc: 'Unequal House System', category: 'lagna' },
+    'kp_bhava': { name: 'KP Bhava', desc: 'KP System Houses', category: 'lagna' },
+    'equal_bhava': { name: 'Equal Bhava', desc: 'Equal House System', category: 'lagna' },
+    'karkamsha_d1': { name: 'Karkamsha D1', desc: 'Atmakaraka in Navamsha to D1', category: 'lagna' },
+    'karkamsha_d9': { name: 'Karkamsha D9', desc: 'Atmakaraka in Navamsha', category: 'lagna' },
+};
+
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001/api/v1';
 const USER_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:3002/api/v1';
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_SERVICE_URL || 'http://localhost:3008/api/v1';
@@ -154,6 +242,97 @@ export const clientApi = {
         apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate-core`, {
             method: 'POST',
         }),
+
+    /**
+     * Generate Vimshottari Dasha periods for a client
+     * @param level - 'mahadasha' | 'antardasha' | 'pratyantardasha' | 'sookshma' | 'prana'
+     * @param ayanamsa - 'lahiri' | 'raman' | 'kp'
+     * @param save - if true, saves dasha to database
+     */
+    generateDasha: (
+        clientId: string,
+        level: string = 'mahadasha',
+        ayanamsa: string = 'lahiri',
+        save: boolean = false,
+        context: { mahaLord?: string; antarLord?: string; pratyantarLord?: string } = {}
+    ): Promise<DashaResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha`, {
+            method: 'POST',
+            body: JSON.stringify({ level, ayanamsa, save, ...context }),
+        }),
+
+    /**
+     * Generate Ashtakavarga (Lahiri/Raman only - not available for KP)
+     */
+    generateAshtakavarga: (clientId: string, ayanamsa: string = 'lahiri'): Promise<AshtakavargaResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/ashtakavarga`, {
+            method: 'POST',
+            body: JSON.stringify({ ayanamsa }),
+        }),
+
+    /**
+     * Get system capabilities - which chart types are available per ayanamsa
+     * This is a client-side utility, not an API call
+     */
+    getSystemCapabilities: (system: string): SystemCapabilities => {
+        const CAPABILITIES: Record<string, SystemCapabilities> = {
+            lahiri: {
+                charts: {
+                    divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
+                    special: ['moon', 'sun', 'sudarshan', 'transit'],
+                    lagna: ['arudha', 'bhava', 'hora', 'sripathi', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                },
+                features: {
+                    dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
+                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    compatibility: ['synastry', 'composite', 'progressed'],
+                    numerology: ['chaldean', 'lo_shu']
+                },
+                hasDivisional: true,
+                hasAshtakavarga: true,
+                hasNumerology: true,
+                hasCompatibility: true,
+                hasHorary: false,
+            },
+            raman: {
+                charts: {
+                    divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
+                    special: ['moon', 'sun', 'sudarshan', 'transit'],
+                    lagna: ['arudha', 'bhava', 'hora', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                },
+                features: {
+                    dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
+                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_varga'],
+                    compatibility: [],
+                    numerology: []
+                },
+                hasDivisional: true,
+                hasAshtakavarga: true,
+                hasNumerology: false,
+                hasCompatibility: false,
+                hasHorary: false,
+            },
+            kp: {
+                charts: {
+                    divisional: ['D1'],
+                    special: ['planets_cusps'],
+                    lagna: []
+                },
+                features: {
+                    dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
+                    ashtakavarga: [],
+                    compatibility: [],
+                    numerology: []
+                },
+                hasDivisional: false,
+                hasAshtakavarga: false,
+                hasNumerology: false,
+                hasCompatibility: false,
+                hasHorary: true,
+            },
+        };
+        return CAPABILITIES[system.toLowerCase()] || CAPABILITIES.lahiri;
+    },
 };
 
 // ============ FAMILY API ============
