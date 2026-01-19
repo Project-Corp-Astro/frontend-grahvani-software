@@ -195,7 +195,8 @@ export default function NorthIndianChart({
                                     // Spacing logic: more compact if many planets
                                     const spacing = boxPlanets.length > 4 ? 12 : 15;
                                     const yOffset = (i * spacing) - ((boxPlanets.length - 1) * (spacing / 2));
-                                    const displayName = p.isRetro ? `${p.name}R` : p.name;
+                                    // Use professional retrograde symbol ℞
+                                    const displayName = p.isRetro ? `${p.name}℞` : p.name;
 
                                     return (
                                         <g key={p.name} transform={`translate(0, ${yOffset})`}>

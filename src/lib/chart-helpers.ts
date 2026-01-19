@@ -47,11 +47,15 @@ export function parseChartData(chartData: any): ProcessedChartData {
             // Parse house if available (ensure it's a number)
             const house = value?.house ? parseInt(value.house) : undefined;
 
+            // Rahu and Ketu are always retrograde - don't show marker (Vedic convention)
+            const isRahuKetu = name === 'Ra' || name === 'Ke';
+            const hasRetrograde = value?.retrograde === 'R' || value?.retrograde === true || value?.is_retro === true;
+
             return {
                 name,
                 signId: signNameToId[normalizedSign] || 1,
                 degree: formatPlanetDegree(rawDegree),
-                isRetro: value?.retrograde === 'R' || value?.retrograde === true || value?.is_retro === true,
+                isRetro: isRahuKetu ? false : hasRetrograde, // Never show R for Rahu/Ketu
                 house
             };
         });
