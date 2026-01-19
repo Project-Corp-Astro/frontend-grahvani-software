@@ -6,17 +6,39 @@ export interface Planet {
     signId: number;
     degree: string;
     isRetro?: boolean;
+    house?: number;
 }
 
 interface NorthIndianChartProps {
     planets: Planet[];
-    ascendantSign: number;
+    ascendantSign: number; // 1-12
     className?: string;
-    onHouseClick?: (houseNumber: number) => void; // New prop for interactivity
+    onHouseClick?: (houseNumber: number) => void;
+    houseValues?: Record<number, number>; // Map of HouseNumber (1-12) to Value (e.g. Bindus)
+    valueType?: 'bindu' | 'none';
 }
 
-export default function NorthIndianChart({ planets, ascendantSign, className = "", onHouseClick }: NorthIndianChartProps) {
+export default function NorthIndianChart({
+    planets,
+    ascendantSign,
+    className = "",
+    onHouseClick,
+    houseValues,
+    valueType = 'none'
+}: NorthIndianChartProps) {
     const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
+
+    // Helpers for Heatmap
+    const getHouseColor = (houseNum: number) => {
+        if (!houseValues || !houseValues[houseNum]) return "transparent";
+        const val = houseValues[houseNum];
+        if (valueType === 'bindu') {
+            if (val >= 32) return "rgba(16, 185, 129, 0.15)"; // Emerald
+            if (val >= 28) return "rgba(208, 140, 96, 0.1)"; // Copper/Gold
+            if (val < 20) return "rgba(225, 29, 72, 0.1)"; // Red
+        }
+        return "transparent";
+    };
 
     // North Indian Style (Diamond Chart)
     // Signs are MUTABLE (Houses are fixed).
@@ -108,15 +130,15 @@ export default function NorthIndianChart({ planets, ascendantSign, className = "
                 <line x1="390" y1="200" x2="200" y2="10" />
             </g>
 
-            {/* Invisible Clickable Regions for Houses */}
-            {onHouseClick && houseCenters.map((pos) => (
+            {/* Clickable Regions & Heatmap for Houses */}
+            {houseCenters.map((pos) => (
                 <polygon
-                    key={`click-${pos.h}`}
+                    key={`poly-${pos.h}`}
                     points={housePolygons[pos.h]}
-                    fill={hoveredHouse === pos.h ? "rgba(208, 140, 96, 0.15)" : "transparent"}
+                    fill={hoveredHouse === pos.h ? "rgba(208, 140, 96, 0.25)" : getHouseColor(pos.h)}
                     stroke="transparent"
                     strokeWidth="0"
-                    className="cursor-pointer transition-all duration-300"
+                    className={cn("transition-all duration-300", onHouseClick && "cursor-pointer")}
                     onMouseEnter={() => setHoveredHouse(pos.h)}
                     onMouseLeave={() => setHoveredHouse(null)}
                     onClick={() => handleHouseClick(pos.h)}
@@ -126,7 +148,9 @@ export default function NorthIndianChart({ planets, ascendantSign, className = "
             {/* Render Houses & Planets */}
             {houseCenters.map((pos) => {
                 const signId = ((ascSign + pos.h - 2) % 12) + 1;
-                const boxPlanets = planets.filter(p => p.signId === signId);
+                const boxPlanets = planets
+                    .filter(p => (p.house ? p.house === pos.h : p.signId === signId))
+                    .sort((a, b) => a.degree.localeCompare(b.degree));
                 const isHovered = hoveredHouse === pos.h;
 
                 return (
@@ -135,48 +159,78 @@ export default function NorthIndianChart({ planets, ascendantSign, className = "
                         <text
                             x={pos.x}
                             y={pos.y + (pos.h === 1 || pos.h === 4 || pos.h === 7 || pos.h === 10 ? 32 : pos.h === 2 || pos.h === 12 ? 22 : -22)}
-                            fontSize="22"
+                            fontSize="18"
                             fontFamily="serif"
                             fontWeight="900"
                             fill="#3D2618"
+                            fillOpacity="0.4"
                             textAnchor="middle"
                             dominantBaseline="central"
-                            className={cn(
-                                "select-none transition-all duration-300 cursor-default",
-                                isHovered && "scale-110"
-                            )}
-                            style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
+                            className="select-none pointer-events-none"
                         >
                             {signId}
                         </text>
 
-                        {/* Planets List - Clustered in centers */}
-                        {
-                            boxPlanets.map((p, i) => {
-                                const yOffset = (i * 14) - ((boxPlanets.length - 1) * 7);
-                                return (
-                                    <g key={p.name} transform={`translate(${pos.x}, ${pos.y + yOffset})`}>
-                                        <text
-                                            fontSize="13"
-                                            fontFamily="serif"
-                                            fontWeight="900"
-                                            fill="#3D2618"
-                                            textAnchor="middle"
-                                            dominantBaseline="central"
-                                            className={cn(
-                                                "select-none shadow-sm transition-all duration-300",
-                                                isHovered && "font-black"
-                                            )}
-                                        >
-                                            {p.name}
-                                        </text>
-                                        {p.isRetro && (
-                                            <text x="12" y="4" fontSize="6" fontWeight="black" fill="#D08C60">R</text>
-                                        )}
-                                    </g>
-                                );
-                            })
-                        }
+                        {/* Ashtakavarga Score / Value */}
+                        {houseValues && houseValues[pos.h] !== undefined && (
+                            <text
+                                x={pos.x}
+                                y={pos.y}
+                                fontSize="34"
+                                fontFamily="serif"
+                                fontWeight="bold"
+                                fill={houseValues[pos.h] < 20 ? "#E11D48" : houseValues[pos.h] >= 30 ? "#10B981" : "#3D2618"}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                className="select-none pointer-events-none"
+                            >
+                                {houseValues[pos.h]}
+                            </text>
+                        )}
+
+                        {/* Planets List - Clustered in centers (smaller if score is showing) */}
+                        <g transform={`translate(${pos.x}, ${pos.y + (houseValues ? 22 : 0)})`}>
+                            {
+                                boxPlanets.map((p, i) => {
+                                    // Spacing logic: more compact if many planets
+                                    const spacing = boxPlanets.length > 4 ? 12 : 15;
+                                    const yOffset = (i * spacing) - ((boxPlanets.length - 1) * (spacing / 2));
+                                    const displayName = p.isRetro ? `${p.name}R` : p.name;
+
+                                    return (
+                                        <g key={p.name} transform={`translate(0, ${yOffset})`}>
+                                            <text
+                                                fontSize={houseValues ? "10" : "13"}
+                                                fontFamily="serif"
+                                                fontWeight="900"
+                                                fill="#3D2618"
+                                                textAnchor="end" /* Align name to right of center */
+                                                x="-2"
+                                                dominantBaseline="central"
+                                                className={cn(
+                                                    "select-none transition-all duration-300",
+                                                    isHovered && "font-black"
+                                                )}
+                                            >
+                                                {displayName}
+                                            </text>
+                                            <text
+                                                fontSize={houseValues ? "8" : "11"}
+                                                fontFamily="sans-serif"
+                                                fontWeight="500"
+                                                fill="#664d03" /* Darker gold/brown for degrees */
+                                                textAnchor="start" /* Align degrees to left of center */
+                                                x="2"
+                                                dominantBaseline="central"
+                                                className="select-none"
+                                            >
+                                                {p.degree}
+                                            </text>
+                                        </g>
+                                    );
+                                })
+                            }
+                        </g>
                     </g>
                 );
             })}

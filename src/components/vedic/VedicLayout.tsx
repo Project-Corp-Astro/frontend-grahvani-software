@@ -21,7 +21,9 @@ import {
     User,
     ArrowLeft,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Shield,
+    Layers
 } from "lucide-react";
 
 // Unified Professional Navigation for the Consultation Workspace
@@ -30,7 +32,9 @@ const VEDIC_NAV_ITEMS: SidebarItem[] = [
     { name: "Analytical Workbench", path: "/workbench", icon: LayoutDashboard },
     { name: "Planetary Details", path: "/planets", icon: Compass },
     { name: "Divisional Charts", path: "/divisional", icon: Map },
+    { name: "Ashtakavarga", path: "/ashtakavarga", icon: Shield },
     { name: "Vimshottari Dasha", path: "/dashas", icon: History },
+    { name: "Chakras", path: "/chakras", icon: Layers },
     { name: "Transits", path: "/transits", icon: Globe },
     { name: "Report Lab", path: "/reports", icon: FileText },
     { name: "Remedies", path: "/remedies", icon: Gem },

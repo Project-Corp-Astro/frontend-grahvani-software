@@ -55,7 +55,9 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
 
     const houseDetails = selectedHouse ? getHouseDetails(selectedHouse, ascendantSign) : null;
     const planetsInHouse = selectedHouse
-        ? planets.filter(p => p.signId === ((ascendantSign + selectedHouse - 2) % 12) + 1)
+        ? planets
+            .filter(p => (p.house ? p.house === selectedHouse : p.signId === ((ascendantSign + selectedHouse - 2) % 12) + 1))
+            .sort((a, b) => a.degree.localeCompare(b.degree))
         : [];
 
     // Determine popup position (left or right of click point)
@@ -111,7 +113,7 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
                         </div>
 
                         {/* Sign Info */}
-                        <div className="bg-parchment rounded-xl p-3 mb-0 border border-antique">
+                        <div className="bg-parchment rounded-xl p-3 mb-3 border border-antique">
                             <div className="flex items-center gap-2 mb-2">
                                 <Star className="w-4 h-4 text-gold-primary" />
                                 <span className="text-xs font-bold text-muted uppercase tracking-wider">Sign</span>
@@ -129,6 +131,31 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
                             </div>
                         </div>
 
+                        {/* Planets in House */}
+                        {planetsInHouse.length > 0 ? (
+                            <div className="bg-white/50 rounded-xl p-3 border border-antique">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles className="w-4 h-4 text-gold-primary" />
+                                    <span className="text-xs font-bold text-muted uppercase tracking-wider">Planets</span>
+                                </div>
+                                <div className="space-y-1">
+                                    {planetsInHouse.map((p, i) => (
+                                        <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-antique/30 last:border-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-serif font-bold text-ink">{p.name} {p.isRetro && '(R)'}</span>
+                                            </div>
+                                            <span className="font-mono text-xs text-gold-dark font-medium bg-gold-primary/10 px-1.5 py-0.5 rounded">
+                                                {p.degree}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="py-2 text-center text-xs text-muted italic bg-parchment/50 rounded-lg border border-antique/30">
+                                No planets in this house
+                            </div>
+                        )}
 
                     </div>
                 </>
