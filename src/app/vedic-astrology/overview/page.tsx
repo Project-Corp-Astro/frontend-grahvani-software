@@ -124,13 +124,82 @@ export default function VedicOverviewPage() {
                 </Link>
             </div>
 
-            {/* 2. CORE SIGNATURES */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <SignatureCard label="Lagna" value="Scorpio" sub="Mars, Ketu, Rahu" />
-                <SignatureCard label="Moon Sign" value={clientDetails.rashi || "Scorpio"} sub="Anuradha Pada 3" highlight />
-                <SignatureCard label="Sun Sign" value="Capricorn" sub="22° 14'" />
-                <SignatureCard label="Nakshatra Lord" value="Saturn" sub="Shani" />
-            </div>
+            {/* 2. CORE SIGNATURES - Dynamically extracted from D1 chart */}
+            {(() => {
+                // Extract core signatures from D1 chart
+                const d1Chart = charts.find(c =>
+                    (c.chartConfig?.system || 'lahiri').toLowerCase() === settings.ayanamsa.toLowerCase()
+                    && c.chartType === 'D1'
+                );
+                const chartData = d1Chart?.chartData;
+
+                // Sign names for ID mapping
+                const signNames = ['', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+
+                // Nakshatra lords
+                const nakshatraLords: Record<string, string> = {
+                    'Ashwini': 'Ketu', 'Bharani': 'Venus', 'Krittika': 'Sun',
+                    'Rohini': 'Moon', 'Mrigashira': 'Mars', 'Ardra': 'Rahu',
+                    'Punarvasu': 'Jupiter', 'Pushya': 'Saturn', 'Ashlesha': 'Mercury',
+                    'Magha': 'Ketu', 'Purva Phalguni': 'Venus', 'Uttara Phalguni': 'Sun',
+                    'Hasta': 'Moon', 'Chitra': 'Mars', 'Swati': 'Rahu',
+                    'Vishakha': 'Jupiter', 'Anuradha': 'Saturn', 'Jyeshtha': 'Mercury',
+                    'Mula': 'Ketu', 'Purva Ashadha': 'Venus', 'Uttara Ashadha': 'Sun',
+                    'Shravana': 'Moon', 'Dhanishta': 'Mars', 'Shatabhisha': 'Rahu',
+                    'Purva Bhadrapada': 'Jupiter', 'Uttara Bhadrapada': 'Saturn', 'Revati': 'Mercury'
+                };
+
+                // Extract values
+                const ascendant = chartData?.ascendant;
+                const lagnaSign = ascendant?.sign || signNames[d1Data.ascendant] || '—';
+                const lagnaDegs = ascendant?.degrees?.split('°')[0] || '';
+
+                const planets = chartData?.planetary_positions || {};
+                const moonData = planets['Moon'] || {};
+                const sunData = planets['Sun'] || {};
+
+                const moonSign = moonData?.sign || clientDetails.rashi || '—';
+                const moonNakshatra = moonData?.nakshatra || '—';
+                const moonPada = moonData?.pada ? `Pada ${moonData.pada}` : '';
+
+                const sunSign = sunData?.sign || '—';
+                const sunDegrees = sunData?.degrees?.split("'")[0]?.replace('°', '° ') || '';
+
+                const nakshatraLord = nakshatraLords[moonNakshatra] || '—';
+
+                // Planets in 1st house for Lagna sub-text
+                const lagnaHousePlanets = Object.entries(planets)
+                    .filter(([_, p]: [string, any]) => p.house === 1)
+                    .map(([name]) => name.substring(0, 2))
+                    .join(', ') || 'No planets';
+
+                return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <SignatureCard
+                            label="Lagna"
+                            value={lagnaSign}
+                            sub={lagnaHousePlanets}
+                        />
+                        <SignatureCard
+                            label="Moon Sign"
+                            value={moonSign}
+                            sub={moonNakshatra && moonPada ? `${moonNakshatra} ${moonPada}` : moonNakshatra}
+                            highlight
+                        />
+                        <SignatureCard
+                            label="Sun Sign"
+                            value={sunSign}
+                            sub={sunDegrees}
+                        />
+                        <SignatureCard
+                            label="Nakshatra Lord"
+                            value={nakshatraLord}
+                            sub={nakshatraLord !== '—' ? nakshatraLords[moonNakshatra] || '' : ''}
+                        />
+                    </div>
+                );
+            })()}
 
             {/* 3. MAIN GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
