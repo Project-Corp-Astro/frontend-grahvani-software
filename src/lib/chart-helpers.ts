@@ -40,7 +40,13 @@ export function parseChartData(chartData: any): ProcessedChartData {
         planets = entries.map((entry) => {
             const key = entry[0];
             const value = entry[1];
-            const name = planetMap[key] || key.substring(0, 2);
+
+            // Extract planet name from various possible fields
+            const rawName = value?.name || value?.planet_name || value?.planet || value?.label || value?.id || key || "??";
+
+            // Normalize for lookup (Capitalize first letter, rest lowercase)
+            const lookupKey = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+            const name = planetMap[lookupKey] || (rawName.length > 3 ? rawName.substring(0, 2) : rawName);
             const sign = value?.sign || value?.sign_name || "";
             const normalizedSign = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
             const rawDegree = value?.degrees || value?.longitude || value?.degree;

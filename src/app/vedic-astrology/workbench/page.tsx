@@ -27,9 +27,43 @@ import { clientApi } from '@/lib/api';
 import { parseChartData, signNameToId, signIdToName } from '@/lib/chart-helpers';
 
 const CHART_NAMES: Record<string, string> = {
-    'D1': 'Rashi (Birth)',
-    // ...
+    // Divisional Charts
+    'D1': 'Rashi (Birth Chart)',
+    'D2': 'Hora (Wealth)',
+    'D3': 'Drekkana (Siblings)',
+    'D4': 'Chaturthamsha (Fortune)',
+    'D7': 'Saptamsha (Children)',
+    'D9': 'Navamsha (Spouse & Soul)',
+    'D10': 'Dashamsha (Career)',
+    'D12': 'Dwadashamsha (Parents)',
+    'D16': 'Shodashamsha (Vehicles)',
+    'D20': 'Vimshamsha (Spirituality)',
+    'D24': 'Chaturvimshamsha (Education)',
+    'D27': 'Bhamsha (Strength)',
+    'D30': 'Trimshamsha (Misfortunes)',
+    'D40': 'Khavedamsha (Auspiciousness)',
+    'D45': 'Akshavedamsha (General)',
     'D60': 'Shashtiamsha (Past Karma)',
+
+    // Chandra & Surya Lagna
+    'moon': 'Chandra Lagna (Moon Chart)',
+    'moon_chart': 'Chandra Lagna (Moon Chart)',
+    'sun': 'Surya Lagna (Sun Chart)',
+    'sun_chart': 'Surya Lagna (Sun Chart)',
+
+    // Special Lagnas & Analysis
+    'arudha': 'Arudha Lagna (Perception)',
+    'arudha_lagna': 'Arudha Lagna (Perception)',
+    'bhava': 'Bhava Lagna (Relative Strength)',
+    'bhava_lagna': 'Bhava Lagna (Relative Strength)',
+    'hora': 'Hora Lagna (Prosperity)',
+    'hora_lagna': 'Hora Lagna (Prosperity)',
+    'karkamsha': 'Karkamsha (Soul Desire)',
+    'sripathi': 'Sripathi Bhava (House Analysis)',
+    'sripathi_bhava': 'Sripathi Bhava (House Analysis)',
+    'kp_bhava': 'KP Bhava (Stellar System)',
+    'equal_bhava': 'Equal Bhava',
+    'sudarshan': 'Sudarshan Chakra',
 };
 
 export default function AnalyticalWorkbenchPage() {
@@ -44,6 +78,7 @@ export default function AnalyticalWorkbenchPage() {
     const systemCapabilities = clientApi.getSystemCapabilities(settings.ayanamsa);
     const divisionalCharts = systemCapabilities.charts.divisional;
     const lagnaCharts = systemCapabilities.charts.lagna;
+    const specialCharts = systemCapabilities.charts.special;
 
     const fetchCharts = async () => {
         if (!clientDetails?.id) return;
@@ -68,7 +103,20 @@ export default function AnalyticalWorkbenchPage() {
     }, [clientDetails?.id, settings.ayanamsa]);
 
     const activeSystem = settings.ayanamsa.toLowerCase();
-    const currentChart = charts.find(c => c.chartType === selectedChartType && (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem);
+
+    // Normalize chart type for matching with backend (e.g., 'moon' -> 'moon_chart')
+    const getMatchTarget = (type: string) => {
+        if (type === 'moon') return 'moon_chart';
+        if (type === 'sun') return 'sun_chart';
+        return type;
+    };
+
+    const targetType = getMatchTarget(selectedChartType).toLowerCase();
+    const currentChart = charts.find(c => {
+        const type = (c.chartType || '').toLowerCase();
+        return (type === targetType || type === selectedChartType.toLowerCase()) &&
+            (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem;
+    });
 
     // Use shared parser
     const { planets: displayPlanets, ascendant: ascendantSign } = parseChartData(currentChart?.chartData);
@@ -113,12 +161,17 @@ export default function AnalyticalWorkbenchPage() {
                                 <h2 className="font-serif font-bold text-ink flex items-center gap-2">{activeTab === 'lagna' ? <Layers className="w-5 h-5 text-gold-primary" /> : <Activity className="w-5 h-5 text-gold-primary" />} {activeTab === 'lagna' ? 'Lagna Manifestation' : 'Interactive Visualization'}</h2>
                                 <select className="text-sm bg-parchment border border-antique rounded-lg px-3 py-1.5 focus:outline-none focus:border-gold-primary" value={selectedChartType} onChange={e => setSelectedChartType(e.target.value)}>
                                     {activeTab === 'chart' ? (
-                                        <optgroup label="Divisional Charts">
-                                            {divisionalCharts.map(c => <option key={c} value={c}>{c} - {CHART_NAMES[c] || c}</option>)}
-                                        </optgroup>
+                                        <>
+                                            <optgroup label="Divisional Charts (Vargas)">
+                                                {divisionalCharts.map(c => <option key={c} value={c}>{c} - {CHART_NAMES[c] || c}</option>)}
+                                            </optgroup>
+                                            <optgroup label="Special Focus Charts">
+                                                {specialCharts.map(c => <option key={c} value={c}>{CHART_NAMES[c] || c.toUpperCase()}</option>)}
+                                            </optgroup>
+                                        </>
                                     ) : (
-                                        <optgroup label="Special Lagnas">
-                                            {lagnaCharts.map(c => <option key={c} value={c}>{c.toUpperCase()} Analysis</option>)}
+                                        <optgroup label="Lagna Analysis">
+                                            {lagnaCharts.map(c => <option key={c} value={c}>{CHART_NAMES[c] || c.toUpperCase() + ' Analysis'}</option>)}
                                         </optgroup>
                                     )}
                                 </select>

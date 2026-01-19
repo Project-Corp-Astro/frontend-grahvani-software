@@ -66,26 +66,33 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
             : '',
     });
 
+    // Track if birth data was actually modified by user
+    const [birthDataModified, setBirthDataModified] = useState(false);
+
     // Parse initial birth time - Critical Fix for Timezone Shifts
     // We treat birth time as "face value" (local clock time at birth place)
     // The backend stores this as UTC. We must retrieve UTC components to avoid local timezone shifts.
     useEffect(() => {
         if (initialData?.birthTime) {
-            let hours, minutes;
+            let hours, minutes, seconds = 0;
             if (initialData.birthTime.includes('T')) {
                 // It's an ISO string (e.g. "1970-01-01T10:00:00.000Z")
                 // Parse it as a Date and extract UTC components
                 const dt = new Date(initialData.birthTime);
                 hours = dt.getUTCHours();
                 minutes = dt.getUTCMinutes();
+                seconds = dt.getUTCSeconds();
             } else {
                 // It's a simple time string (e.g. "10:00:00")
-                [hours, minutes] = initialData.birthTime.split(':').map(Number);
+                const parts = initialData.birthTime.split(':').map(Number);
+                hours = parts[0];
+                minutes = parts[1];
+                seconds = parts[2] || 0;
             }
 
-            // Create a local date object with these "face value" hours/minutes
-            const timeDate = new Date();
-            timeDate.setHours(hours, minutes, 0, 0);
+            // CRITICAL: Create date with the TIME components as-is
+            // Use a fixed base date (1970-01-01) stored as UTC to avoid local TZ conversion
+            const timeDate = new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
             setFormData(prev => ({ ...prev, timeOfBirth: timeDate }));
         }
         if (initialData?.birthPlace) {
@@ -94,7 +101,21 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
     }, [initialData]);
 
     const handleChange = (field: string, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        // For timeOfBirth, convert the local Date to UTC storage format
+        // This ensures consistent UTC extraction during form submission
+        if (field === 'timeOfBirth' && value instanceof Date) {
+            // The time picker gives us a Date with local hours/minutes
+            // We need to store it as UTC with those same hour/minute values
+            const utcDate = new Date(Date.UTC(
+                1970, 0, 1,
+                value.getHours(),
+                value.getMinutes(),
+                value.getSeconds()
+            ));
+            setFormData(prev => ({ ...prev, [field]: utcDate }));
+        } else {
+            setFormData(prev => ({ ...prev, [field]: value }));
+        }
     };
 
     // Debounced location search
@@ -159,18 +180,21 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                 phoneSecondary: formData.phoneSecondary || undefined,
 
                 // Birth details - crucial for astrology
-                // Prisma expects ISO-8601 DateTime, so combine date and time
+                // CRITICAL: We store timeOfBirth as UTC in state, so extract using UTC methods
                 birthDate: formData.dateOfBirth
                     ? new Date(
                         formData.dateOfBirth.getFullYear(),
                         formData.dateOfBirth.getMonth(),
                         formData.dateOfBirth.getDate(),
-                        formData.timeOfBirth ? formData.timeOfBirth.getHours() : 0,
-                        formData.timeOfBirth ? formData.timeOfBirth.getMinutes() : 0,
-                        formData.timeOfBirth ? formData.timeOfBirth.getSeconds() : 0
+                        formData.timeOfBirth ? formData.timeOfBirth.getUTCHours() : 0,
+                        formData.timeOfBirth ? formData.timeOfBirth.getUTCMinutes() : 0,
+                        formData.timeOfBirth ? formData.timeOfBirth.getUTCSeconds() : 0
                     ).toISOString()
                     : undefined,
-                birthTime: formData.timeOfBirth ? format(formData.timeOfBirth, 'HH:mm:ss') : undefined,
+                // Format time using UTC components to preserve the exact value
+                birthTime: formData.timeOfBirth
+                    ? `${formData.timeOfBirth.getUTCHours().toString().padStart(2, '0')}:${formData.timeOfBirth.getUTCMinutes().toString().padStart(2, '0')}:${formData.timeOfBirth.getUTCSeconds().toString().padStart(2, '0')}`
+                    : undefined,
                 birthPlace: formData.birthPlace || undefined,
                 birthLatitude: formData.birthLatitude,
                 birthLongitude: formData.birthLongitude,
