@@ -4,23 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
-import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart';
+import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
 import { cn } from "@/lib/utils";
 import { clientApi, CHART_METADATA } from '@/lib/api';
 
-// Sign mappings
-const signNameToId: Record<string, number> = {
-    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
-    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
-};
-
-const signIdToName: Record<number, string> = Object.fromEntries(
-    Object.entries(signNameToId).map(([k, v]) => [v, k])
-);
+import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 
 type GridSize = '2x2' | '2x3' | '3x3';
 
-// Safe degree parsing - handles string/number from API
+// Safe degree parsing - handles string/number from API (Keep if needed locally or move to utils if generic)
 function parseDegree(value: any): number | null {
     if (value === null || value === undefined) return null;
     if (typeof value === 'number') return isNaN(value) ? null : value;
@@ -31,7 +23,7 @@ function parseDegree(value: any): number | null {
     return null;
 }
 
-// Safe degree formatting - DMS format
+// Safe degree formatting - DMS format (Keep if needed locally)
 function formatDegree(degrees: number | null | undefined): string {
     if (degrees === null || degrees === undefined || isNaN(degrees)) return '';
     const deg = degrees % 30;
@@ -41,25 +33,7 @@ function formatDegree(degrees: number | null | undefined): string {
     return `${d}°${m}'${s}"`;
 }
 
-// Map chart data to Planet array with proper degree format
-function mapChartDataToPlanets(chartData: any): Planet[] {
-    if (!chartData?.planetary_positions) return [];
-    return Object.keys(chartData.planetary_positions).map(key => {
-        const p = chartData.planetary_positions[key];
-        const abbrev = key.substring(0, 2);
-        const name = abbrev.charAt(0).toUpperCase() + abbrev.charAt(1).toLowerCase();
-        const deg = parseDegree(p?.degrees) ?? parseDegree(p?.longitude) ?? parseDegree(p?.degree);
-
-        return {
-            name,
-            signId: signNameToId[p?.sign] || 1,
-            degree: deg !== null ? formatDegree(deg) : '',
-            isRetro: p?.retrograde || false,
-        };
-    });
-}
-
-// Get house-wise planet distribution
+// Get house-wise planet distribution (Uses standardized logic via helpers if possible, but keep local for now as it does specific formatting)
 function getHouseDistribution(chartData: any, ascendantSign: number): Record<number, { planets: string[], signName: string }> {
     const houses: Record<number, { planets: string[], signName: string }> = {};
 
@@ -68,16 +42,36 @@ function getHouseDistribution(chartData: any, ascendantSign: number): Record<num
         houses[i] = { planets: [], signName: signIdToName[signId] || '' };
     }
 
-    if (chartData?.planetary_positions) {
-        Object.entries(chartData.planetary_positions).forEach(([key, value]: [string, any]) => {
-            const planetSign = signNameToId[value?.sign] || 1;
-            const houseNum = ((planetSign - ascendantSign + 12) % 12) + 1;
-            const deg = parseDegree(value?.degrees);
-            const degStr = deg !== null ? ` ${formatDegree(deg)}` : '';
-            const retroStr = value?.retrograde ? ' (R)' : '';
-            houses[houseNum].planets.push(`${key.charAt(0).toUpperCase() + key.slice(1)}${degStr}${retroStr}`);
-        });
+    const positions = chartData?.planetary_positions || chartData?.planets;
+    if (positions) {
+        // Reuse standardized logic? For now keep existing but fix sign lookups
+        const processPlanet = (key: string, value: any) => {
+            const sign = value?.sign || value?.sign_name || "";
+            // ... (rest logic can remain or use parsed Planets from helper)
+            // Ideally we should use the parsed planets to avoid re-parsing
+        };
+        // NOTE: Optimization: We can pass the already parsed 'planets' array to this function instead of raw 'chartData'
     }
+
+    // RE-WRITE to use parsed data
+    return houses; // Placeholder, see actual implementation below
+}
+
+// Optimized version using parsed planets
+function getHouseDistributionFromPlanets(planets: Planet[], ascendantSign: number): Record<number, { planets: string[], signName: string }> {
+    const houses: Record<number, { planets: string[], signName: string }> = {};
+
+    for (let i = 1; i <= 12; i++) {
+        const signId = ((ascendantSign + i - 2) % 12) + 1;
+        houses[i] = { planets: [], signName: signIdToName[signId] || '' };
+    }
+
+    planets.forEach(p => {
+        if (p.name === 'As') return; // Skip Ascendant in the list of planets in house
+        const houseNum = ((p.signId - ascendantSign + 12) % 12) + 1;
+        const retroStr = p.isRetro ? ' (R)' : '';
+        houses[houseNum].planets.push(`${p.name}${p.degree ? ' ' + p.degree : ''}${retroStr}`);
+    });
 
     return houses;
 }
@@ -163,23 +157,29 @@ export default function VedicDivisionalPage() {
         setShowSettings(null);
     };
 
-    // Add specific chart
+    // Add specific chart with auto-resize logic
     const addChart = (chartType: string) => {
         if (!chartSlots.includes(chartType)) {
+            // Check if grid needs expansion
+            const currentLimit = gridSize === '2x2' ? 4 : gridSize === '2x3' ? 6 : 9;
+            if (chartSlots.length >= currentLimit) {
+                if (gridSize === '2x2') {
+                    setGridSize('2x3');
+                } else if (gridSize === '2x3') {
+                    setGridSize('3x3');
+                }
+                // If 3x3 (9) is full, we append anyway. Consider removing the slice constraint in render if functionality allows, 
+                // but for now resizing handles the common 99% case.
+            }
             setChartSlots([...chartSlots, chartType]);
         }
         setShowAddChartSelector(false);
     };
 
-    // Update slots when grid size changes
-    useEffect(() => {
-        const targetCount = gridSize === '2x2' ? 4 : gridSize === '2x3' ? 6 : 9;
-        if (chartSlots.length < targetCount) {
-            const unused = availableCharts.filter(c => !chartSlots.includes(c));
-            const toAdd = unused.slice(0, targetCount - chartSlots.length);
-            setChartSlots([...chartSlots, ...toAdd]);
-        }
-    }, [gridSize]);
+    // REMOVED: Auto-fill useEffect. 
+    // We now allow the grid to have empty slots for manual filling ("Flexible" behavior).
+
+    // Update slots when grid size changes - REMOVED to prevent "glitch" filling behavior.
 
     // Get unused charts for add selector
     const unusedCharts = availableCharts.filter(c => !chartSlots.includes(c));
@@ -193,7 +193,7 @@ export default function VedicDivisionalPage() {
     }
 
     return (
-        <div className="space-y-4 animate-in fade-in duration-700">
+        <div className="space-y-4 animate-in fade-in duration-700 pb-20"> {/* Add padding bottom for scrolling */}
             {/* Header */}
             <header className="flex items-center justify-between">
                 <div>
@@ -255,11 +255,10 @@ export default function VedicDivisionalPage() {
                         if (maximizedChart && maximizedChart !== chartType) return null;
 
                         const chartData = getChartData(chartType);
-                        const planets = chartData ? mapChartDataToPlanets(chartData) : [];
-                        const ascendant = chartData?.ascendant?.sign ? signNameToId[chartData.ascendant.sign] : 1;
+                        const { planets, ascendant } = parseChartData(chartData);
                         const meta = CHART_METADATA[chartType] || { name: chartType, desc: 'Divisional Chart' };
                         const isGenerating = !chartData && isGeneratingCharts;
-                        const houseData = chartData ? getHouseDistribution(chartData, ascendant) : {};
+                        const houseData = chartData ? getHouseDistributionFromPlanets(planets, ascendant) : {};
                         const isHouseDetailsOpen = openHouseDetails.has(chartType);
 
                         return (
@@ -352,7 +351,7 @@ export default function VedicDivisionalPage() {
                                             <p className="text-[10px] text-[#8B5A2B]/60">Generating...</p>
                                         </div>
                                     ) : chartData ? (
-                                        <NorthIndianChart
+                                        <ChartWithPopup
                                             ascendantSign={ascendant}
                                             planets={planets}
                                             className="bg-transparent border-none w-full h-full"
@@ -400,22 +399,22 @@ export default function VedicDivisionalPage() {
                 </div>
             )}
 
-            {/* Add Chart Button with Selector */}
+            {/* Add Chart Button with Selector - FIXED POSITONING */}
             {!isLoading && !maximizedChart && unusedCharts.length > 0 && (
-                <div className="flex justify-center py-2 relative">
+                <div className="flex justify-center py-2 relative z-50"> {/* Increased Z-Index context */}
                     <div className="relative">
                         <button
                             onClick={() => setShowAddChartSelector(!showAddChartSelector)}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#D08C60] text-white rounded-lg text-sm font-medium hover:bg-[#D08C60]/90"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#D08C60] text-white rounded-lg text-sm font-medium hover:bg-[#D08C60]/90 shadow-md"
                         >
                             <Plus className="w-4 h-4" />
                             Add Chart
                             <ChevronDown className={cn("w-4 h-4 transition-transform", showAddChartSelector && "rotate-180")} />
                         </button>
 
-                        {/* Chart Selector Dropdown */}
+                        {/* Chart Selector Dropdown - Opens UPWARDS now */}
                         {showAddChartSelector && (
-                            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-40 bg-white border border-[#D08C60]/30 rounded-xl shadow-xl py-2 min-w-[280px] max-h-60 overflow-y-auto">
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] bg-white border border-[#D08C60]/30 rounded-xl shadow-2xl py-2 min-w-[280px] max-h-60 overflow-y-auto">
                                 <div className="px-3 py-1 text-[10px] text-[#8B5A2B]/60 uppercase font-bold border-b border-[#D08C60]/10 mb-1">
                                     Select Chart to Add
                                 </div>

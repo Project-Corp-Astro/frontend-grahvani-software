@@ -51,32 +51,43 @@ function formatDegree(degrees: number | null | undefined): string {
 
 // Map API data to transit format
 function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlanet[] {
-    if (!chartData?.planetary_positions) return [];
+    if (!chartData) return [];
+    const positions = chartData.planetary_positions || chartData.planets;
+    if (!positions) return [];
 
-    return Object.entries(chartData.planetary_positions).map(([key, value]: [string, any]) => {
+    const processPlanet = (key: string, value: any): TransitPlanet => {
         const name = key.charAt(0).toUpperCase() + key.slice(1);
-        const signId = signNameToId[value?.sign] || 1;
+        const sign = value?.sign || value?.sign_name || "";
+        const normalized = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
+        const signId = signNameToId[normalized] || 1;
         const house = ((signId - natalAscendant + 12) % 12) + 1;
 
         // Safely extract degrees - API may return string or number
         const deg = parseDegree(value?.degrees) ?? parseDegree(value?.longitude) ?? parseDegree(value?.degree);
 
         let status = 'Neutral';
-        if (value?.dignity === 'Exalted') status = 'Exalted';
-        else if (value?.dignity === 'Debilitated') status = 'Debilitated';
-        else if (value?.dignity === 'Own Sign' || value?.dignity === 'Moolatrikona') status = 'Strong';
-        else if (value?.dignity === 'Friend') status = 'Friend';
+        const dignity = value?.dignity || value?.dignity_name || "";
+        if (dignity === 'Exalted') status = 'Exalted';
+        else if (dignity === 'Debilitated') status = 'Debilitated';
+        else if (dignity === 'Own Sign' || dignity === 'Moolatrikona') status = 'Strong';
+        else if (dignity === 'Friend') status = 'Friend';
 
         return {
             planet: name,
-            sign: value?.sign || 'Unknown',
+            sign: normalized || 'Unknown',
             degree: formatDegree(deg),
             house,
             status,
-            isRetro: value?.retrograde || false,
-            nakshatra: value?.nakshatra || '—',
+            isRetro: value?.retrograde || value?.is_retro || false,
+            nakshatra: value?.nakshatra || value?.nakshatra_name || '—',
         };
-    });
+    };
+
+    if (Array.isArray(positions)) {
+        return positions.map((p: any) => processPlanet(p.name || p.planet_name || "??", p));
+    }
+
+    return Object.entries(positions).map(([key, value]: [string, any]) => processPlanet(key, value));
 }
 
 export default function TransitsPage() {

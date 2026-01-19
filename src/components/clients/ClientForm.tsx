@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, MapPin, Calendar, Globe, Phone, Mail, Briefcase, Search, Loader2 } from 'lucide-react';
+import { User, MapPin, Calendar, Globe, Phone, Mail, Briefcase, Search, Loader2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import GoldenButton from "@/components/GoldenButton";
 import ParchmentInput from "@/components/ui/ParchmentInput";
@@ -28,6 +28,7 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
     const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+    const [manualCoordinates, setManualCoordinates] = useState(false);
 
     // Form State - All fields for comprehensive client registration
     const [formData, setFormData] = useState({
@@ -58,12 +59,31 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
         city: initialData?.city || '',
         state: initialData?.state || '',
         country: initialData?.country || '',
+
+        // Additional Information
+        notes: (initialData?.notes && Array.isArray(initialData.notes) && initialData.notes.length > 0)
+            ? initialData.notes[0].noteContent // Get the latest/first note content
+            : '',
     });
 
-    // Parse initial birth time
+    // Parse initial birth time - Critical Fix for Timezone Shifts
+    // We treat birth time as "face value" (local clock time at birth place)
+    // The backend stores this as UTC. We must retrieve UTC components to avoid local timezone shifts.
     useEffect(() => {
         if (initialData?.birthTime) {
-            const [hours, minutes] = initialData.birthTime.split(':').map(Number);
+            let hours, minutes;
+            if (initialData.birthTime.includes('T')) {
+                // It's an ISO string (e.g. "1970-01-01T10:00:00.000Z")
+                // Parse it as a Date and extract UTC components
+                const dt = new Date(initialData.birthTime);
+                hours = dt.getUTCHours();
+                minutes = dt.getUTCMinutes();
+            } else {
+                // It's a simple time string (e.g. "10:00:00")
+                [hours, minutes] = initialData.birthTime.split(':').map(Number);
+            }
+
+            // Create a local date object with these "face value" hours/minutes
             const timeDate = new Date();
             timeDate.setHours(hours, minutes, 0, 0);
             setFormData(prev => ({ ...prev, timeOfBirth: timeDate }));
@@ -166,7 +186,11 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                 city: formData.city || undefined,
                 state: formData.state || undefined,
                 country: formData.country || undefined,
-            };
+
+                // Metadata - Cast to any to bypass strict type checking until types are fully synced
+                // The backend accepts 'notes' as a string in the update payload
+                notes: formData.notes || undefined,
+            } as any;
 
             let client: Client;
 
@@ -208,43 +232,63 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                    <ParchmentInput
-                        placeholder="First Name"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) => handleChange('firstName', e.target.value)}
-                    />
-                    <ParchmentInput
-                        placeholder="Last Name"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) => handleChange('lastName', e.target.value)}
-                    />
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            First Name <span className="text-red-500">*</span>
+                        </label>
+                        <ParchmentInput
+                            placeholder="First Name"
+                            required
+                            value={formData.firstName}
+                            onChange={(e) => handleChange('firstName', e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            Last Name <span className="text-red-500">*</span>
+                        </label>
+                        <ParchmentInput
+                            placeholder="Last Name"
+                            required
+                            value={formData.lastName}
+                            onChange={(e) => handleChange('lastName', e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ParchmentSelect
-                        label="Gender"
-                        value={formData.gender}
-                        onChange={(e) => handleChange('gender', e.target.value)}
-                        options={[
-                            { value: 'female', label: 'Female' },
-                            { value: 'male', label: 'Male' },
-                            { value: 'other', label: 'Other' }
-                        ]}
-                    />
-                    <ParchmentSelect
-                        label="Marital Status"
-                        value={formData.maritalStatus}
-                        onChange={(e) => handleChange('maritalStatus', e.target.value)}
-                        options={[
-                            { value: '', label: 'Select Status' },
-                            { value: 'single', label: 'Single' },
-                            { value: 'married', label: 'Married' },
-                            { value: 'divorced', label: 'Divorced' },
-                            { value: 'widowed', label: 'Widowed' }
-                        ]}
-                    />
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            Gender <span className="text-red-500">*</span>
+                        </label>
+                        <ParchmentSelect
+                            label=""
+                            value={formData.gender}
+                            onChange={(e) => handleChange('gender', e.target.value)}
+                            options={[
+                                { value: 'female', label: 'Female' },
+                                { value: 'male', label: 'Male' },
+                                { value: 'other', label: 'Other' }
+                            ]}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            Marital Status
+                        </label>
+                        <ParchmentSelect
+                            label=""
+                            value={formData.maritalStatus}
+                            onChange={(e) => handleChange('maritalStatus', e.target.value)}
+                            options={[
+                                { value: '', label: 'Select Status' },
+                                { value: 'single', label: 'Single' },
+                                { value: 'married', label: 'Married' },
+                                { value: 'divorced', label: 'Divorced' },
+                                { value: 'widowed', label: 'Widowed' }
+                            ]}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -297,24 +341,37 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    <ParchmentDatePicker
-                        label="Date of Birth"
-                        placeholder="Select Birth Date"
-                        date={formData.dateOfBirth}
-                        setDate={(date) => handleChange('dateOfBirth', date)}
-                    />
-                    <ParchmentTimePicker
-                        label="Time of Birth"
-                        placeholder="Select Birth Time"
-                        date={formData.timeOfBirth}
-                        setDate={(date) => handleChange('timeOfBirth', date)}
-                    />
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            Date of Birth <span className="text-red-500">*</span>
+                        </label>
+                        <ParchmentDatePicker
+                            label=""
+                            placeholder="Select Birth Date"
+                            date={formData.dateOfBirth}
+                            setDate={(date) => handleChange('dateOfBirth', date)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                            Time of Birth <span className="text-red-500">*</span>
+                        </label>
+                        <ParchmentTimePicker
+                            label=""
+                            placeholder="Select Birth Time"
+                            date={formData.timeOfBirth}
+                            setDate={(date) => handleChange('timeOfBirth', date)}
+                        />
+                    </div>
                 </div>
 
                 {/* Birth Time Accuracy */}
                 <div className="mb-8">
+                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                        Birth Time Accuracy
+                    </label>
                     <ParchmentSelect
-                        label="Birth Time Accuracy"
+                        label=""
                         value={formData.birthTimeAccuracy}
                         onChange={(e) => handleChange('birthTimeAccuracy', e.target.value)}
                         options={[
@@ -328,8 +385,8 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
 
                 {/* Birth Place with Autocomplete */}
                 <div className="mb-8">
-                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-3">
-                        Place of Birth
+                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                        Place of Birth <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                         <div className="relative">
@@ -372,41 +429,90 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                     </div>
                 </div>
 
-                {/* Coordinates Display (Editable) */}
-                {formData.birthLatitude !== undefined && formData.birthLongitude !== undefined && (
+                {/* Manual Coordinates Toggle */}
+                <div className="mt-4 flex items-center gap-3">
+                    <input
+                        type="checkbox"
+                        id="manualCoords"
+                        checked={manualCoordinates}
+                        onChange={(e) => {
+                            setManualCoordinates(e.target.checked);
+                            // Initialize coordinates if enabling manual mode and they're empty
+                            if (e.target.checked && formData.birthLatitude === undefined) {
+                                handleChange('birthLatitude', 0);
+                                handleChange('birthLongitude', 0);
+                                handleChange('birthTimezone', 'Asia/Kolkata');
+                            }
+                        }}
+                        className="w-4 h-4 accent-[#9C7A2F] cursor-pointer"
+                    />
+                    <label htmlFor="manualCoords" className="text-sm text-[#3E2A1F] font-serif cursor-pointer">
+                        Enter coordinates manually (for precise calculations)
+                    </label>
+                </div>
+
+                {/* Coordinates Display - Now shows for manual mode OR after location selection */}
+                {(manualCoordinates || (formData.birthLatitude !== undefined && formData.birthLongitude !== undefined)) && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-[#FEFAEA] rounded-xl border border-[#DCC9A6] shadow-sm">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Latitude</label>
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Latitude <span className="text-red-500">*</span></label>
                             <input
                                 type="number"
                                 step="0.0001"
                                 value={formData.birthLatitude}
                                 onChange={(e) => handleChange('birthLatitude', parseFloat(e.target.value))}
                                 className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Longitude</label>
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Longitude <span className="text-red-500">*</span></label>
                             <input
                                 type="number"
                                 step="0.0001"
                                 value={formData.birthLongitude}
                                 onChange={(e) => handleChange('birthLongitude', parseFloat(e.target.value))}
                                 className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Timezone</label>
+                            <label className="text-[10px] font-bold text-[#9C7A2F] uppercase tracking-wider block">Timezone <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 value={formData.birthTimezone}
                                 onChange={(e) => handleChange('birthTimezone', e.target.value)}
                                 placeholder="e.g. Asia/Kolkata"
                                 className="w-full bg-transparent border-b border-[#DCC9A6] focus:border-[#9C7A2F] focus:outline-none py-1 text-[#3E2A1F] font-serif"
+                                required
                             />
+                        </div>
+                        {/* Validation hints */}
+                        <div className="md:col-span-3 text-xs text-[#9C7A2F]/70 italic">
+                            Latitude: -90 to 90 (e.g., 27.1833 for Agra) • Longitude: -180 to 180 (e.g., 78.0167)
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* 4. Notes & Observations */}
+            <div className="mb-10">
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-[#DCC9A6]">
+                    <FileText className="w-5 h-5 text-[#9C7A2F]" />
+                    <h2 className="font-serif text-xl font-bold text-[#3E2A1F]">Notes & Observations</h2>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                        Client Notes
+                    </label>
+                    <textarea
+                        value={formData.notes}
+                        onChange={(e) => handleChange('notes', e.target.value)}
+                        placeholder="Add any initial observations, specific questions, or important context about the client here..."
+                        className="w-full bg-[#FEFAEA] border border-[#DCC9A6] rounded-lg p-4 min-h-[120px] text-[#3E2A1F] font-serif placeholder:text-[#9C7A2F]/50 focus:outline-none focus:border-[#9C7A2F] transition-colors resize-y"
+                    />
+                </div>
             </div>
 
             {/* Actions */}

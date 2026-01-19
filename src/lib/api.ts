@@ -23,6 +23,7 @@ export interface DashaResponse {
         mahadashas?: DashaPeriod[];
         current_dasha?: DashaPeriod;
     };
+    dasha_list?: any[]; // For deep tree structure
     cached: boolean;
     calculatedAt: string;
 }
@@ -244,6 +245,14 @@ export const clientApi = {
         }),
 
     /**
+     * Trigger exhaustive chart generation (All vargas, dashas, diagrams)
+     */
+    generateFullVedicProfile: (clientId: string): Promise<{ success: boolean; count: number }> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate-full`, {
+            method: 'POST',
+        }),
+
+    /**
      * Generate Vimshottari Dasha periods for a client
      * @param level - 'mahadasha' | 'antardasha' | 'pratyantardasha' | 'sookshma' | 'prana'
      * @param ayanamsa - 'lahiri' | 'raman' | 'kp'
@@ -262,10 +271,20 @@ export const clientApi = {
         }),
 
     /**
-     * Generate Ashtakavarga (Lahiri/Raman only - not available for KP)
+     * Generate Ashtakavarga (Lahiri/Raman only)
+     * @param type - 'bhinna' (default) | 'sarva' | 'shodasha'
      */
-    generateAshtakavarga: (clientId: string, ayanamsa: string = 'lahiri'): Promise<AshtakavargaResponse> =>
+    generateAshtakavarga: (clientId: string, ayanamsa: string = 'lahiri', type: string = 'bhinna'): Promise<AshtakavargaResponse> =>
         apiFetch(`${CLIENT_URL}/clients/${clientId}/ashtakavarga`, {
+            method: 'POST',
+            body: JSON.stringify({ ayanamsa, type }),
+        }),
+
+    /**
+     * Generate Sudarshan Chakra
+     */
+    generateSudarshanChakra: (clientId: string, ayanamsa: string = 'lahiri'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/sudarshan-chakra`, {
             method: 'POST',
             body: JSON.stringify({ ayanamsa }),
         }),

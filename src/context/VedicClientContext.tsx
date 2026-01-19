@@ -55,25 +55,14 @@ export function VedicClientProvider({ children }: { children: ReactNode }) {
             // First check if charts exist
             const existingCharts = await clientApi.getCharts(clientId);
 
-            // If less than 10 charts, generate all core charts
-            if (!existingCharts || existingCharts.length < 10) {
-                console.log('Auto-generating all charts for client:', clientId);
-                await clientApi.generateCoreCharts(clientId);
-
-                // Generate all divisional charts for Lahiri
-                const divisionalCharts = ['D2', 'D3', 'D4', 'D7', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'];
-
-                // Generate in batches to avoid overwhelming the server
-                for (const chart of divisionalCharts) {
-                    try {
-                        await clientApi.generateChart(clientId, chart, 'lahiri');
-                    } catch (err) {
-                        console.warn(`Failed to generate ${chart}:`, err);
-                    }
-                }
+            // If less than 20 charts (exhaustive profile has many more), trigger full generation
+            // This ensures Dasha, Ashtakavarga, and all Vargas are available
+            if (!existingCharts || existingCharts.length < 20) {
+                console.log('Automated technical audit: Missing charts detected. Initializing exhaustive Vedic profile generation for:', clientId);
+                await clientApi.generateFullVedicProfile(clientId);
             }
         } catch (err) {
-            console.error('Auto-generation failed:', err);
+            console.error('Exhaustive auto-generation failed:', err);
         } finally {
             setIsGeneratingCharts(false);
         }
