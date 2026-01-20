@@ -20,12 +20,16 @@ import {
     Shield,
     Compass,
     Layers,
-    Star
+    Star,
+    X,
+    Sparkle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
 import { clientApi, DashaResponse } from '@/lib/api';
+import DoshaAnalysis from '@/components/astrology/DoshaAnalysis';
+import YogaAnalysisView from '@/components/astrology/YogaAnalysis';
 
 import { parseChartData } from '@/lib/chart-helpers';
 
@@ -39,6 +43,7 @@ export default function VedicOverviewPage() {
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
     const [dashaLoading, setDashaLoading] = useState(false);
     const [notes, setNotes] = useState("");
+    const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
 
     // Calculate Age
     const age = clientDetails ? new Date().getFullYear() - new Date(clientDetails.dateOfBirth).getFullYear() : 0;
@@ -85,7 +90,7 @@ export default function VedicOverviewPage() {
     // Helper to get processed data for a specific chart type
     const getProcessedChart = (varga: string) => {
         const activeSystem = settings.ayanamsa.toLowerCase();
-        const chart = charts.find(c => (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem && c.chartType === varga);
+        const chart = charts.find((c: any) => (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem && c.chartType === varga);
         return parseChartData(chart?.chartData); // Returns { planets: [], ascendant: 1 } if no data
     };
 
@@ -127,7 +132,7 @@ export default function VedicOverviewPage() {
             {/* 2. CORE SIGNATURES - Dynamically extracted from D1 chart */}
             {(() => {
                 // Extract core signatures from D1 chart
-                const d1Chart = charts.find(c =>
+                const d1Chart = charts.find((c: any) =>
                     (c.chartConfig?.system || 'lahiri').toLowerCase() === settings.ayanamsa.toLowerCase()
                     && c.chartType === 'D1'
                 );
@@ -279,9 +284,30 @@ export default function VedicOverviewPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div className="bg-softwhite border border-antique rounded-xl p-4">
                     <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-gold-primary" /> Yogas & Doshas</h3>
-                    <div className="space-y-2">
-                        <YogaItem type="yoga" name="Gaja Kesari Yoga" desc="Wisdom & Prosperity" />
-                        <YogaItem type="dosha" name="Mangal Dosha" desc="Marriage considerations" />
+                    <div className="space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                        {charts.filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).length > 0 ? (
+                            charts.filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).slice(0, 8).map((c: any, i: number) => {
+                                const isYoga = c.chartType.startsWith('yoga_');
+                                const type = isYoga ? 'yoga' : 'dosha';
+                                const subType = c.chartType.replace(isYoga ? 'yoga_' : 'dosha_', '');
+                                const label = subType.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+
+                                return (
+                                    <YogaItem
+                                        key={i}
+                                        type={type as any}
+                                        name={label}
+                                        desc={isYoga ? "Benefic Combination" : "Malefic Influence"}
+                                        onClick={() => setAnalysisModal({ type: type as any, subType, label: `${label} ${isYoga ? 'Yoga' : 'Analysis'}` })}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-4 border border-dashed border-antique rounded-lg bg-parchment/30">
+                                <Sparkle className="w-4 h-4 text-muted/30 mb-1" />
+                                <p className="text-[10px] text-muted italic text-center">No major signatures detected in core charts</p>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="bg-softwhite border border-antique rounded-xl p-4">
@@ -301,13 +327,54 @@ export default function VedicOverviewPage() {
             {zoomedChart && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-ink/40 animate-in fade-in zoom-in-95 duration-300">
                     <div className="bg-softwhite border border-antique rounded-3xl p-8 max-w-2xl w-full relative shadow-2xl">
-                        <button onClick={() => setZoomedChart(null)} className="absolute top-4 right-4 px-4 py-2 rounded-lg bg-parchment text-muted hover:bg-gold-primary/20 hover:text-ink text-sm font-medium">Close</button>
+                        <button onClick={() => setZoomedChart(null)} className="absolute top-4 right-4 p-2 rounded-xl bg-parchment text-muted hover:bg-gold-primary/20 hover:text-ink transition-all">
+                            <X className="w-5 h-5" />
+                        </button>
                         <div className="mb-6 text-center">
                             <h2 className="text-2xl font-serif text-ink font-bold">{zoomedChart.label}</h2>
                             <p className="text-xs text-muted uppercase tracking-widest mt-1">{zoomedChart.varga} Divisional Chart</p>
                         </div>
                         <div className="aspect-square w-full max-w-md mx-auto bg-parchment rounded-2xl p-6 border border-antique">
                             <ChartWithPopup ascendantSign={zoomedData.ascendant} planets={zoomedData.planets} className="bg-transparent border-none" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ANALYSIS MODAL */}
+            {analysisModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 backdrop-blur-xl bg-ink/60 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="bg-parchment border border-antique rounded-[2.5rem] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl custom-scrollbar border-b-8 border-gold-primary">
+                        <button onClick={() => setAnalysisModal(null)} className="absolute top-6 right-6 p-2 rounded-2xl bg-white border border-antique text-muted hover:bg-red-50 hover:text-red-500 transition-all">
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Sparkles className="w-4 h-4 text-gold-primary" />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-dark">Lahiri Astrological Report</span>
+                            </div>
+                            <h2 className="text-3xl font-serif text-ink font-bold">{analysisModal.label}</h2>
+                        </div>
+
+                        {analysisModal.type === 'yoga' ? (
+                            <YogaAnalysisView
+                                clientId={clientDetails.id!}
+                                yogaType={analysisModal.subType}
+                                ayanamsa={settings.ayanamsa}
+                            />
+                        ) : (
+                            <DoshaAnalysis
+                                clientId={clientDetails.id!}
+                                doshaType={analysisModal.subType as any}
+                                ayanamsa={settings.ayanamsa}
+                            />
+                        )}
+
+                        <div className="mt-8 pt-6 border-t border-antique/50 text-center">
+                            <p className="text-[10px] text-muted italic">
+                                * This analysis is based on Vedic principles and Lahiri Ayanamsa. Remedies are suggestive and for spiritual guidance.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -358,13 +425,27 @@ function DashaRow({ level, planet, ends, active = false }: { level: string; plan
     );
 }
 
-function YogaItem({ type, name, desc }: { type: "yoga" | "dosha"; name: string; desc: string }) {
+function YogaItem({ type, name, desc, onClick }: { type: "yoga" | "dosha"; name: string; desc: string; onClick?: () => void }) {
     return (
-        <div className="flex items-start gap-2">
-            {type === "yoga" ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600 mt-0.5" /> : <AlertTriangle className="w-3.5 h-3.5 text-orange-500 mt-0.5" />}
-            <div>
-                <p className="text-xs font-semibold text-ink">{name}</p>
-                <p className="text-[10px] text-muted">{desc}</p>
+        <div
+            className={cn(
+                "flex items-start gap-3 p-2 rounded-xl border border-transparent transition-all cursor-pointer group",
+                type === "yoga" ? "hover:bg-green-50 hover:border-green-100" : "hover:bg-orange-50 hover:border-orange-100"
+            )}
+            onClick={onClick}
+        >
+            <div className={cn(
+                "p-1.5 rounded-lg shrink-0",
+                type === "yoga" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-500"
+            )}>
+                {type === "yoga" ? <Sparkle className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-ink truncate group-hover:text-gold-dark transition-colors">{name}</p>
+                <div className="flex items-center justify-between">
+                    <p className="text-[9px] text-muted truncate">{desc}</p>
+                    <ArrowRight className="w-2.5 h-2.5 text-muted/0 group-hover:text-gold-primary group-hover:translate-x-0.5 transition-all" />
+                </div>
             </div>
         </div>
     );

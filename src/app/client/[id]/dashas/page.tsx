@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Clock, Calendar, ChevronRight, ChevronDown, Circle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import { Clock, Calendar, ChevronRight, ChevronDown, Circle, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import ParchmentSelect from "@/components/ui/ParchmentSelect";
+import { clientApi, DashaResponse } from "@/lib/api";
 
-// --- Types & Mock Data ---
-
+// --- Types ---
 interface DashaNode {
     id: string;
     planet: string;
@@ -14,125 +15,170 @@ interface DashaNode {
     end: string;
     level: 'Mahadasha' | 'Antardasha' | 'Pratyantardasha' | 'Sookshma' | 'Prana';
     children?: DashaNode[];
-    isCurrent?: boolean; // Highlight active period
+    isCurrent?: boolean;
 }
 
-const MOCK_DASHA_DATA: DashaNode[] = [
-    {
-        id: "saturn-maha",
-        planet: "Saturn",
-        start: "Jan 15, 2010",
-        end: "Jan 15, 2029",
-        level: "Mahadasha",
-        isCurrent: true,
-        children: [
-            {
-                id: "sat-sat-antar",
-                planet: "Saturn",
-                start: "Jan 15, 2010",
-                end: "Jan 18, 2013",
-                level: "Antardasha",
-                children: [
-                    { id: "sat-sat-sat-prat", planet: "Saturn", start: "Jan 15, 2010", end: "Jun 24, 2010", level: "Pratyantardasha" },
-                    { id: "sat-sat-mer-prat", planet: "Mercury", start: "Jun 24, 2010", end: "Nov 27, 2010", level: "Pratyantardasha" }
-                ]
-            },
-            {
-                id: "sat-mer-antar",
-                planet: "Mercury",
-                start: "Jan 18, 2013",
-                end: "Sept 27, 2015",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-ket-antar",
-                planet: "Ketu",
-                start: "Sept 27, 2015",
-                end: "Nov 06, 2016",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-ven-antar",
-                planet: "Venus",
-                start: "Nov 06, 2016",
-                end: "Jan 06, 2020",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-sun-antar",
-                planet: "Sun",
-                start: "Jan 06, 2020",
-                end: "Dec 18, 2020",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-moon-antar",
-                planet: "Moon",
-                start: "Dec 18, 2020",
-                end: "Jul 19, 2022",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-mars-antar",
-                planet: "Mars",
-                start: "Jul 19, 2022",
-                end: "Aug 28, 2023",
-                level: "Antardasha",
-            },
-            {
-                id: "sat-rah-antar",
-                planet: "Rahu",
-                start: "Aug 28, 2023",
-                end: "Jul 04, 2026",
-                level: "Antardasha",
-                isCurrent: true, // Currently expanding this one
-                children: [
-                    { id: "sat-rah-rah-prat", planet: "Rahu", start: "Aug 28, 2023", end: "Jan 31, 2024", level: "Pratyantardasha" },
-                    { id: "sat-rah-jup-prat", planet: "Jupiter", start: "Jan 31, 2024", end: "Jun 19, 2024", level: "Pratyantardasha" },
-                    { id: "sat-rah-sat-prat", planet: "Saturn", start: "Jun 19, 2024", end: "Dec 01, 2024", level: "Pratyantardasha" },
-                    { id: "sat-rah-mer-prat", planet: "Mercury", start: "Dec 01, 2024", end: "Apr 28, 2025", level: "Pratyantardasha", isCurrent: true },
-                ]
-            },
-            {
-                id: "sat-jup-antar",
-                planet: "Jupiter",
-                start: "Jul 04, 2026",
-                end: "Jan 15, 2029",
-                level: "Antardasha",
-            }
-        ]
-    },
-    {
-        id: "mercury-maha",
-        planet: "Mercury",
-        start: "Jan 15, 2029",
-        end: "Jan 15, 2046",
-        level: "Mahadasha",
-        children: [
-            { id: "mer-mer-antar", planet: "Mercury", start: "Jan 15, 2029", end: "Jun 12, 2031", level: "Antardasha" },
-        ]
-    },
-    {
-        id: "ketu-maha",
-        planet: "Ketu",
-        start: "Jan 15, 2046",
-        end: "Jan 15, 2053",
-        level: "Mahadasha",
-    },
-    {
-        id: "venus-maha",
-        planet: "Venus",
-        start: "Jan 15, 2053",
-        end: "Jan 15, 2073",
-        level: "Mahadasha",
-    }
+// Planet colors for timeline visualization
+const PLANET_COLORS: Record<string, string> = {
+    Sun: '#F59E0B',
+    Moon: '#94A3B8',
+    Mars: '#EF4444',
+    Mercury: '#10B981',
+    Jupiter: '#F97316',
+    Venus: '#EC4899',
+    Saturn: '#6B7280',
+    Rahu: '#1E3A8A',
+    Ketu: '#7C3AED',
+};
+
+// Available Dasha systems (only those implemented in backend)
+const DASHA_SYSTEMS = [
+    { value: "vimshottari", label: "Vimshottari Dasha" },
+    { value: "tribhagi", label: "Tribhagi Dasha" },
+    { value: "shodashottari", label: "Shodashottari Dasha" },
+    { value: "dwadashottari", label: "Dwadashottari Dasha" },
+    { value: "panchottari", label: "Panchottari Dasha" },
 ];
 
-export default function DashaPage() {
-    const [dashaSystem, setDashaSystem] = useState("Vimshottari Dasha");
+// Transform backend dasha response to DashaNode tree
+function transformDashaData(apiData: DashaResponse): DashaNode[] {
+    if (!apiData?.data?.mahadashas) return [];
 
-    // State to track expanded nodes (by ID)
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(["saturn-maha", "sat-rah-antar"]));
+    const now = new Date();
+
+    const formatDate = (dateStr: string): string => {
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch {
+            return dateStr;
+        }
+    };
+
+    const isCurrentPeriod = (startStr: string, endStr: string): boolean => {
+        try {
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            return now >= start && now <= end;
+        } catch {
+            return false;
+        }
+    };
+
+    const mapLevel = (depth: number): DashaNode['level'] => {
+        const levels: DashaNode['level'][] = ['Mahadasha', 'Antardasha', 'Pratyantardasha', 'Sookshma', 'Prana'];
+        return levels[depth] || 'Prana';
+    };
+
+    const transformPeriod = (period: any, depth: number, parentId: string): DashaNode => {
+        const id = `${parentId}-${period.planet?.toLowerCase() || 'unknown'}-${depth}`;
+        const startDate = period.startDate || period.start_date || '';
+        const endDate = period.endDate || period.end_date || '';
+        const isCurrent = isCurrentPeriod(startDate, endDate);
+
+        const node: DashaNode = {
+            id,
+            planet: period.planet || 'Unknown',
+            start: formatDate(startDate),
+            end: formatDate(endDate),
+            level: mapLevel(depth),
+            isCurrent,
+        };
+
+        // Recursively transform sub-periods
+        const subPeriods = period.subPeriods || period.sub_periods || period.antardashas || [];
+        if (subPeriods.length > 0) {
+            node.children = subPeriods.map((sp: any) => transformPeriod(sp, depth + 1, id));
+        }
+
+        return node;
+    };
+
+    return apiData.data.mahadashas.map((maha: any, idx: number) =>
+        transformPeriod(maha, 0, `maha-${idx}`)
+    );
+}
+
+// Find current dasha sequence for display
+function findCurrentDasha(nodes: DashaNode[]): { maha?: string; antar?: string; pratyantar?: string } {
+    for (const maha of nodes) {
+        if (maha.isCurrent) {
+            const result: { maha?: string; antar?: string; pratyantar?: string } = { maha: maha.planet };
+            if (maha.children) {
+                for (const antar of maha.children) {
+                    if (antar.isCurrent) {
+                        result.antar = antar.planet;
+                        if (antar.children) {
+                            for (const pratyantar of antar.children) {
+                                if (pratyantar.isCurrent) {
+                                    result.pratyantar = pratyantar.planet;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+    }
+    return {};
+}
+
+export default function DashaPage() {
+    const params = useParams();
+    const clientId = params?.id as string;
+
+    const [dashaSystem, setDashaSystem] = useState("vimshottari");
+    const [dashaData, setDashaData] = useState<DashaNode[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+    // Fetch dasha data when client or system changes
+    useEffect(() => {
+        if (!clientId) return;
+
+        const fetchDasha = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Request deep dasha (prana level includes all 5 levels)
+                const response = await clientApi.generateDasha(
+                    clientId,
+                    'prana', // Get deepest level to have full hierarchy
+                    'lahiri',
+                    false
+                );
+
+                const transformed = transformDashaData(response);
+                setDashaData(transformed);
+
+                // Auto-expand current periods
+                const currentIds = new Set<string>();
+                const findCurrentIds = (nodes: DashaNode[]) => {
+                    for (const node of nodes) {
+                        if (node.isCurrent) {
+                            currentIds.add(node.id);
+                            if (node.children) findCurrentIds(node.children);
+                        }
+                    }
+                };
+                findCurrentIds(transformed);
+                setExpandedNodes(currentIds);
+
+            } catch (err: any) {
+                console.error('Dasha fetch error:', err);
+                setError(err.message || 'Failed to load Dasha data');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchDasha();
+    }, [clientId, dashaSystem]);
 
     const toggleNode = (id: string) => {
         const newExpanded = new Set(expandedNodes);
@@ -143,6 +189,18 @@ export default function DashaPage() {
         }
         setExpandedNodes(newExpanded);
     };
+
+    // Get current running dasha for header display
+    const currentDasha = useMemo(() => findCurrentDasha(dashaData), [dashaData]);
+
+    // Get current mahadasha end date
+    const currentMahaEnd = useMemo(() => {
+        const currentMaha = dashaData.find(d => d.isCurrent);
+        return currentMaha?.end || '';
+    }, [dashaData]);
+
+    // Get display label for selected system
+    const systemLabel = DASHA_SYSTEMS.find(s => s.value === dashaSystem)?.label || 'Vimshottari Dasha';
 
     return (
         <div className="space-y-8 max-w-5xl mx-auto pb-12">
@@ -163,97 +221,132 @@ export default function DashaPage() {
                 </p>
             </div>
 
-            {/* Vimshottari Timeline Section */}
+            {/* Dasha Selection & Status Section */}
             <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-xl p-8 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h3 className="font-serif text-xs uppercase tracking-widest text-[#7A5A43]">{dashaSystem}</h3>
+                    <h3 className="font-serif text-xs uppercase tracking-widest text-[#7A5A43]">{systemLabel}</h3>
                     <div className="w-full sm:w-64">
                         <ParchmentSelect
                             value={dashaSystem}
                             onChange={(e) => setDashaSystem(e.target.value)}
-                            options={[
-                                { value: "Vimshottari Dasha", label: "Vimshottari Dasha" },
-                                { value: "Yogini Dasha", label: "Yogini Dasha" },
-                                { value: "Chara Dasha", label: "Chara Dasha" },
-                                { value: "Ashtottari Dasha", label: "Ashtottari Dasha" },
-                            ]}
+                            options={DASHA_SYSTEMS}
                         />
                     </div>
                 </div>
 
                 {/* Active Dasha Bar */}
-                <div className="bg-[#F6EBD6] border border-[#E7D6B8] rounded-lg px-6 py-4 flex items-center gap-3 mb-8">
-                    <div className="w-3 h-3 rounded-full bg-[#4A729A]"></div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                        <span className="font-serif font-bold text-[#3E2A1F] text-lg">Saturn Mahadasha</span>
-                        <div className="flex items-center gap-2 text-sm text-[#7A5A43] font-serif">
-                            <span>•</span>
-                            <span>Rahu Antardasha</span>
-                            <span>•</span>
-                            <span>Mercury Pratyantar</span>
+                {!isLoading && !error && currentDasha.maha && (
+                    <div className="bg-[#F6EBD6] border border-[#E7D6B8] rounded-lg px-6 py-4 flex items-center gap-3 mb-8">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PLANET_COLORS[currentDasha.maha] || '#4A729A' }}></div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                            <span className="font-serif font-bold text-[#3E2A1F] text-lg">{currentDasha.maha} Mahadasha</span>
+                            <div className="flex items-center gap-2 text-sm text-[#7A5A43] font-serif">
+                                {currentDasha.antar && (
+                                    <>
+                                        <span>•</span>
+                                        <span>{currentDasha.antar} Antardasha</span>
+                                    </>
+                                )}
+                                {currentDasha.pratyantar && (
+                                    <>
+                                        <span>•</span>
+                                        <span>{currentDasha.pratyantar} Pratyantar</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        {currentMahaEnd && (
+                            <span className="text-sm text-[#7A5A43] ml-auto font-serif hidden sm:inline-block">
+                                (Until {currentMahaEnd})
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Timeline Visual - Only show for Vimshottari with data */}
+                {!isLoading && !error && dashaSystem === 'vimshottari' && dashaData.length > 0 && (
+                    <div className="relative mb-2">
+                        <div className="flex w-full h-16 rounded-md overflow-hidden text-white font-bold text-xs uppercase tracking-wider text-center shadow-inner">
+                            {dashaData.slice(0, 6).map((maha, idx) => {
+                                const totalYears = 120;
+                                const startYear = new Date(maha.start.replace(/,/g, '')).getFullYear();
+                                const endYear = new Date(maha.end.replace(/,/g, '')).getFullYear();
+                                const duration = endYear - startYear;
+                                const widthPercent = (duration / totalYears) * 100;
+
+                                return (
+                                    <div
+                                        key={maha.id}
+                                        className={cn(
+                                            "flex items-center justify-center relative group cursor-help transition-all",
+                                            maha.isCurrent && "ring-2 ring-[#3E2A1F] ring-inset"
+                                        )}
+                                        style={{
+                                            width: `${Math.max(widthPercent, 8)}%`,
+                                            backgroundColor: PLANET_COLORS[maha.planet] || '#6B93B8'
+                                        }}
+                                        title={`${maha.planet}: ${maha.start} - ${maha.end}`}
+                                    >
+                                        {widthPercent > 10 ? maha.planet : maha.planet.charAt(0)}
+                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                    <span className="text-sm text-[#7A5A43] ml-auto font-serif hidden sm:inline-block">(Until 1/15/2029)</span>
-                </div>
-
-                {/* Timeline Visual (Simplified for mock) */}
-                <div className="relative mb-2">
-                    <div className="flex w-full h-16 rounded-md overflow-hidden text-white font-bold text-xs uppercase tracking-wider text-center shadow-inner">
-                        {/* Saturn */}
-                        <div className="w-[30%] bg-[#6B93B8] flex items-center justify-center relative group cursor-help">
-                            Saturn
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        {/* Mercury */}
-                        <div className="w-[35%] bg-[#6BB86E] flex items-center justify-center relative group cursor-help">
-                            Mercury
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        {/* Ketu */}
-                        <div className="w-[10%] bg-[#A0A0A0] flex items-center justify-center relative group cursor-help">
-                            Ketu
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        {/* Venus */}
-                        <div className="w-[25%] bg-[#F48FB1] flex items-center justify-center relative group cursor-help">
-                            Venus
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                    </div>
-
-                    {/* Active Marker Indicator */}
-                    <div className="absolute top-0 bottom-0 left-[30%] w-[2px] bg-[#3E2A1F] z-10 hidden sm:flex flex-col items-center">
-                        <div className="w-3 h-3 -mt-1.5 bg-[#3E2A1F] rounded-full shadow-md border-2 border-[#FEFAEA]"></div>
-                        <div className="mt-auto mb-[-25px] bg-[#3E2A1F] text-[#FEFAEA] text-[10px] px-2 py-1 rounded font-bold">Now</div>
-                    </div>
-                </div>
-
-                {/* Timeline Dates */}
-                <div className="flex justify-between text-xs text-[#7A5A43] font-serif font-medium px-1">
-                    <span>2010</span>
-                    <span className="ml-[10%]">2029</span>
-                    <span>2073</span>
-                </div>
+                )}
             </div>
 
-            {/* Dasha Hierarchy List (Replacing Grid) */}
+            {/* Dasha Hierarchy List */}
             <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                     <Calendar className="w-5 h-5 text-[#9C7A2F]" />
                     <h2 className="font-serif text-lg font-bold text-[#3E2A1F]">Dasha Cycles</h2>
                 </div>
 
-                <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg overflow-hidden divide-y divide-[#E7D6B8]">
-                    {MOCK_DASHA_DATA.map((node) => (
-                        <DashaRow
-                            key={node.id}
-                            node={node}
-                            expandedNodes={expandedNodes}
-                            toggleNode={toggleNode}
-                            depth={0}
-                        />
-                    ))}
-                </div>
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg p-12 flex flex-col items-center justify-center gap-4">
+                        <Loader2 className="w-8 h-8 text-[#9C7A2F] animate-spin" />
+                        <p className="text-[#7A5A43] font-serif">Calculating Dasha periods...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {!isLoading && error && (
+                    <div className="bg-[#FEFAEA] border border-red-200 rounded-lg p-8 flex flex-col items-center justify-center gap-4">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                        <p className="text-red-600 font-serif text-center">{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="text-sm text-[#9C7A2F] underline hover:no-underline"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
+                {/* Dasha Tree */}
+                {!isLoading && !error && dashaData.length > 0 && (
+                    <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg overflow-hidden divide-y divide-[#E7D6B8]">
+                        {dashaData.map((node) => (
+                            <DashaRow
+                                key={node.id}
+                                node={node}
+                                expandedNodes={expandedNodes}
+                                toggleNode={toggleNode}
+                                depth={0}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* No Data State */}
+                {!isLoading && !error && dashaData.length === 0 && (
+                    <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg p-8 text-center">
+                        <p className="text-[#7A5A43] font-serif">No Dasha data available for this client.</p>
+                    </div>
+                )}
             </div>
 
         </div>
@@ -275,15 +368,15 @@ function DashaRow({
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
 
-    // Indent based on depth (but keep mobile usable)
-    const paddingLeft = depth * 20 + 16; // 16px base + 20px per level
+    // Indent based on depth
+    const paddingLeft = depth * 20 + 16;
 
     return (
         <div className="flex flex-col">
             {/* The Row Itself */}
             <div
                 className={cn(
-                    "flex items-center py-4 pr-4 transition-colors relative",
+                    "flex items-center py-4 pr-4 transition-colors relative cursor-pointer",
                     node.isCurrent ? "bg-[#F6EBD6]" : "hover:bg-[#FAF5E6]",
                     (isExpanded && hasChildren) ? "bg-[#FAF5E6]" : ""
                 )}
@@ -292,7 +385,10 @@ function DashaRow({
             >
                 {/* Active Indicator Line on Left */}
                 {node.isCurrent && (
-                    <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#9C7A2F]" />
+                    <div
+                        className="absolute left-0 top-0 bottom-0 w-[4px]"
+                        style={{ backgroundColor: PLANET_COLORS[node.planet] || '#9C7A2F' }}
+                    />
                 )}
 
                 {/* Left: Icon or Spacer + Label */}
@@ -308,8 +404,6 @@ function DashaRow({
                             {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                     ) : (
-                        // Spacer for alignment if no children, but only if not at root? 
-                        // Actually circle dot looks nice for leaf nodes
                         <div className="w-6 flex justify-center">
                             <Circle className="w-2 h-2 text-[#DCC9A6] fill-[#DCC9A6]" />
                         </div>
@@ -323,12 +417,10 @@ function DashaRow({
                         )}>
                             {node.planet} <span className="font-normal text-[#7A5A43] text-xs uppercase tracking-wider ml-1 opacity-70">{node.level}</span>
                         </span>
-                        {/* Mobile Date View */}
-                        {/* <span className="text-[10px] text-[#7A5A43] sm:hidden">{node.start} - {node.end}</span> */}
                     </div>
                 </div>
 
-                {/* Right: Date Range (Desktop) */}
+                {/* Right: Date Range */}
                 <div className="text-right text-sm font-serif text-[#7A5A43]">
                     <span className="block sm:inline">{node.start}</span>
                     <span className="hidden sm:inline mx-1">-</span>
