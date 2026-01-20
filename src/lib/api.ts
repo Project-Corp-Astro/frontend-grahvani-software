@@ -290,6 +290,18 @@ export const clientApi = {
         }),
 
     /**
+     * Get Yoga Analysis for a specific client
+     */
+    getYogaAnalysis: (clientId: string, yogaType: string, ayanamsa: string = 'lahiri'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/yoga/${yogaType}?ayanamsa=${ayanamsa}`),
+
+    /**
+     * Get Dosha Analysis for a specific client
+     */
+    getDoshaAnalysis: (clientId: string, doshaType: string, ayanamsa: string = 'lahiri'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/dosha/${doshaType}?ayanamsa=${ayanamsa}`),
+
+    /**
      * Get system capabilities - which chart types are available per ayanamsa
      * This is a client-side utility, not an API call
      */
