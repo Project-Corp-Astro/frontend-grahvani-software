@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import {
     Shield,
-    ArrowRight,
     RefreshCw,
     Info,
     LayoutGrid,
@@ -19,15 +18,22 @@ import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
 import { clientApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import NorthIndianChart from '@/components/astrology/NorthIndianChart/NorthIndianChart';
+import AshtakavargaChart from '@/components/astrology/AshtakavargaChart';
+import ShodashaVargaTable from '@/components/astrology/ShodashaVargaTable';
+
+const SIGN_MAP: Record<string, number> = {
+    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
+    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
+};
 
 interface AshtakavargaData {
-    sarva?: Record<number, number>;
-    bhinna?: Record<string, Record<number, number>>;
+    sarva?: any;
+    bhinna?: any;
     shodasha?: any;
     ascendant?: number;
 }
 
-const PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
+const PLANETS = ['Lagna', 'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
 const HOUSES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 const AnalyzeCard = ({ icon, title, desc, color }: { icon: React.ReactNode; title: string; desc: string; color: 'amber' | 'rose' | 'copper' }) => (
@@ -56,7 +62,7 @@ export default function AshtakavargaPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<AshtakavargaData | null>(null);
     const [activeTab, setActiveTab] = useState<'sarva' | 'bhinna' | 'shodasha'>('sarva');
-    const [selectedPlanet, setSelectedPlanet] = useState<string>('Sun');
+    const [selectedPlanet, setSelectedPlanet] = useState<string>('Lagna');
 
     const fetchAshtakavarga = async (type: 'bhinna' | 'sarva' | 'shodasha') => {
         if (!clientDetails?.id) return;
@@ -68,19 +74,13 @@ export default function AshtakavargaPage() {
                 type
             );
 
-            let asc = data?.ascendant;
-            if (!asc) {
-                const charts = await clientApi.getCharts(clientDetails.id);
-                const d1 = charts.find((c: any) => c.chartType === 'D1');
-                if (d1?.chartData?.ascendant?.sign) {
-                    const signMap: any = { 'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6, 'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12 };
-                    asc = signMap[d1.chartData.ascendant.sign];
-                }
-            }
+            const ashtResult = (result as any);
+            const ascFromResponse = ashtResult.ascendant?.sign || ashtResult.data?.ascendant?.sign || ashtResult.ashtakvarga?.ascendant?.sign;
+            const asc = SIGN_MAP[ascFromResponse] || data?.ascendant;
 
             setData(prev => ({
                 ...prev,
-                [type]: result.data,
+                [type]: ashtResult.data || ashtResult.ashtakvarga || ashtResult,
                 ascendant: asc
             }));
         } catch (error) {
@@ -94,6 +94,7 @@ export default function AshtakavargaPage() {
         if (clientDetails?.id) {
             fetchAshtakavarga('sarva');
             fetchAshtakavarga('bhinna');
+            fetchAshtakavarga('shodasha');
         }
     }, [clientDetails?.id, settings.ayanamsa]);
 
@@ -114,45 +115,73 @@ export default function AshtakavargaPage() {
         let scores: Record<number, number> = {};
 
         if (activeTab === 'sarva' && data.sarva) {
-            // Calculate column totals from the matrix or use direct SAV if available
-            // NEW: Handle direct 'signs' object from backend (e.g. { "Aries": 30, ... })
-            if ((data.sarva as any).signs) {
-                const signMap: Record<string, number> = {
-                    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
-                    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
-                };
-                Object.entries((data.sarva as any).signs).forEach(([signName, val]) => {
-                    const signId = signMap[signName] || signMap[signName.charAt(0).toUpperCase() + signName.slice(1)];
-                    if (signId) scores[signId] = val as number;
+            // NEW: Handle nested structure from backend (sarvashtakavarga.signs)
+            const savPayload = (data.sarva as any).sarvashtakavarga || data.sarva;
+            const signsData = savPayload.signs || savPayload;
+
+            if (signsData && typeof signsData === 'object' && !Array.isArray(signsData)) {
+                Object.entries(signsData).forEach(([signName, val]) => {
+                    const signId = SIGN_MAP[signName] || SIGN_MAP[signName.charAt(0).toUpperCase() + signName.slice(1)] || parseInt(signName);
+                    if (signId >= 1 && signId <= 12) scores[signId] = val as number;
                 });
             } else {
-                // FALLBACK: Calculate column totals from the matrix if it's a raw matrix
-                const matrix = data.sarva;
+                // FALLBACK: Calculate column totals from the matrix if it's a raw matrix of planets
+                const matrix = savPayload.bhinnashtakavarga || savPayload;
                 const signs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-                const planets = ['lagna', 'sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
+                const planets = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
 
                 signs.forEach(s => {
                     let colTotal = 0;
                     planets.forEach(p => {
-                        const row = (matrix as any)[p] || (matrix as any)[p.toLowerCase()] || {};
-                        const val = row[s];
+                        const lookupKey = p === 'lagna' ? 'Ascendant' : p;
+                        const row = (matrix as any)[lookupKey] ||
+                            (matrix as any)[lookupKey.toLowerCase()] ||
+                            (matrix as any)[lookupKey.charAt(0).toUpperCase() + lookupKey.slice(1)] ||
+                            {};
+
+                        let val;
+                        if (Array.isArray(row)) {
+                            val = row[s - 1];
+                        } else {
+                            const signName = Object.keys(SIGN_MAP).find(k => SIGN_MAP[k] === s);
+                            val = row[s] || (signName ? row[signName] : null);
+                        }
+
                         if (typeof val === 'number') colTotal += val;
                     });
                     scores[s] = colTotal;
                 });
             }
         } else if (activeTab === 'bhinna' && data.bhinna) {
-            const planetData = (data.bhinna as any)[selectedPlanet.toLowerCase()] || (data.bhinna as any)[selectedPlanet];
-            if (planetData) {
-                Object.entries(planetData).forEach(([s, v]) => {
-                    scores[parseInt(s)] = typeof v === 'number' ? v : (v as any).total || 0;
-                });
+            // Handle nested bhinnashtakavarga from backend (Dedicated /bhinna response)
+            const bhinnaRoot = (data.bhinna as any).ashtakvarga || data.bhinna;
+
+            if (bhinnaRoot.tables && Array.isArray(bhinnaRoot.tables)) {
+                const table = bhinnaRoot.tables.find((t: any) =>
+                    t.planet === selectedPlanet ||
+                    (selectedPlanet === 'Lagna' && (t.planet === 'Ascendant' || t.planet === 'Lagna'))
+                );
+                if (table && table.total_bindus) {
+                    table.total_bindus.forEach((val: number, idx: number) => {
+                        scores[idx + 1] = val;
+                    });
+                }
+            } else {
+                // FALLBACK: Previous flat object structure
+                const bhinnaPayload = (data.bhinna as any).bhinnashtakavarga || data.bhinna;
+                const planetKey = selectedPlanet.toLowerCase();
+                const planetData = bhinnaPayload[planetKey] || bhinnaPayload[selectedPlanet] || bhinnaPayload[selectedPlanet.charAt(0).toUpperCase() + selectedPlanet.slice(1)];
+
+                if (planetData) {
+                    Object.entries(planetData).forEach(([s, v]) => {
+                        const signId = SIGN_MAP[s] || parseInt(s);
+                        if (signId) scores[signId] = typeof v === 'number' ? v : (v as any).total || 0;
+                    });
+                }
             }
         }
 
-        // Map sign scores to houses: House H shows score of Sign S
-        // Formula: S = ((L + H - 2) % 12) + 1 where L is Ascendant Sign
-        if (Object.keys(scores).length > 0) {
+        if (Object.keys(scores).length > 0 && ascSign) {
             for (let h = 1; h <= 12; h++) {
                 const s = ((ascSign + h - 2) % 12) + 1;
                 houseValues[h] = scores[s] || 0;
@@ -209,7 +238,7 @@ export default function AshtakavargaPage() {
                     {activeTab !== 'shodasha' ? (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                             {/* Main Content Area: Table + Chart Side by Side */}
-                            <div className="lg:col-span-12 xl:col-span-8 space-y-8">
+                            <div className="lg:col-span-12 space-y-8">
                                 <div className="bg-white rounded-[2rem] border border-copper-200 shadow-2xl shadow-copper-100/50 overflow-hidden">
                                     <div className="p-8 border-b border-copper-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-parchment/30 to-white">
                                         <div>
@@ -249,8 +278,11 @@ export default function AshtakavargaPage() {
                                             </h3>
                                             <AshtakavargaMatrix
                                                 type={activeTab === 'sarva' ? 'sarva' : 'bhinna'}
+                                                data={activeTab === 'sarva' ? data?.sarva : (data?.bhinna?.ashtakvarga?.tables?.find((t: any) =>
+                                                    t.planet === selectedPlanet ||
+                                                    (selectedPlanet === 'Lagna' && (t.planet === 'Ascendant' || t.planet === 'Lagna'))
+                                                ) || data?.bhinna?.bhinnashtakavarga?.[selectedPlanet] || data?.bhinna?.bhinnashtakavarga?.[selectedPlanet.toLowerCase()] || data?.bhinna?.[selectedPlanet.toLowerCase()])}
                                                 planet={selectedPlanet}
-                                                data={activeTab === 'sarva' ? data?.sarva : data?.bhinna?.[selectedPlanet.toLowerCase()]}
                                             />
                                             <div className="p-4 bg-parchment/30 rounded-2xl border border-antique shadow-inner flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-gold-primary/20 flex items-center justify-center flex-shrink-0">
@@ -268,16 +300,11 @@ export default function AshtakavargaPage() {
                                             <h3 className="text-xs font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
                                                 <MapIcon className="w-4 h-4" /> Spatial Distribution (D1 Houses)
                                             </h3>
-                                            <div className="bg-parchment/20 rounded-[2rem] border border-antique p-8 flex items-center justify-center aspect-square relative group overflow-hidden">
-                                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center">
-                                                    <Shield className="w-[80%] h-[80%] text-copper-900" />
-                                                </div>
-                                                <div className="relative w-full max-w-md">
-                                                    <NorthIndianChart
-                                                        planets={[]}
+                                            <div className="bg-parchment/20 rounded-[2rem] border border-antique p-4 flex items-center justify-center relative group overflow-hidden">
+                                                <div className="relative w-full max-w-[300px]">
+                                                    <AshtakavargaChart
                                                         ascendantSign={data?.ascendant || 1}
                                                         houseValues={houseValues}
-                                                        valueType="bindu"
                                                         className="animate-in zoom-in-95 duration-1000"
                                                     />
                                                 </div>
@@ -311,45 +338,11 @@ export default function AshtakavargaPage() {
                                 )}
                             </div>
 
-                            {/* Sidebar Analytics */}
-                            <div className="hidden xl:block xl:col-span-4 space-y-6">
-                                <div className="bg-white rounded-3xl border border-copper-200 p-8 shadow-xl shadow-copper-100/30">
-                                    <h3 className="text-xl font-serif text-copper-950 mb-6 flex items-center gap-3">
-                                        <Zap className="w-5 h-5 text-amber-500" /> Scoring Insights
-                                    </h3>
 
-                                    <div className="space-y-6">
-                                        <InsightRow label="Excellent" range="30+ / 6+" color="text-emerald-600 bg-emerald-50" />
-                                        <InsightRow label="Average" range="25-29 / 4-5" color="text-copper-600 bg-copper-50" />
-                                        <InsightRow label="Weak" range="< 25 / < 4" color="text-rose-600 bg-rose-50" />
-                                    </div>
-
-                                    <div className="mt-10 pt-8 border-t border-copper-100">
-                                        <div className="p-5 rounded-2xl bg-parchment/40 border border-antique italic">
-                                            <p className="text-xs text-copper-800 leading-relaxed">
-                                                "SAV values represent the 'receptive capacity' of a sign. A planet transiting through high bindu houses triggers significant life events corresponding to that house."
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-copper-900 rounded-3xl p-8 text-white relative overflow-hidden group">
-                                    <Compass className="absolute -bottom-10 -right-10 w-40 h-40 text-white/5 transform group-hover:rotate-45 transition-transform duration-1000" />
-                                    <h4 className="font-serif text-xl mb-4">Astro Dashboard Tip</h4>
-                                    <p className="text-sm text-copper-200 leading-relaxed mb-6">
-                                        Combine these scores with Current Transits in the Workbench for high-precision timing of events (Muhurta).
-                                    </p>
-                                    <button className="flex items-center gap-2 text-xs font-bold text-amber-400 hover:text-white transition-colors">
-                                        VIEW WORKBENCH <ArrowRight className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-[2rem] border border-copper-200 p-12 text-center">
-                            <Compass className="w-20 h-20 text-copper-200 mx-auto mb-6 animate-spin-slow" />
-                            <h3 className="text-2xl font-serif text-copper-900 mb-2">Divisional Varga summary coming soon</h3>
-                            <p className="text-copper-500 max-w-md mx-auto">We are precisely calculating the shodasha varga (16 divisional charts) strength matrix for this profile.</p>
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <ShodashaVargaTable data={data?.shodasha} />
                         </div>
                     )}
                 </div>
@@ -358,11 +351,4 @@ export default function AshtakavargaPage() {
     );
 }
 
-const InsightRow = ({ label, range, color }: { label: string; range: string; color: string }) => (
-    <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-copper-700">{label}</span>
-        <span className={cn("px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest", color)}>
-            {range}
-        </span>
-    </div>
-);
+

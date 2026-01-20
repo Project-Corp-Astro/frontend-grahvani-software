@@ -8,8 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover
 import { Calendar } from "@/components/ui/Calendar";
 
 interface ParchmentDatePickerProps {
-    date: Date | undefined;
-    setDate: (date: Date | undefined) => void;
+    date?: string; // YYYY-MM-DD
+    setDate: (date: string | undefined) => void;
     label?: string;
     placeholder?: string;
     className?: string;
@@ -22,6 +22,24 @@ export default function ParchmentDatePicker({
     placeholder = "Select Date",
     className
 }: ParchmentDatePickerProps) {
+    const [open, setOpen] = React.useState(false);
+
+    // Convert string to Date for the Calendar component
+    const selectedDate = date ? new Date(date) : undefined;
+
+    const handleSelect = (newDate: Date | undefined) => {
+        if (newDate) {
+            // Format to YYYY-MM-DD manually to avoid TZ shifts
+            const yyyy = newDate.getFullYear();
+            const mm = String(newDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(newDate.getDate()).padStart(2, '0');
+            setDate(`${yyyy}-${mm}-${dd}`);
+            setOpen(false); // Auto-close on selection
+        } else {
+            setDate(undefined);
+        }
+    };
+
     return (
         <div className={cn("flex flex-col gap-2", className)}>
             {label && (
@@ -29,7 +47,7 @@ export default function ParchmentDatePicker({
                     {label}
                 </label>
             )}
-            <Popover>
+            <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <button
                         type="button"
@@ -38,15 +56,15 @@ export default function ParchmentDatePicker({
                             !date && "text-[#DCC9A6]"
                         )}
                     >
-                        {date ? format(date, "PPP") : <span>{placeholder}</span>}
+                        {selectedDate ? format(selectedDate, "PPP") : <span>{placeholder}</span>}
                         <CalendarIcon className="w-4 h-4 text-[#DCC9A6] group-hover:text-[#9C7A2F] transition-colors" />
                     </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                         mode="single"
-                        selected={date}
-                        onSelect={setDate}
+                        selected={selectedDate}
+                        onSelect={handleSelect}
                         initialFocus
                     />
                 </PopoverContent>

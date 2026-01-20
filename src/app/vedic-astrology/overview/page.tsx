@@ -33,6 +33,54 @@ import YogaAnalysisView from '@/components/astrology/YogaAnalysis';
 
 import { parseChartData } from '@/lib/chart-helpers';
 
+// Helper for formatting
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return dateStr;
+    }
+};
+
+const formatTime = (timeStr: string) => {
+    if (!timeStr) return "";
+    try {
+        // If it contains a T, it's an ISO string, extract time part carefully
+        // We use string manipulation to avoid timezone shifts if the data is raw storage
+        if (timeStr.includes('T')) {
+           const timePart = timeStr.split('T')[1];
+           // Remove Z or offset
+           const cleanTime = timePart.replace('Z', '').split('+')[0].split('.')[0];
+           const [hours, minutes] = cleanTime.split(':');
+           const h = parseInt(hours);
+           const m = parseInt(minutes);
+           const ampm = h >= 12 ? 'PM' : 'AM';
+           const h12 = h % 12 || 12;
+           return `${h12}:${minutes} ${ampm}`;
+        }
+        
+        // Fallback to Date parsing if standard time string
+        const date = new Date(`1970-01-01T${timeStr}`);
+        if (!isNaN(date.getTime())) {
+             return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        return timeStr;
+    } catch (e) {
+        return timeStr;
+    }
+};
+
 // ... (other imports)
 
 export default function VedicOverviewPage() {
@@ -118,8 +166,8 @@ export default function VedicOverviewPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted mt-1">
-                            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {clientDetails.dateOfBirth}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {clientDetails.timeOfBirth}</span>
+                            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatDate(clientDetails.dateOfBirth)}</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {formatTime(clientDetails.timeOfBirth)}</span>
                             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {clientDetails.placeOfBirth.city}</span>
                         </div>
                     </div>

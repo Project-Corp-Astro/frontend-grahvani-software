@@ -8,30 +8,74 @@ import { Sparkles, Calendar, Clock, MapPin, User, Mail, Phone, Heart, Plus, Sear
 import { Client, FamilyLink, RelationshipType, ClientListResponse, FamilyLinkPayload, LocationSuggestion } from '@/types/client';
 import { clientApi, familyApi } from '@/lib/api';
 import Link from 'next/link';
+import ParchmentDatePicker from "@/components/ui/ParchmentDatePicker";
+import ParchmentTimePicker from "@/components/ui/ParchmentTimePicker";
 
-// Helper to strip ISO dates/times for clean input display
-const formatDate = (date?: string) => date?.includes('T') ? date.split('T')[0] : date;
-const formatTime = (time?: string) => time?.includes('T') ? time.split('T')[1].split('.')[0] : time;
-
-// Helper to derive firstName/lastName from fullName
-const deriveNames = (c: Client): Client => {
-    if (c.firstName && c.lastName) return c;
-    if (c.fullName) {
-        const parts = c.fullName.split(' ');
-        return {
-            ...c,
-            firstName: parts[0] || '',
-            lastName: parts.slice(1).join(' ') || '',
-            birthPlace: c.birthPlace || c.placeOfBirth,
-            birthDate: formatDate(c.birthDate || c.dateOfBirth),
-            birthTime: formatTime(c.birthTime || c.timeOfBirth),
-            placeOfBirth: c.birthPlace || c.placeOfBirth,
-            dateOfBirth: formatDate(c.birthDate || c.dateOfBirth),
-            timeOfBirth: formatTime(c.birthTime || c.timeOfBirth),
-            phone: c.phonePrimary || c.phone,
-        };
+// Helper to strip ISO dates/times for clean input display WITH timezone awareness
+const formatDate = (dateStr?: string) => {
+    if (!dateStr) return undefined;
+    // If it's a full ISO string or has TZ info, parse it properly
+    if (dateStr.includes('T') || dateStr.includes('Z') || dateStr.includes('+')) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
     }
-    return c;
+    // Fallback/Naive: Extract YYYY-MM-DD literal
+    return dateStr.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || dateStr;
+};
+
+const formatTime = (timeStr?: string) => {
+    if (!timeStr) return undefined;
+
+    // If it's a ISO datetime or has Z/+ suffixes, we must convert to Local
+    // Note: If no date part exists, we prepend a dummy date to ensure correct parsing
+    const hasDate = timeStr.includes('-') && timeStr.includes(':');
+    const parseable = hasDate ? timeStr : `1970-01-01T${timeStr}${timeStr.includes('Z') || timeStr.includes('+') ? '' : ''}`;
+
+    if (timeStr.includes('T') || timeStr.includes('Z') || timeStr.includes('+')) {
+        const d = new Date(parseable);
+        if (!isNaN(d.getTime())) {
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            const s = String(d.getSeconds()).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+    }
+
+    // Fallback/Naive: Extract HH:mm:ss literal, stripping any timezone/ms suffixes
+    return timeStr.split('.')[0].split('+')[0].split('Z')[0];
+};
+
+// Helper to derive firstName/lastName and always normalize dates/times
+const deriveNames = (c: Client): Client => {
+    let firstName = c.firstName;
+    let lastName = c.lastName;
+
+    if (!firstName && !lastName && c.fullName) {
+        const parts = c.fullName.split(' ');
+        firstName = parts[0] || '';
+        lastName = parts.slice(1).join(' ') || '';
+    }
+
+    const normalizedDate = formatDate(c.birthDate || c.dateOfBirth);
+    const normalizedTime = formatTime(c.birthTime || c.timeOfBirth);
+
+    return {
+        ...c,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        birthPlace: c.birthPlace || c.placeOfBirth,
+        birthDate: normalizedDate,
+        birthTime: normalizedTime,
+        placeOfBirth: c.birthPlace || c.placeOfBirth,
+        dateOfBirth: normalizedDate,
+        timeOfBirth: normalizedTime,
+        phone: c.phonePrimary || c.phone,
+    };
 };
 
 const RELATIONSHIP_OPTIONS: { value: RelationshipType; label: string }[] = [
@@ -182,9 +226,12 @@ export default function ClientProfilePage() {
                 ...cleanData
             } = editData as any;
 
+            // Send birth details directly (they are already normalized in state by deriveNames/deriveNames)
             const payload = {
                 ...cleanData,
-                fullName: updatedFullName
+                fullName: updatedFullName,
+                birthDate: editData.birthDate || undefined,
+                birthTime: editData.birthTime || undefined,
             };
 
             // Cast coords to numbers if they exist
@@ -193,11 +240,6 @@ export default function ClientProfilePage() {
             }
             if (payload.birthLongitude !== undefined && payload.birthLongitude !== null) {
                 payload.birthLongitude = Number(payload.birthLongitude);
-            }
-
-            // Ensure birthTime has seconds if it's HH:MM string
-            if (typeof payload.birthTime === 'string' && payload.birthTime.length === 5) {
-                payload.birthTime = `${payload.birthTime}:00`;
             }
 
             const updated = await clientApi.updateClient(clientId, payload);
@@ -428,19 +470,19 @@ export default function ClientProfilePage() {
                                 <div className="space-y-3">
                                     <DetailItem
                                         label="First Name"
-                                        value={client.firstName || ''}
+                                        value={(isEditing ? editData.firstName : client.firstName) || ''}
                                         isEditing={isEditing}
                                         onChange={(val) => setEditData(prev => ({ ...prev, firstName: val }))}
                                     />
                                     <DetailItem
                                         label="Last Name"
-                                        value={client.lastName || ''}
+                                        value={(isEditing ? editData.lastName : client.lastName) || ''}
                                         isEditing={isEditing}
                                         onChange={(val) => setEditData(prev => ({ ...prev, lastName: val }))}
                                     />
                                     <DetailItem
                                         label="Gender"
-                                        value={client.gender || "female"}
+                                        value={(isEditing ? editData.gender : client.gender) || "female"}
                                         isEditing={isEditing}
                                         type="select"
                                         options={[{ v: 'male', l: 'Male' }, { v: 'female', l: 'Female' }, { v: 'other', l: 'Other' }]}
@@ -448,15 +490,16 @@ export default function ClientProfilePage() {
                                     />
                                     <DetailItem
                                         label="Date of Birth"
-                                        value={client.birthDate || ''}
+                                        value={(isEditing ? editData.birthDate : client.birthDate) || ''}
                                         isEditing={isEditing}
                                         type="date"
                                         onChange={(val) => setEditData(prev => ({ ...prev, birthDate: val }))}
                                     />
                                     <DetailItem
                                         label="Time of Birth"
-                                        value={client.birthTime || ""}
+                                        value={(isEditing ? editData.birthTime : client.birthTime) || ""}
                                         isEditing={isEditing}
+                                        type="time"
                                         onChange={(val) => setEditData(prev => ({ ...prev, birthTime: val }))}
                                     />
                                 </div>
@@ -568,13 +611,13 @@ export default function ClientProfilePage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <DetailItem
                                         label="Email Address"
-                                        value={client.email || ""}
+                                        value={(isEditing ? editData.email : client.email) || ""}
                                         isEditing={isEditing}
                                         onChange={(val) => setEditData(prev => ({ ...prev, email: val }))}
                                     />
                                     <DetailItem
                                         label="Phone Number"
-                                        value={client.phonePrimary || ""}
+                                        value={(isEditing ? editData.phonePrimary : client.phonePrimary) || ""}
                                         isEditing={isEditing}
                                         onChange={(val) => setEditData(prev => ({ ...prev, phonePrimary: val }))}
                                     />
@@ -941,7 +984,7 @@ function DetailItem({
     value: string,
     isEditing?: boolean,
     onChange?: (val: string) => void,
-    type?: 'text' | 'select' | 'date',
+    type?: 'text' | 'select' | 'date' | 'time',
     options?: { v: string, l: string }[]
 }) {
     return (
@@ -956,10 +999,20 @@ function DetailItem({
                     >
                         {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                     </select>
+                ) : type === 'date' ? (
+                    <ParchmentDatePicker
+                        date={value}
+                        setDate={(val) => onChange?.(val || '')}
+                    />
+                ) : type === 'time' ? (
+                    <ParchmentTimePicker
+                        value={value}
+                        onChange={(val) => onChange?.(val || '')}
+                    />
                 ) : (
                     <input
                         type={type}
-                        defaultValue={value}
+                        value={value}
                         onChange={(e) => onChange?.(e.target.value)}
                         className="w-full text-base font-serif text-[#2B1510] font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                     />

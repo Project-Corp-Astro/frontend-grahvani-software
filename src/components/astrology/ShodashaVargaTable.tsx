@@ -1,0 +1,112 @@
+"use client";
+
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+interface ShodashaVargaTableProps {
+    data: any;
+    className?: string;
+}
+
+const VARGA_ORDER = [
+    { key: 'D1', name: 'Janma' },
+    { key: 'D2', name: 'Hora' },
+    { key: 'D3', name: 'Dreshkana' },
+    { key: 'D4', name: 'Chaturthamsha' },
+    { key: 'D7', name: 'Saptamsha' },
+    { key: 'D9', name: 'Navamsha' },
+    { key: 'D10', name: 'Dashamsha' },
+    { key: 'D12', name: 'Dwadashamsha' },
+    { key: 'D16', name: 'Shodashamsha' },
+    { key: 'D20', name: 'Vimshamsha' },
+    { key: 'D24', name: 'Chaturvimshamsha' },
+    { key: 'D27', name: 'Saptavimshamsha' },
+    { key: 'D30', name: 'Trimshamsha' },
+    { key: 'D40', name: 'Khavedamsha' },
+    { key: 'D45', name: 'Akshavedamsha' },
+    { key: 'D60', name: 'Shashtiamsha' }
+];
+
+const PLANET_ORDER = ['Ascendant', 'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+
+const SIGN_ABBR: Record<string, string> = {
+    'Aries': 'Ari',
+    'Taurus': 'Tau',
+    'Gemini': 'Gem',
+    'Cancer': 'Can',
+    'Leo': 'Leo',
+    'Virgo': 'Vir',
+    'Libra': 'Lib',
+    'Scorpio': 'Sco',
+    'Sagittarius': 'Sag',
+    'Capricorn': 'Cap',
+    'Aquarius': 'Aqu',
+    'Pisces': 'Pis'
+};
+
+const getAbbr = (sign: string) => SIGN_ABBR[sign] || sign;
+
+export default function ShodashaVargaTable({ data, className }: ShodashaVargaTableProps) {
+    if (!data) return null;
+
+    const summary = data.shodasha_varga_summary || data;
+
+    return (
+        <div className={cn("overflow-x-auto rounded-[2rem] border border-antique bg-white shadow-2xl", className)}>
+            <div className="p-8 border-b border-copper-100 bg-gradient-to-r from-parchment/30 to-white">
+                <h2 className="text-2xl font-serif text-copper-900 font-black text-center">Shodashvarga Summary</h2>
+                <p className="text-sm text-copper-600 mt-1 text-center font-bold">Signs occupied by planets in Shodashvargas</p>
+            </div>
+
+            <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr className="bg-parchment/50 border-b border-antique">
+                        <th className="p-4 text-xs font-black uppercase text-copper-900 border-r border-antique sticky left-0 bg-parchment/50 z-10 w-[180px]">
+                            Varga
+                        </th>
+                        {PLANET_ORDER.map(p => (
+                            <th key={p} className="p-3 text-center text-xs font-black text-copper-900 border-r border-antique/50 last:border-r-0">
+                                {p === 'Ascendant' ? 'Lagna' : p}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {VARGA_ORDER.map((varga, idx) => (
+                        <tr
+                            key={varga.key}
+                            className={cn(
+                                "border-b border-antique/30 last:border-b-0 group hover:bg-gold-primary/5 transition-colors",
+                                idx % 2 === 0 ? "bg-white" : "bg-parchment/20"
+                            )}
+                        >
+                            <td className="p-3 text-sm font-bold text-copper-900 border-r border-antique sticky left-0 bg-inherit group-hover:bg-inherit z-10">
+                                {varga.name}
+                            </td>
+                            {PLANET_ORDER.map(p => {
+                                const sign = summary[p]?.[varga.key] || '-';
+                                return (
+                                    <td
+                                        key={p}
+                                        className="p-3 text-center text-sm font-medium text-copper-950 border-r border-antique/20 last:border-r-0"
+                                    >
+                                        {getAbbr(sign)}
+                                    </td>
+                                );
+                            })}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            <div className="p-6 bg-parchment/10 border-t border-antique flex items-center justify-center gap-8 flex-wrap">
+                {Object.entries(SIGN_ABBR).map(([full, abbr]) => (
+                    <div key={full} className="flex items-center gap-2 text-[10px] text-copper-600">
+                        <span className="font-bold text-copper-900">{abbr}:</span>
+                        <span>{full}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}

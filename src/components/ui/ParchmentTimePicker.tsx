@@ -6,62 +6,56 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
 
 interface ParchmentTimePickerProps {
-    date: Date | undefined;
-    setDate: (date: Date | undefined) => void;
+    value?: string; // HH:mm:ss (24h format)
+    onChange: (time: string | undefined) => void;
     label?: string;
     placeholder?: string;
     className?: string;
 }
 
 export default function ParchmentTimePicker({
-    date,
-    setDate,
+    value,
+    onChange,
     label,
     placeholder = "Select Time",
     className
 }: ParchmentTimePickerProps) {
-    // Helper to update specific parts of the date
-    const handleTimeChange = (type: 'hour' | 'minute' | 'ampm', value: string) => {
-        const newDate = date ? new Date(date) : new Date();
-        // If no date was set, default to today
+    const [open, setOpen] = React.useState(false);
 
-        let currentHours = newDate.getHours();
-        let currentMinutes = newDate.getMinutes();
+    // Parse HH:mm:ss (24h) - be tolerant of ISO artifacts
+    const parsedTime = React.useMemo(() => {
+        if (!value) return { h: 12, m: 0, s: 0 };
+        // Extract only the HH:mm:ss part if there's any suffix like .000Z
+        const cleanValue = value.split('.')[0].split('+')[0].split('Z')[0];
+        const parts = cleanValue.split(':').map(Number);
+        return {
+            h: parts[0] || 0,
+            m: parts[1] || 0,
+            s: parts[2] || 0
+        };
+    }, [value]);
 
-        if (type === 'hour') {
-            const hour = parseInt(value);
-            const isPM = currentHours >= 12;
-            if (isPM && hour < 12) newDate.setHours(hour + 12);
-            else if (!isPM && hour === 12) newDate.setHours(0);
-            else if (isPM && hour === 12) newDate.setHours(12);
-            else newDate.setHours(hour + (isPM ? 12 : 0) - (isPM && hour !== 12 ? 12 : 0)); // Logic slightly complex, simplifying below
+    const handleTimeChange = (type: 'hour' | 'minute' | 'second', newVal: number) => {
+        let { h, m, s } = parsedTime;
 
-            // Re-calc simply:
-            // We want to set the visual hour (1-12) preserving AM/PM
-            const ampm = currentHours >= 12 ? 'PM' : 'AM';
-            let newH = hour;
-            if (ampm === 'PM' && hour !== 12) newH = hour + 12;
-            if (ampm === 'AM' && hour === 12) newH = 0;
-            newDate.setHours(newH);
-        } else if (type === 'minute') {
-            newDate.setMinutes(parseInt(value));
-        } else if (type === 'ampm') {
-            const currentH = newDate.getHours();
-            if (value === 'PM' && currentH < 12) newDate.setHours(currentH + 12);
-            if (value === 'AM' && currentH >= 12) newDate.setHours(currentH - 12);
-        }
+        if (type === 'hour') h = newVal;
+        else if (type === 'minute') m = newVal;
+        else if (type === 'second') s = newVal;
 
-        setDate(newDate);
+        const formatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        onChange(formatted);
     };
 
     const getDisplayTime = () => {
-        if (!date) return null;
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (!value) return null;
+        const { h, m, s } = parsedTime;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
     // Generate options
-    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    const minutes = Array.from({ length: 60 }, (_, i) => i);
+    const seconds = Array.from({ length: 60 }, (_, i) => i);
 
     return (
         <div className={cn("flex flex-col gap-2", className)}>
@@ -70,13 +64,13 @@ export default function ParchmentTimePicker({
                     {label}
                 </label>
             )}
-            <Popover>
+            <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <button
                         type="button"
                         className={cn(
                             "w-full bg-transparent border-b border-[#DCC9A6] px-3 py-2.5 font-serif text-[#3E2A1F] placeholder-[#DCC9A6] focus:outline-none focus:border-[#9C7A2F] transition-colors flex items-center justify-between group hover:bg-[#FEFAEA]/50 text-left",
-                            !date && "text-[#DCC9A6]"
+                            !value && "text-[#DCC9A6]"
                         )}
                     >
                         <span>{getDisplayTime() || placeholder}</span>
@@ -84,54 +78,57 @@ export default function ParchmentTimePicker({
                     </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4" align="start">
-                    <div className="flex gap-2 h-48">
+                    <div className="flex gap-2 h-64 overflow-hidden">
                         {/* Hours */}
-                        <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar w-16 text-center border-r border-[#DCC9A6] pr-2">
-                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1">Hr</span>
+                        <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar w-14 text-center border-r border-[#DCC9A6] pr-2">
+                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1 sticky top-0 bg-white py-1">H</span>
                             {hours.map((h) => (
                                 <button
                                     key={h}
-                                    onClick={() => handleTimeChange('hour', h.toString())}
+                                    type="button"
+                                    onClick={() => handleTimeChange('hour', h)}
                                     className={cn(
-                                        "py-1 rounded hover:bg-[#F2DCBC] text-sm font-serif",
-                                        date && ((date.getHours() % 12 || 12) === h) && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
+                                        "py-1 rounded hover:bg-[#F2DCBC] text-sm font-serif transition-colors shrink-0",
+                                        value && parsedTime.h === h && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
                                     )}
                                 >
-                                    {h}
+                                    {h.toString().padStart(2, '0')}
                                 </button>
                             ))}
                         </div>
 
                         {/* Minutes */}
-                        <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar w-16 text-center border-r border-[#DCC9A6] pr-2">
-                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1">Min</span>
+                        <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar w-14 text-center border-r border-[#DCC9A6] pr-2">
+                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1 sticky top-0 bg-white py-1">M</span>
                             {minutes.map((m) => (
                                 <button
                                     key={m}
+                                    type="button"
                                     onClick={() => handleTimeChange('minute', m)}
                                     className={cn(
-                                        "py-1 rounded hover:bg-[#F2DCBC] text-sm font-serif",
-                                        date && (date.getMinutes() === parseInt(m)) && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
+                                        "py-1 rounded hover:bg-[#F2DCBC] text-sm font-serif transition-colors shrink-0",
+                                        value && parsedTime.m === m && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
                                     )}
                                 >
-                                    {m}
+                                    {m.toString().padStart(2, '0')}
                                 </button>
                             ))}
                         </div>
 
-                        {/* AM/PM */}
-                        <div className="flex flex-col gap-1 w-14 text-center">
-                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1">Mer</span>
-                            {['AM', 'PM'].map((ap) => (
+                        {/* Seconds */}
+                        <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar w-14 text-center pr-2">
+                            <span className="text-[10px] text-[#9C7A2F] font-bold uppercase mb-1 sticky top-0 bg-white py-1">S</span>
+                            {seconds.map((s) => (
                                 <button
-                                    key={ap}
-                                    onClick={() => handleTimeChange('ampm', ap)}
+                                    key={s}
+                                    type="button"
+                                    onClick={() => handleTimeChange('second', s)}
                                     className={cn(
-                                        "py-2 rounded hover:bg-[#F2DCBC] text-sm font-serif",
-                                        date && (date.getHours() >= 12 ? 'PM' : 'AM') === ap && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
+                                        "py-1 rounded hover:bg-[#F2DCBC] text-sm font-serif transition-colors shrink-0",
+                                        value && parsedTime.s === s && "bg-[#9C7A2F] text-[#FEFAEA] font-bold hover:bg-[#763A1F]"
                                     )}
                                 >
-                                    {ap}
+                                    {s.toString().padStart(2, '0')}
                                 </button>
                             ))}
                         </div>

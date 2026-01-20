@@ -15,6 +15,11 @@ export default function GlobalHeader() {
     const { user, logout } = useAuth();
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Hide header on authenticaton pages
     if (pathname === "/login" || pathname === "/register") {
@@ -78,7 +83,9 @@ export default function GlobalHeader() {
                         <span className="text-[10px] font-serif text-white tracking-widest uppercase">{settings.ayanamsa} Ayanamsa</span>
                         <div className="flex items-center gap-1.5 text-white/90">
                             <Clock className="w-3 h-3" />
-                            <span className="text-xs font-serif tracking-wider">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-xs font-serif tracking-wider" suppressHydrationWarning>
+                                {mounted ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                            </span>
                         </div>
                     </div>
 
