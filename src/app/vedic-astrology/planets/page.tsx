@@ -98,56 +98,25 @@ function mapChartToPlanetInfo(chartData: any): PlanetInfo[] {
 }
 
 export default function VedicPlanetsPage() {
-    const { clientDetails, isGeneratingCharts } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { settings } = useAstrologerSettings();
 
-    const [planetData, setPlanetData] = useState<PlanetInfo[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const activeSystem = settings.ayanamsa.toLowerCase();
 
-    const fetchPlanetData = async () => {
-        if (!clientDetails?.id) return;
-
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            const charts = await clientApi.getCharts(clientDetails.id);
-            const activeSystem = settings.ayanamsa.toLowerCase();
-            const d1Chart = charts.find((c: any) =>
-                c.chartType === 'D1' &&
-                (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem
-            );
-
-            if (d1Chart?.chartData) {
-                setPlanetData(mapChartToPlanetInfo(d1Chart.chartData));
-            } else {
-                // No chart found, try generating
-                try {
-                    await clientApi.generateChart(clientDetails.id, 'D1', activeSystem);
-                    const refreshedCharts = await clientApi.getCharts(clientDetails.id);
-                    const newChart = refreshedCharts.find((c: any) =>
-                        c.chartType === 'D1' &&
-                        (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem
-                    );
-                    if (newChart?.chartData) {
-                        setPlanetData(mapChartToPlanetInfo(newChart.chartData));
-                    }
-                } catch (genErr) {
-                    console.warn('Chart generation failed:', genErr);
-                }
-            }
-        } catch (err: any) {
-            console.error('Failed to fetch planet data:', err);
-            setError(err.message || 'Failed to load planetary data');
-        } finally {
-            setIsLoading(false);
+    const planetData = React.useMemo(() => {
+        const key = `D1_${activeSystem}`;
+        const d1Chart = processedCharts[key];
+        if (d1Chart?.chartData) {
+            return mapChartToPlanetInfo(d1Chart.chartData);
         }
-    };
+        return [];
+    }, [processedCharts, activeSystem]);
 
     useEffect(() => {
-        fetchPlanetData();
-    }, [clientDetails?.id, settings.ayanamsa, isGeneratingCharts]);
+        if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
+            refreshCharts();
+        }
+    }, [clientDetails?.id, isGeneratingCharts]);
 
     if (!clientDetails) {
         return (
@@ -171,51 +140,44 @@ export default function VedicPlanetsPage() {
                                 {settings.ayanamsa}
                             </span>
                             {isGeneratingCharts && (
-                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
                                     <Loader2 className="w-3 h-3 animate-spin" />
                                     Generating...
+                                </span>
+                            )}
+                            {isRefreshingCharts && !isGeneratingCharts && (
+                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Refreshing...
                                 </span>
                             )}
                         </div>
                     </div>
                 </div>
                 <button
-                    onClick={fetchPlanetData}
-                    disabled={isLoading}
+                    onClick={refreshCharts}
+                    disabled={isLoadingCharts}
                     className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
                 >
-                    <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+                    <RefreshCw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
                 </button>
             </div>
 
-            {/* Loading State */}
-            {isLoading && (
-                <div className="flex flex-col items-center justify-center py-20">
-                    <Loader2 className="w-10 h-10 text-[#D08C60] animate-spin mb-4" />
+            {/* Loading State - Only show if NO data exists */}
+            {isLoadingCharts && Object.keys(processedCharts).length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 text-[#D08C60] animate-spin mb-3" />
                     <p className="font-serif text-[#8B5A2B]">Loading planetary positions...</p>
                 </div>
             )}
 
-            {/* Error State */}
-            {!isLoading && error && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <p className="font-serif text-red-600 mb-4">{error}</p>
-                    <button
-                        onClick={fetchPlanetData}
-                        className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
-                    >
-                        Retry
-                    </button>
-                </div>
-            )}
-
             {/* No Data State */}
-            {!isLoading && !error && planetData.length === 0 && (
+            {!isLoadingCharts && planetData.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <p className="font-serif text-[#8B5A2B] text-lg mb-2">No planetary data available</p>
                     <p className="text-sm text-[#8B5A2B]/60 mb-4">Charts are being generated for this client</p>
                     <button
-                        onClick={fetchPlanetData}
+                        onClick={refreshCharts}
                         className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
                     >
                         Refresh
@@ -224,7 +186,7 @@ export default function VedicPlanetsPage() {
             )}
 
             {/* Planets Table */}
-            {!isLoading && !error && planetData.length > 0 && (
+            {planetData.length > 0 && (
                 <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">

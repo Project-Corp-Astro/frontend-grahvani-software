@@ -303,15 +303,16 @@ export const clientApi = {
 
     /**
      * Get system capabilities - which chart types are available per ayanamsa
-     * This is a client-side utility, not an API call
+     * SYNCED with backend endpoint-availability.ts (2026-01-21)
      */
     getSystemCapabilities: (system: string): SystemCapabilities => {
         const CAPABILITIES: Record<string, SystemCapabilities> = {
             lahiri: {
                 charts: {
+                    // Synced with backend - removed D6 and D150 (not supported)
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon', 'sun', 'sudarshan', 'transit'],
-                    lagna: ['arudha', 'bhava', 'hora', 'sripathi', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                    special: ['moon_chart', 'sun_chart', 'sudarshana', 'transit'],
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
@@ -327,9 +328,10 @@ export const clientApi = {
             },
             raman: {
                 charts: {
+                    // No D6 or D150 for Raman
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
                     special: ['moon', 'sun', 'sudarshan', 'transit'],
-                    lagna: ['arudha', 'bhava', 'hora', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
@@ -345,8 +347,9 @@ export const clientApi = {
             },
             kp: {
                 charts: {
+                    // KP: Only D1, no other divisional charts
                     divisional: ['D1'],
-                    special: ['planets_cusps'],
+                    special: ['planets_cusps', 'shodasha_varga'],
                     lagna: []
                 },
                 features: {

@@ -91,68 +91,44 @@ function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlan
 }
 
 export default function TransitsPage() {
-    const { clientDetails, isGeneratingCharts } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { settings } = useAstrologerSettings();
 
-    const [transitData, setTransitData] = useState<TransitPlanet[]>([]);
-    const [natalAscendant, setNatalAscendant] = useState(1);
-    const [transitPlanets, setTransitPlanets] = useState<Planet[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const activeSystem = settings.ayanamsa.toLowerCase();
 
-    const fetchTransitData = async () => {
-        if (!clientDetails?.id) return;
+    const { transitData, natalAscendant, transitPlanets } = React.useMemo(() => {
+        const key = `D1_${activeSystem}`;
+        const d1Chart = processedCharts[key];
 
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            const charts = await clientApi.getCharts(clientDetails.id);
-            const activeSystem = settings.ayanamsa.toLowerCase();
-            const d1Chart = charts.find((c: any) =>
-                c.chartType === 'D1' &&
-                (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem
-            );
-
-            if (d1Chart?.chartData?.ascendant?.sign) {
-                setNatalAscendant(signNameToId[d1Chart.chartData.ascendant.sign] || 1);
-            }
-
-            if (d1Chart?.chartData) {
-                const natal = d1Chart.chartData;
-                const ascSign = signNameToId[natal.ascendant?.sign] || 1;
-                const transits = mapChartToTransits(natal, ascSign);
-                setTransitData(transits);
-
-                const planets: Planet[] = Object.entries(natal.planetary_positions || {}).map(([key, value]: [string, any]) => {
-                    // Safely extract degrees
-                    let deg: number | null = null;
-                    if (typeof value?.degrees === 'number') deg = value.degrees;
-                    else if (typeof value?.longitude === 'number') deg = value.longitude;
-
-                    return {
-                        name: key.substring(0, 2).charAt(0).toUpperCase() + key.substring(1, 2),
-                        signId: signNameToId[value?.sign] || 1,
-                        degree: deg !== null && !isNaN(deg) ? formatDegree(deg) : '',
-                        isRetro: value?.retrograde || false,
-                    };
-                });
-                setTransitPlanets(planets);
-            } else {
-                setTransitData([]);
-                setTransitPlanets([]);
-            }
-        } catch (err: any) {
-            console.error('Failed to fetch transit data:', err);
-            setError(err.message || 'Failed to load transit data');
-        } finally {
-            setIsLoading(false);
+        if (!d1Chart?.chartData) {
+            return { transitData: [], natalAscendant: 1, transitPlanets: [] };
         }
-    };
+
+        const natal = d1Chart.chartData;
+        const ascSign = signNameToId[natal.ascendant?.sign] || 1;
+        const transits = mapChartToTransits(natal, ascSign);
+
+        const planets: Planet[] = Object.entries(natal.planetary_positions || {}).map(([key, value]: [string, any]) => {
+            let deg: number | null = null;
+            if (typeof value?.degrees === 'number') deg = value.degrees;
+            else if (typeof value?.longitude === 'number') deg = value.longitude;
+
+            return {
+                name: key.substring(0, 2).charAt(0).toUpperCase() + key.substring(1, 2),
+                signId: signNameToId[value?.sign] || 1,
+                degree: deg !== null && !isNaN(deg) ? formatDegree(deg) : '',
+                isRetro: value?.retrograde || false,
+            };
+        });
+
+        return { transitData: transits, natalAscendant: ascSign, transitPlanets: planets };
+    }, [processedCharts, activeSystem]);
 
     useEffect(() => {
-        fetchTransitData();
-    }, [clientDetails?.id, settings.ayanamsa, isGeneratingCharts]);
+        if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
+            refreshCharts();
+        }
+    }, [clientDetails?.id, isGeneratingCharts]);
 
     const retroPlanets = transitData.filter(t => t.isRetro);
     const debilitatedPlanets = transitData.filter(t => t.status === 'Debilitated');
@@ -180,20 +156,26 @@ export default function TransitsPage() {
                             {settings.ayanamsa}
                         </span>
                         {isGeneratingCharts && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Generating...
+                            </span>
+                        )}
+                        {isRefreshingCharts && !isGeneratingCharts && (
+                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Refreshing...
                             </span>
                         )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={fetchTransitData}
-                        disabled={isLoading}
+                        onClick={refreshCharts}
+                        disabled={isLoadingCharts}
                         className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
                     >
-                        <RefreshCcw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+                        <RefreshCcw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
                     </button>
                     <div className="bg-green-100 px-2 py-1 rounded-lg border border-green-200 flex items-center gap-1.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -202,35 +184,23 @@ export default function TransitsPage() {
                 </div>
             </div>
 
-            {/* Loading State */}
-            {isLoading && (
+            {/* Loading State - Only show if NO data exists */}
+            {isLoadingCharts && Object.keys(processedCharts).length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16">
                     <Loader2 className="w-8 h-8 text-[#D08C60] animate-spin mb-3" />
                     <p className="font-serif text-[#8B5A2B]">Calculating transit positions...</p>
                 </div>
             )}
 
-            {/* Error State */}
-            {!isLoading && error && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <p className="font-serif text-red-600 mb-4">{error}</p>
-                    <button
-                        onClick={fetchTransitData}
-                        className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
-                    >
-                        Retry
-                    </button>
-                </div>
-            )}
 
             {/* No Data State */}
-            {!isLoading && !error && transitData.length === 0 && (
+            {!isLoadingCharts && transitData.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <Info className="w-12 h-12 text-[#8B5A2B]/30 mb-3" />
                     <p className="font-serif text-[#8B5A2B] text-lg mb-2">Transit data unavailable</p>
                     <p className="text-sm text-[#8B5A2B]/60 mb-4">Charts are being generated for this client</p>
                     <button
-                        onClick={fetchTransitData}
+                        onClick={refreshCharts}
                         className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
                     >
                         Refresh
@@ -238,7 +208,7 @@ export default function TransitsPage() {
                 </div>
             )}
 
-            {!isLoading && !error && transitData.length > 0 && (
+            {transitData.length > 0 && (
                 <>
                     {/* Alert Banners */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -4,11 +4,22 @@ import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import GoldenButton from "@/components/GoldenButton";
 import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
 import { ChevronDown, Info } from 'lucide-react';
+import { clientApi, CHART_METADATA } from '@/lib/api';
 
 
 export default function ChartControls() {
     const { settings, updateAyanamsa } = useAstrologerSettings();
     const [showAdvanced, setShowAdvanced] = React.useState(false);
+
+    // Get dynamic chart options based on selected Ayanamsa system
+    const systemCapabilities = clientApi.getSystemCapabilities(settings.ayanamsa);
+    const availableDivisionalCharts = systemCapabilities.charts.divisional;
+
+    // Build chart options from available charts
+    const chartOptions = availableDivisionalCharts.map(chartType => ({
+        value: chartType,
+        label: `${CHART_METADATA[chartType]?.name || chartType} (${chartType})`
+    }));
 
     return (
         <div className="space-y-6">
@@ -51,37 +62,36 @@ export default function ChartControls() {
                             { value: 'lahiri', label: 'Lahiri (Chitrapaksha)' },
                             { value: 'raman', label: 'Raman' },
                             { value: 'kp', label: 'KP' },
-                            { value: 'tropical', label: 'Tropical' },
                         ]}
                     />
                     <p className="text-[9px] text-[#9C7A2F]/60 mt-2 italic">* This updates your global astrologer preferences.</p>
+
+                    {/* System capability info */}
+                    <div className="mt-3 p-2 bg-[#FAF5E6] rounded-lg text-[9px] text-[#7A5A43]">
+                        <span className="font-bold uppercase">Available Features:</span>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                            {systemCapabilities.hasDivisional && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Divisional</span>}
+                            {systemCapabilities.hasAshtakavarga && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Ashtakavarga</span>}
+                            {systemCapabilities.hasNumerology && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Numerology</span>}
+                            {systemCapabilities.hasHorary && <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">Horary</span>}
+                            {!systemCapabilities.hasDivisional && <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">D1 Only</span>}
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* Divisional Charts Select */}
+            {/* Divisional Charts Select - Now Dynamic based on Ayanamsa */}
             <div>
                 <ParchmentSelect
                     label="Divisional Chart"
                     defaultValue="D1"
-                    options={[
-                        { value: 'D1', label: 'Rashi (D1)' },
-                        { value: 'D2', label: 'Hora (D2)' },
-                        { value: 'D3', label: 'Drekkana (D3)' },
-                        { value: 'D4', label: 'Chaturthamsa (D4)' },
-                        { value: 'D7', label: 'Saptamsa (D7)' },
-                        { value: 'D9', label: 'Navamsa (D9)' },
-                        { value: 'D10', label: 'Dasamsa (D10)' },
-                        { value: 'D12', label: 'Dwadasamsa (D12)' },
-                        { value: 'D16', label: 'Shodasamsa (D16)' },
-                        { value: 'D20', label: 'Vimsamsa (D20)' },
-                        { value: 'D24', label: 'Chaturvimsamsa (D24)' },
-                        { value: 'D27', label: 'Saptavimsamsa (D27)' },
-                        { value: 'D30', label: 'Trimsamsa (D30)' },
-                        { value: 'D40', label: 'Khavedamsa (D40)' },
-                        { value: 'D45', label: 'Akshavedamsa (D45)' },
-                        { value: 'D60', label: 'Shashtiamsa (D60)' },
-                    ]}
+                    options={chartOptions}
                 />
+                {!systemCapabilities.hasDivisional && (
+                    <p className="text-[9px] text-orange-600 mt-1 italic">
+                        Note: {settings.ayanamsa} system only supports D1 (Rashi) chart.
+                    </p>
+                )}
             </div>
 
             {/* Toggles */}
@@ -113,3 +123,4 @@ export default function ChartControls() {
         </div>
     );
 }
+

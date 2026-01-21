@@ -46,32 +46,26 @@ const CHART_NAMES: Record<string, string> = {
     'D60': 'Shashtiamsha (Past Karma)',
 
     // Chandra & Surya Lagna
-    'moon': 'Chandra Lagna (Moon Chart)',
     'moon_chart': 'Chandra Lagna (Moon Chart)',
-    'sun': 'Surya Lagna (Sun Chart)',
     'sun_chart': 'Surya Lagna (Sun Chart)',
 
     // Special Lagnas & Analysis
-    'arudha': 'Arudha Lagna (Perception)',
     'arudha_lagna': 'Arudha Lagna (Perception)',
-    'bhava': 'Bhava Lagna (Relative Strength)',
     'bhava_lagna': 'Bhava Lagna (Relative Strength)',
-    'hora': 'Hora Lagna (Prosperity)',
     'hora_lagna': 'Hora Lagna (Prosperity)',
-    'karkamsha': 'Karkamsha (Soul Desire)',
-    'sripathi': 'Sripathi Bhava (House Analysis)',
+    'karkamsha_d1': 'Karkamsha D1 (Soul Desire)',
+    'karkamsha_d9': 'Karkamsha D9 (Internal Soul)',
     'sripathi_bhava': 'Sripathi Bhava (House Analysis)',
     'kp_bhava': 'KP Bhava (Stellar System)',
     'equal_bhava': 'Equal Bhava',
-    'sudarshan': 'Sudarshan Chakra',
+    'sudarshana': 'Sudarshan Chakra',
+    'transit': 'Transit Chart',
 };
 
 export default function AnalyticalWorkbenchPage() {
-    const { clientDetails } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { settings } = useAstrologerSettings();
 
-    const [charts, setCharts] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [selectedChartType, setSelectedChartType] = useState('D1');
     const [activeTab, setActiveTab] = useState<'chart' | 'dignity' | 'lagna'>('chart');
 
@@ -80,43 +74,13 @@ export default function AnalyticalWorkbenchPage() {
     const lagnaCharts = systemCapabilities.charts.lagna;
     const specialCharts = systemCapabilities.charts.special;
 
-    const fetchCharts = async () => {
-        if (!clientDetails?.id) return;
-        try {
-            setIsLoading(true);
-            const data = await clientApi.getCharts(clientDetails.id);
-            setCharts(data || []);
-            if (!data || data.length === 0) {
-                await clientApi.generateCoreCharts(clientDetails.id);
-                const refreshedData = await clientApi.getCharts(clientDetails.id);
-                setCharts(refreshedData || []);
-            }
-        } catch (err) {
-            console.error('Failed to fetch charts:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCharts();
-    }, [clientDetails?.id, settings.ayanamsa]);
-
     const activeSystem = settings.ayanamsa.toLowerCase();
 
-    // Normalize chart type for matching with backend (e.g., 'moon' -> 'moon_chart')
-    const getMatchTarget = (type: string) => {
-        if (type === 'moon') return 'moon_chart';
-        if (type === 'sun') return 'sun_chart';
-        return type;
-    };
-
-    const targetType = getMatchTarget(selectedChartType).toLowerCase();
-    const currentChart = charts.find(c => {
-        const type = (c.chartType || '').toLowerCase();
-        return (type === targetType || type === selectedChartType.toLowerCase()) &&
-            (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem;
-    });
+    // Use global pre-processed charts for O(1) lookup
+    const currentChart = React.useMemo(() => {
+        const key = `${selectedChartType}_${activeSystem}`;
+        return processedCharts[key];
+    }, [selectedChartType, activeSystem, processedCharts]);
 
     // Use shared parser
     const { planets: displayPlanets, ascendant: ascendantSign } = parseChartData(currentChart?.chartData);
@@ -138,7 +102,19 @@ export default function AnalyticalWorkbenchPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={fetchCharts} disabled={isLoading} className="p-2 rounded-lg bg-parchment border border-antique hover:bg-softwhite text-muted disabled:opacity-50"><RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} /></button>
+                    {isGeneratingCharts && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Generating...
+                        </span>
+                    )}
+                    {isRefreshingCharts && !isGeneratingCharts && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Refreshing...
+                        </span>
+                    )}
+                    <button onClick={refreshCharts} disabled={isLoadingCharts} className="p-2 rounded-lg bg-parchment border border-antique hover:bg-softwhite text-muted disabled:opacity-50"><RefreshCw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} /></button>
                     <Link href="/vedic-astrology/overview" className="px-4 py-2 bg-parchment border border-antique rounded-lg text-sm font-medium text-body hover:bg-softwhite flex items-center gap-2"><Eye className="w-4 h-4" /> Overview</Link>
                 </div>
             </div>
@@ -146,7 +122,7 @@ export default function AnalyticalWorkbenchPage() {
             {/* View Tabs */}
             <div className="flex bg-white/50 p-1 rounded-2xl border border-antique/50 w-fit">
                 {(['chart', 'dignity', 'lagna'] as const).map(tab => (
-                    <button key={tab} onClick={() => { setActiveTab(tab); if (tab === 'lagna') setSelectedChartType('arudha'); else if (tab === 'chart') setSelectedChartType('D1'); }} className={cn("px-6 py-2 rounded-xl text-xs font-bold capitalize transition-all", activeTab === tab ? "bg-gold-primary text-ink shadow-lg" : "text-muted hover:bg-parchment")}>
+                    <button key={tab} onClick={() => { setActiveTab(tab); if (tab === 'lagna') setSelectedChartType('arudha_lagna'); else if (tab === 'chart') setSelectedChartType('D1'); }} className={cn("px-6 py-2 rounded-xl text-xs font-bold capitalize transition-all", activeTab === tab ? "bg-gold-primary text-ink shadow-lg" : "text-muted hover:bg-parchment")}>
                         {tab === 'lagna' ? 'Lagna Analysis' : tab === 'dignity' ? 'Dignity Matrix' : 'Interactive Chart'}
                     </button>
                 ))}
@@ -177,11 +153,25 @@ export default function AnalyticalWorkbenchPage() {
                                 </select>
                             </div>
                             <div className="aspect-square max-w-md mx-auto bg-parchment rounded-3xl p-6 border border-antique relative shadow-inner">
-                                {isLoading ? <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-8 h-8 text-gold-primary animate-spin" /></div> : displayPlanets.length > 0 ? <ChartWithPopup ascendantSign={ascendantSign} planets={displayPlanets} className="bg-transparent border-none" /> : <div className="absolute inset-0 flex flex-col items-center justify-center text-center"><p className="text-muted italic mb-4">No data for {selectedChartType}</p><button onClick={() => clientApi.generateChart(clientDetails.id!, selectedChartType, activeSystem).then(fetchCharts)} className="px-6 py-2 bg-gold-primary text-ink rounded-xl font-bold hover:shadow-lg transition-all">Generate {selectedChartType}</button></div>}
+                                {isLoadingCharts && Object.keys(processedCharts).length === 0 ? (
+                                    <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-8 h-8 text-gold-primary animate-spin" /></div>
+                                ) : displayPlanets.length > 0 ? (
+                                    <ChartWithPopup ascendantSign={ascendantSign} planets={displayPlanets} className="bg-transparent border-none" />
+                                ) : (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                                        <p className="text-muted italic mb-4">No data for {CHART_NAMES[selectedChartType] || selectedChartType}</p>
+                                        <button
+                                            onClick={() => clientApi.generateChart(clientDetails.id!, selectedChartType, activeSystem as any).then(refreshCharts)}
+                                            className="px-6 py-2 bg-gold-primary text-ink rounded-xl font-bold hover:shadow-lg transition-all"
+                                        >
+                                            Generate {selectedChartType}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
-                        <ShodashaDignity data={{ charts }} />
+                        <ShodashaDignity data={{ charts: Object.values(processedCharts) }} />
                     )}
                 </div>
 
@@ -196,7 +186,11 @@ export default function AnalyticalWorkbenchPage() {
                             </div>
                             <div className="p-3 bg-parchment rounded-xl border border-antique/50">
                                 <p className="text-[10px] uppercase font-bold text-muted mb-1">Ascendant Significance</p>
-                                <p className="text-xs text-body leading-relaxed">{selectedChartType === 'arudha' ? 'Perceived persona and worldly success.' : selectedChartType === 'karkamsha' ? 'The soul\'s true desire and talent.' : 'Primary physical and general destiny.'}</p>
+                                <p className="text-xs text-body leading-relaxed">
+                                    {selectedChartType === 'arudha_lagna' ? 'Perceived persona and worldly success.' :
+                                        selectedChartType.includes('karkamsha') ? 'The soul\'s true desire and spiritual talent.' :
+                                            'Primary physical and general destiny.'}
+                                </p>
                             </div>
                         </div>
                     </div>
