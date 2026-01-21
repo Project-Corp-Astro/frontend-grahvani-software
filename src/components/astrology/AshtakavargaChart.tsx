@@ -34,12 +34,15 @@ export default function AshtakavargaChart({
     return (
         <svg viewBox="0 0 400 400" className={cn("w-full h-full", className)}>
             {/* Background Lines */}
-            <g stroke="#D08C60" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
-                {/* Outer Rect */}
-                <rect x="0" y="0" width="400" height="400" />
+            <g stroke="#3D2618" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                {/* Outer Double Frame */}
+                <rect x="0" y="0" width="400" height="400" strokeWidth="2" />
+                <rect x="5" y="5" width="390" height="390" strokeWidth="0.5" strokeOpacity="0.5" />
+
                 {/* Diagonals */}
                 <line x1="0" y1="0" x2="400" y2="400" />
                 <line x1="400" y1="0" x2="0" y2="400" />
+
                 {/* Inscribed Diamond */}
                 <line x1="200" y1="0" x2="0" y2="200" />
                 <line x1="0" y1="200" x2="200" y2="400" />
@@ -52,33 +55,51 @@ export default function AshtakavargaChart({
                 const signId = ((ascendantSign + pos.h - 2) % 12) + 1;
                 const bindus = houseValues[pos.h] || 0;
 
+                // Traditional sign number offset logic
+                let signOffset = { x: 0, y: 35 };
+                if (pos.h === 1) signOffset = { x: 0, y: 55 };
+                else if (pos.h === 7) signOffset = { x: 0, y: -55 };
+                else if (pos.h === 4) signOffset = { x: 55, y: 0 };
+                else if (pos.h === 10) signOffset = { x: -55, y: 0 };
+                // Corners
+                else if (pos.h === 2) signOffset = { x: -25, y: -15 };
+                else if (pos.h === 3) signOffset = { x: -25, y: -15 };
+                else if (pos.h === 5) signOffset = { x: -25, y: 15 };
+                else if (pos.h === 6) signOffset = { x: -25, y: 15 };
+                else if (pos.h === 8) signOffset = { x: 25, y: 15 };
+                else if (pos.h === 9) signOffset = { x: 25, y: 15 };
+                else if (pos.h === 11) signOffset = { x: 25, y: -15 };
+                else if (pos.h === 12) signOffset = { x: 25, y: -15 };
+
                 return (
                     <g key={pos.h}>
                         {/* Bindu Value (Large) */}
                         <text
                             x={pos.x}
                             y={pos.y}
-                            fontSize="36"
+                            fontSize="42"
                             fontFamily="serif"
                             fontWeight="900"
                             fill={bindus < 20 ? "#E11D48" : "#3D2618"}
                             textAnchor="middle"
                             dominantBaseline="central"
+                            className="select-none"
                         >
                             {bindus}
                         </text>
 
-                        {/* Sign Number (Small) - Positioned at the specific point of the house */}
+                        {/* Sign Number (Small) */}
                         <text
-                            x={pos.x}
-                            y={pos.y + (pos.h === 1 ? 55 : pos.h === 7 ? -55 : 35)}
-                            fontSize="16"
+                            x={pos.x + signOffset.x}
+                            y={pos.y + signOffset.y}
+                            fontSize="14"
                             fontFamily="serif"
                             fontWeight="bold"
                             fill="#3D2618"
-                            fillOpacity="0.8"
+                            fillOpacity="0.7"
                             textAnchor="middle"
                             dominantBaseline="central"
+                            className="select-none"
                         >
                             {signId}
                         </text>

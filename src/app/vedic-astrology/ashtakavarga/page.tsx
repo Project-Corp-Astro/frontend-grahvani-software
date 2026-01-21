@@ -115,69 +115,44 @@ export default function AshtakavargaPage() {
         let scores: Record<number, number> = {};
 
         if (activeTab === 'sarva' && data.sarva) {
-            // NEW: Handle nested structure from backend (sarvashtakavarga.signs)
-            const savPayload = (data.sarva as any).sarvashtakavarga || data.sarva;
-            const signsData = savPayload.signs || savPayload;
+            const sarvaData = data.sarva.sarvashtakavarga || data.sarva.ashtakvarga || data.sarva;
+            const signs = sarvaData.signs || sarvaData.houses_matrix || sarvaData.houses || {};
 
-            if (signsData && typeof signsData === 'object' && !Array.isArray(signsData)) {
-                Object.entries(signsData).forEach(([signName, val]) => {
-                    const signId = SIGN_MAP[signName] || SIGN_MAP[signName.charAt(0).toUpperCase() + signName.slice(1)] || parseInt(signName);
-                    if (signId >= 1 && signId <= 12) scores[signId] = val as number;
-                });
-            } else {
-                // FALLBACK: Calculate column totals from the matrix if it's a raw matrix of planets
-                const matrix = savPayload.bhinnashtakavarga || savPayload;
-                const signs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-                const planets = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
+            Object.entries(signs).forEach(([s, v]) => {
+                const signId = SIGN_MAP[s] || SIGN_MAP[s.charAt(0).toUpperCase() + s.slice(1)] ||
+                    (s.startsWith('House') ? ((ascSign + parseInt(s.split(' ')[1]) - 2) % 12) + 1 : parseInt(s));
 
-                signs.forEach(s => {
-                    let colTotal = 0;
-                    planets.forEach(p => {
-                        const lookupKey = p === 'lagna' ? 'Ascendant' : p;
-                        const row = (matrix as any)[lookupKey] ||
-                            (matrix as any)[lookupKey.toLowerCase()] ||
-                            (matrix as any)[lookupKey.charAt(0).toUpperCase() + lookupKey.slice(1)] ||
-                            {};
-
-                        let val;
-                        if (Array.isArray(row)) {
-                            val = row[s - 1];
-                        } else {
-                            const signName = Object.keys(SIGN_MAP).find(k => SIGN_MAP[k] === s);
-                            val = row[s] || (signName ? row[signName] : null);
-                        }
-
-                        if (typeof val === 'number') colTotal += val;
-                    });
-                    scores[s] = colTotal;
-                });
-            }
+                if (signId && signId >= 1 && signId <= 12) {
+                    scores[signId] = v as number;
+                }
+            });
         } else if (activeTab === 'bhinna' && data.bhinna) {
-            // Handle nested bhinnashtakavarga from backend (Dedicated /bhinna response)
-            const bhinnaRoot = (data.bhinna as any).ashtakvarga || data.bhinna;
+            const bhinnaRoot = data.bhinna.bhinnashtakavarga || data.bhinna.ashtakvarga || data.bhinna;
+            const planetKey = selectedPlanet === 'Lagna' ? 'Ascendant' : selectedPlanet;
 
-            if (bhinnaRoot.tables && Array.isArray(bhinnaRoot.tables)) {
-                const table = bhinnaRoot.tables.find((t: any) =>
-                    t.planet === selectedPlanet ||
-                    (selectedPlanet === 'Lagna' && (t.planet === 'Ascendant' || t.planet === 'Lagna'))
-                );
-                if (table && table.total_bindus) {
-                    table.total_bindus.forEach((val: number, idx: number) => {
-                        scores[idx + 1] = val;
-                    });
-                }
+            // Handle array of tables from some backend versions
+            const tables = bhinnaRoot.tables || [];
+            const specificTable = Array.isArray(tables) ? tables.find((t: any) => t.planet === planetKey || t.planet === selectedPlanet) : null;
+
+            // Priority: direct total_bindus array > 'total' field in matrix > 'total_bindus' field in matrix
+            let planetData = specificTable?.total_bindus || bhinnaRoot[planetKey] || bhinnaRoot[planetKey.toLowerCase()] || {};
+
+            // If planetData contains a 'total' or 'total_bindus' property, that's our BAV scores
+            if (planetData && typeof planetData === 'object' && !Array.isArray(planetData)) {
+                if (planetData.total) planetData = planetData.total;
+                else if (planetData.total_bindus) planetData = planetData.total_bindus;
+                else if (planetData.bindus && Array.isArray(planetData.bindus)) planetData = planetData.bindus;
+            }
+
+            if (Array.isArray(planetData)) {
+                planetData.forEach((v, idx) => { scores[idx + 1] = v; });
             } else {
-                // FALLBACK: Previous flat object structure
-                const bhinnaPayload = (data.bhinna as any).bhinnashtakavarga || data.bhinna;
-                const planetKey = selectedPlanet.toLowerCase();
-                const planetData = bhinnaPayload[planetKey] || bhinnaPayload[selectedPlanet] || bhinnaPayload[selectedPlanet.charAt(0).toUpperCase() + selectedPlanet.slice(1)];
-
-                if (planetData) {
-                    Object.entries(planetData).forEach(([s, v]) => {
-                        const signId = SIGN_MAP[s] || parseInt(s);
-                        if (signId) scores[signId] = typeof v === 'number' ? v : (v as any).total || 0;
-                    });
-                }
+                Object.entries(planetData).forEach(([s, v]) => {
+                    const signId = SIGN_MAP[s] || SIGN_MAP[s.charAt(0).toUpperCase() + s.slice(1)] || parseInt(s);
+                    if (signId && signId >= 1 && signId <= 12) {
+                        scores[signId] = (typeof v === 'number' ? v : (v as any).total) || 0;
+                    }
+                });
             }
         }
 
@@ -209,8 +184,8 @@ export default function AshtakavargaPage() {
                                 className={cn(
                                     "px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all",
                                     activeTab === tab
-                                        ? "bg-copper-600 text-white shadow-md shadow-copper-200"
-                                        : "text-copper-600 hover:bg-copper-100"
+                                        ? "bg-gold-primary text-ink shadow-md shadow-gold-primary/20 scale-[1.02]"
+                                        : "text-ink/60 hover:bg-gold-primary/10 hover:text-ink"
                                 )}
                             >
                                 {tab === 'sarva' ? 'Sarvashtakavarga' : tab === 'bhinna' ? 'Bhinnashtakavarga' : 'Shodasha'}
@@ -240,9 +215,9 @@ export default function AshtakavargaPage() {
                             {/* Main Content Area: Table + Chart Side by Side */}
                             <div className="lg:col-span-12 space-y-8">
                                 <div className="bg-white rounded-[2rem] border border-copper-200 shadow-2xl shadow-copper-100/50 overflow-hidden">
-                                    <div className="p-8 border-b border-copper-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-parchment/30 to-white">
+                                    <div className="p-4 md:p-6 border-b border-copper-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-parchment/30 to-white">
                                         <div>
-                                            <h2 className="text-2xl font-serif text-copper-900 font-black">
+                                            <h2 className="text-xl font-serif text-copper-900 font-bold">
                                                 {activeTab === 'sarva' ? 'Sarvashtakavarga (SAV)' : `Bhinnashtakavarga: ${selectedPlanet}`}
                                             </h2>
                                             <p className="text-sm text-copper-600 mt-1 italic">
@@ -260,7 +235,7 @@ export default function AshtakavargaPage() {
                                                         onClick={() => setSelectedPlanet(p)}
                                                         className={cn(
                                                             "px-4 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap",
-                                                            selectedPlanet === p ? "bg-copper-600 text-white shadow-sm" : "text-copper-600 hover:bg-white"
+                                                            selectedPlanet === p ? "bg-gold-primary text-ink shadow-sm scale-105" : "text-ink/60 hover:bg-gold-primary/10 hover:text-ink"
                                                         )}
                                                     >
                                                         {p}
@@ -270,7 +245,7 @@ export default function AshtakavargaPage() {
                                         )}
                                     </div>
 
-                                    <div className="p-8 grid grid-cols-1 xl:grid-cols-2 gap-10 items-start">
+                                    <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                                         {/* Left: Technical Matrix */}
                                         <div className="space-y-4">
                                             <h3 className="text-xs font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">

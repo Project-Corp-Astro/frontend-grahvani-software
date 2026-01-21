@@ -5,7 +5,6 @@ import {
     Compass,
     Loader2,
     RefreshCw,
-    Layers,
     ZoomIn,
     ZoomOut,
     Maximize2,
@@ -17,19 +16,13 @@ import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
 import { clientApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import SudarshanChakraPro, { PlanetPosition } from '@/components/astrology/SudarshanChakraPro';
-
-const signNameToId: Record<string, number> = {
-    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
-    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
-};
+import SudarshanChakraFinal from '@/components/astrology/SudarshanChakraFinal';
 
 export default function ChakrasPage() {
     const { clientDetails } = useVedicClient();
     const { settings } = useAstrologerSettings();
     const [loading, setLoading] = useState(true);
     const [chakraData, setChakraData] = useState<any>(null);
-    const [activeLayer, setActiveLayer] = useState<'triple' | 'lagna' | 'moon' | 'sun'>('triple');
 
     const fetchChakraData = async () => {
         if (!clientDetails?.id) return;
@@ -61,66 +54,6 @@ export default function ChakrasPage() {
         );
     }
 
-    // ROBUST DATA MAPPING
-    const getLayerSigns = (chartData: any) => {
-        if (!chartData) return Array(12).fill(0);
-
-        // Handle houses as object or array
-        const houses = chartData.houses || chartData.house_positions;
-        if (!houses) return Array(12).fill(0);
-
-        return Array.from({ length: 12 }, (_, i) => {
-            const h = Array.isArray(houses) ? houses[i] : houses[i + 1];
-            if (!h) return 0;
-            const signName = h.sign || h.sign_name;
-            if (!signName) return 0;
-
-            // Normalize sign name
-            const normalized = signName.charAt(0).toUpperCase() + signName.slice(1).toLowerCase();
-            return signNameToId[normalized] || 0;
-        });
-    };
-
-    const mapPlanets = (chartData: any): PlanetPosition[] => {
-        if (!chartData) return [];
-
-        const positions = chartData.planetary_positions || chartData.planets;
-        if (!positions) return [];
-
-        if (Array.isArray(positions)) {
-            return positions.map((p: any) => {
-                const name = p.name || p.planet_name || "";
-                const sign = p.sign || p.sign_name || "";
-                const normalized = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
-                return {
-                    name: name.substring(0, 2),
-                    signId: signNameToId[normalized] || 0,
-                    degree: p.degrees || p.degree || '0°'
-                };
-            }).filter(p => p.signId > 0);
-        }
-
-        return Object.entries(positions).map(([name, pos]: [string, any]) => {
-            const sign = pos.sign || pos.sign_name || "";
-            const normalized = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
-            return {
-                name: name.substring(0, 2),
-                signId: signNameToId[normalized] || 0,
-                degree: pos.degrees || pos.degree || '0°'
-            };
-        }).filter(p => p.signId > 0);
-    };
-
-    const lagnaPlanets = mapPlanets(chakraData?.lagna_chart || chakraData?.lagna);
-    const moonPlanets = mapPlanets(chakraData?.moon_chart || chakraData?.moon);
-    const sunPlanets = mapPlanets(chakraData?.sun_chart || chakraData?.sun);
-
-    const layerSigns = {
-        lagna: getLayerSigns(chakraData?.lagna_chart || chakraData?.lagna),
-        moon: getLayerSigns(chakraData?.moon_chart || chakraData?.moon),
-        sun: getLayerSigns(chakraData?.sun_chart || chakraData?.sun)
-    };
-
     return (
         <div className="min-h-screen space-y-8 animate-in fade-in duration-700">
             {/* Professional Header */}
@@ -141,29 +74,13 @@ export default function ChakrasPage() {
                     >
                         <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
                     </button>
-                    <div className="flex bg-white/80 backdrop-blur p-1.5 rounded-2xl border border-copper-200 shadow-sm">
-                        {(['triple', 'lagna', 'moon', 'sun'] as const).map((layer) => (
-                            <button
-                                key={layer}
-                                onClick={() => setActiveLayer(layer)}
-                                className={cn(
-                                    "px-5 py-2.5 rounded-xl text-xs font-bold transition-all capitalize tracking-wide",
-                                    activeLayer === layer
-                                        ? "bg-copper-950 text-white shadow-lg shadow-copper-200"
-                                        : "text-copper-600 hover:bg-copper-50"
-                                )}
-                            >
-                                {layer === 'triple' ? 'Confluence' : layer}
-                            </button>
-                        ))}
-                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Visualization Column */}
                 <div className="lg:col-span-8 space-y-6">
-                    <div className="relative aspect-square w-full bg-[#fdfcfb] rounded-[3rem] border border-copper-200 shadow-[0_32px_64px_-16px_rgba(139,92,71,0.15)] overflow-hidden flex items-center justify-center p-12 group">
+                    <div className="relative aspect-square w-full bg-[#fdfcfb] rounded-[3rem] border border-copper-200 shadow-[0_32px_64px_-16px_rgba(139,92,71,0.15)] overflow-hidden flex items-center justify-center p-6 group">
                         {/* Parchment Texture Overlay */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-multiply"
                             style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/parchment.png")' }} />
@@ -182,14 +99,10 @@ export default function ChakrasPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full h-full relative z-10 animate-in zoom-in-95 duration-1000">
-                                <SudarshanChakraPro
-                                    lagnaPlanets={lagnaPlanets}
-                                    moonPlanets={moonPlanets}
-                                    sunPlanets={sunPlanets}
-                                    activeLayer={activeLayer}
-                                    layerSigns={layerSigns}
-                                    className="scale-110 lg:scale-100"
+                            <div className="w-full h-full relative z-10 animate-in zoom-in-95 duration-1000 flex items-center justify-center">
+                                <SudarshanChakraFinal
+                                    data={chakraData}
+                                    className="max-w-[100%] max-h-[100%] scale-90 lg:scale-100"
                                 />
                             </div>
                         )}
@@ -211,7 +124,7 @@ export default function ChakrasPage() {
 
                 {/* Technical Side Panel Column */}
                 <div className="lg:col-span-4 space-y-8">
-                    {/* Dynamic Legend Card - CRITICAL UPDATE */}
+                    {/* Dynamic Legend Card */}
                     <div className="bg-white rounded-3xl border border-copper-200 p-8 shadow-sm space-y-6">
                         <div className="border-b border-copper-100 pb-4">
                             <h3 className="text-[11px] font-black text-copper-400 uppercase tracking-[0.2em]">Chart Legend</h3>
@@ -271,9 +184,9 @@ export default function ChakrasPage() {
                         <div className="flex items-start gap-4">
                             <LayoutDashboard className="w-5 h-5 text-amber-600 mt-1" />
                             <div>
-                                <h4 className="text-sm font-bold text-amber-900 mb-1">Comparative View</h4>
+                                <h4 className="text-sm font-bold text-amber-900 mb-1">Interpretation Guide</h4>
                                 <p className="text-xs text-amber-700/70 leading-relaxed">
-                                    Use the layer toggle to isolate specific charts or return to Confluence for a holistic perspective.
+                                    This confluence chart allows you to simultaneously observe how the luminaries (Sun/Moon) and the Lagna interact across all 12 houses.
                                 </p>
                             </div>
                         </div>

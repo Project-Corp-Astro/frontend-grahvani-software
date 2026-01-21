@@ -12,66 +12,61 @@ interface MatrixProps {
 
 const PLANET_ORDER = ['Lagna', 'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
 const SIGNS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const SIGN_NAMES = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
 
 export default function AshtakavargaMatrix({ type, planet, data, className }: MatrixProps) {
     if (!data) return null;
 
-    // Handle nested structure from backend
-    const matrixPayload = data.bhinnashtakavarga || data;
-    const savPayload = data.sarvashtakavarga || data;
+    // Determine row identifiers
+    // If it's Bhinna mode, show only the active planet rows (contributors)
+    // If it's Sarva mode, show the traditional Lagna + 7 planets matrix
+    const isSarva = type === 'sarva';
+
+    // Handle data extract from various possible backend structures
+    const matrixPayload = data.bhinnashtakavarga || data.ashtakvarga || data;
     const contributors = data.contributors; // Dedicated BAV payload structure
-    const totalBindusArray = data.total_bindus; // Dedicated BAV payload structure
+    const totalBindusArray = data.total_bindus || data.sarvashtakavarga?.total_bindus;
 
-    const signMap: Record<string, number> = {
-        'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
-        'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
-    };
+    let rowKeys = isSarva ? PLANET_ORDER : (contributors ? contributors.map((c: any) => c.contributor) : [planet || 'Lagna']);
 
-    // Determine row identifiers (Planets/Contributors)
-    let rowKeys = contributors
-        ? contributors.map((c: any) => c.contributor)
-        : PLANET_ORDER;
+    // Remove Lagna/Ascendant from the display rows
+    rowKeys = rowKeys.filter((p: string) => p !== 'Lagna' && p !== 'Ascendant' && p !== 'lagna' && p !== 'ascendant');
 
-    // Filter out Lagna for Sarvashtakavarga specifically as per user request
-    if (type === 'sarva') {
-        rowKeys = rowKeys.filter((k: string) => k !== 'Lagna' && k !== 'Ascendant' && k !== 'lagna' && k !== 'ascendant');
-    }
+    // Helper to get bindu value for a specific sign ID (1-12)
+    const getVal = (rowData: any, signId: number) => {
+        if (!rowData) return 0;
+        if (Array.isArray(rowData)) return rowData[signId - 1] ?? 0;
 
-    // Helper to get sign value from array (0-indexed) or object (1-indexed or name-indexed)
-    const getValBySign = (rowData: any, s: number) => {
-        if (!rowData) return null;
-        if (Array.isArray(rowData)) return rowData[s - 1];
-
-        const signName = Object.keys(signMap).find(k => signMap[k] === s);
-        return rowData[s] ?? (signName ? rowData[signName] : null);
+        const signName = SIGN_NAMES[signId - 1];
+        return rowData[signId] ?? rowData[signName] ?? rowData[signName.toLowerCase()] ?? 0;
     };
 
     return (
         <div className={cn("overflow-x-auto rounded-xl border border-antique bg-white shadow-inner", className)}>
-            <table className="w-full text-left border-collapse min-w-[600px]">
+            <table className="w-full text-left border-collapse min-w-[750px]">
                 <thead>
                     <tr className="bg-parchment/50 border-b border-antique">
-                        <th className="p-3 text-[10px] font-black uppercase text-copper-900 border-r border-antique whitespace-nowrap">
-                            {type === 'sarva' ? 'Sign' : `${planet} BAV`}
+                        <th className="p-3 text-[10px] font-black uppercase text-copper-900 border-r border-antique whitespace-nowrap sticky left-0 bg-parchment/90 backdrop-blur-sm z-20">
+                            {isSarva ? 'Sign' : `${planet} BAV`}
                         </th>
                         {SIGNS.map(s => (
-                            <th key={s} className="p-2 text-center text-xs font-bold text-copper-700 border-r border-antique/50 last:border-r-0">
+                            <th key={s} className="p-2 text-center text-xs font-bold text-copper-700 border-r border-antique/50 last:border-r-0 min-w-[35px]">
                                 {s}
                             </th>
                         ))}
-                        <th className="p-2 text-center text-[10px] font-black uppercase text-gold-dark">Total</th>
+                        <th className="p-3 text-center text-[10px] font-black uppercase text-gold-dark sticky right-0 bg-parchment/90 backdrop-blur-sm z-20">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rowKeys.map((p: string, idx: number) => {
                         let rowData: any = {};
-
                         if (contributors) {
-                            const contrib = contributors.find((c: any) => c.contributor === p);
+                            const contrib = contributors.find((c: any) => c.contributor === p || (p === 'Lagna' && (c.contributor === 'Ascendant' || c.contributor === 'lagna')));
                             if (contrib && Array.isArray(contrib.bindus)) {
-                                contrib.bindus.forEach((val: number, sIdx: number) => {
-                                    rowData[sIdx + 1] = val;
-                                });
+                                contrib.bindus.forEach((val: number, sIdx: number) => { rowData[sIdx + 1] = val; });
                             }
                         } else {
                             const lookupKey = p === 'Lagna' ? 'Ascendant' : p;
@@ -82,16 +77,15 @@ export default function AshtakavargaMatrix({ type, planet, data, className }: Ma
                         }
 
                         let rowTotal = 0;
+                        SIGNS.forEach(s => { rowTotal += getVal(rowData, s); });
 
                         return (
                             <tr key={p} className={cn("border-b border-antique/30 last:border-b-0 group hover:bg-gold-primary/5 transition-colors", idx % 2 === 0 ? "bg-white" : "bg-parchment/20")}>
-                                <td className="p-2 text-xs font-bold text-copper-900 border-r border-antique whitespace-nowrap bg-parchment/30">
-                                    {p === 'Ascendant' ? 'Lagna' : p}
+                                <td className="p-2 px-3 text-xs font-bold text-copper-900 border-r border-antique whitespace-nowrap sticky left-0 bg-white group-hover:bg-gold-primary/5 transition-colors z-10">
+                                    {p}
                                 </td>
                                 {SIGNS.map(s => {
-                                    const val = getValBySign(rowData, s) ?? '-';
-
-                                    if (typeof val === 'number') rowTotal += val;
+                                    const val = getVal(rowData, s);
                                     return (
                                         <td key={s} className={cn(
                                             "p-2 text-center text-xs border-r border-antique/20 last:border-r-0",
@@ -101,93 +95,70 @@ export default function AshtakavargaMatrix({ type, planet, data, className }: Ma
                                         </td>
                                     );
                                 })}
-                                <td className="p-2 text-center text-xs font-black text-copper-950 bg-gold-primary/5">
-                                    {rowTotal > 0 ? rowTotal : (rowData[1] !== undefined ? 0 : '-')}
+                                <td className="p-2 text-center text-xs font-black text-copper-950 bg-white group-hover:bg-gold-primary/10 transition-colors sticky right-0 z-10 shadow-[-4px_0_12px_rgba(0,0,0,0.05)] border-l border-antique/20">
+                                    {rowTotal}
                                 </td>
                             </tr>
                         );
                     })}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-copper-900 text-amber-50 font-bold">
-                        <td className="p-3 text-xs uppercase border-r border-white/10">Total SAV</td>
+                    <tr className="bg-copper-900 text-amber-50 font-bold border-t border-copper-800">
+                        <td className="p-3 px-3 text-[10px] font-black uppercase border-r border-white/10 sticky left-0 bg-copper-900 z-20">Total SAV</td>
                         {SIGNS.map(s => {
-                            // Check for direct SAV totals from backend first
-                            if (Array.isArray(totalBindusArray)) {
-                                return (
-                                    <td key={s} className="p-2 text-center text-sm border-r border-white/10 last:border-r-0">
-                                        {totalBindusArray[s - 1]}
-                                    </td>
-                                );
-                            }
-
-                            const signName = Object.keys(signMap).find(k => signMap[k] === s);
-                            const signsData = savPayload.signs || savPayload;
-                            const directSav = signsData ? (signsData[s] ?? (signName ? signsData[signName] : null)) : null;
+                            let colTotal = 0;
+                            const signsData = data.sarvashtakavarga?.signs || data.signs;
+                            const signName = SIGN_NAMES[s - 1];
+                            const directSav = signsData ? (signsData[s] ?? signsData[signName] ?? signsData[signName.toLowerCase()]) : null;
 
                             if (typeof directSav === 'number') {
-                                return (
-                                    <td key={s} className="p-2 text-center text-sm border-r border-white/10 last:border-r-0">
-                                        {directSav}
-                                    </td>
-                                );
+                                colTotal = directSav;
+                            } else if (Array.isArray(totalBindusArray) && totalBindusArray[s - 1] !== undefined) {
+                                colTotal = totalBindusArray[s - 1];
+                            } else {
+                                // Calculate col total from current rows (Excluding Lagna as per traditional SAV standards)
+                                rowKeys.forEach((p: string) => {
+                                    if (p === 'Lagna' || p === 'Ascendant' || p === 'lagna') return;
+                                    let rowData: any = {};
+                                    if (contributors) {
+                                        const contrib = contributors.find((c: any) => c.contributor === p || (p === 'Lagna' && (c.contributor === 'Ascendant' || c.contributor === 'lagna')));
+                                        if (contrib && Array.isArray(contrib.bindus)) {
+                                            contrib.bindus.forEach((val: number, sIdx: number) => { rowData[sIdx + 1] = val; });
+                                        }
+                                    } else {
+                                        const lookupKey = p === 'Lagna' ? 'Ascendant' : p;
+                                        rowData = matrixPayload[lookupKey] || matrixPayload[lookupKey.toLowerCase()] || {};
+                                    }
+                                    colTotal += getVal(rowData, s);
+                                });
                             }
 
-                            // Fallback to calculation
-                            let colTotal = 0;
-                            rowKeys.forEach((p: string) => {
-                                let rowData: any = {};
-                                if (contributors) {
-                                    const contrib = contributors.find((c: any) => c.contributor === p);
-                                    if (contrib && Array.isArray(contrib.bindus)) {
-                                        contrib.bindus.forEach((val: number, sIdx: number) => { rowData[sIdx + 1] = val; });
-                                    }
-                                } else {
-                                    const lookupKey = p === 'Lagna' ? 'Ascendant' : p;
-                                    rowData = matrixPayload[lookupKey] ||
-                                        matrixPayload[lookupKey.toLowerCase()] ||
-                                        matrixPayload[lookupKey.charAt(0).toUpperCase() + lookupKey.slice(1)] ||
-                                        {};
-                                }
-                                const val = getValBySign(rowData, s);
-                                if (typeof val === 'number') colTotal += val;
-                            });
                             return (
                                 <td key={s} className="p-2 text-center text-sm border-r border-white/10 last:border-r-0">
                                     {colTotal}
                                 </td>
                             );
                         })}
-                        <td className="p-2 text-center text-sm bg-amber-400 text-copper-950">
-                            {Array.isArray(totalBindusArray)
-                                ? totalBindusArray.reduce((a: number, b: number) => a + b, 0)
-                                : (savPayload.total_bindus || SIGNS.reduce((acc, s) => {
-                                    const signName = Object.keys(signMap).find(k => signMap[k] === s);
-                                    const signsData = savPayload.signs || savPayload;
-                                    const directSav = signsData ? (signsData[s] ?? (signName ? signsData[signName] : null)) : null;
-
-                                    if (typeof directSav === 'number') return acc + directSav;
-
-                                    let colTotal = 0;
-                                    rowKeys.forEach((p: string) => {
-                                        let rowData: any = {};
-                                        if (contributors) {
-                                            const contrib = contributors.find((c: any) => c.contributor === p);
-                                            if (contrib && Array.isArray(contrib.bindus)) {
-                                                contrib.bindus.forEach((val: number, sIdx: number) => { rowData[sIdx + 1] = val; });
-                                            }
-                                        } else {
-                                            const lookupKey = p === 'Lagna' ? 'Ascendant' : p;
-                                            rowData = matrixPayload[lookupKey] ||
-                                                matrixPayload[lookupKey.toLowerCase()] ||
-                                                matrixPayload[lookupKey.charAt(0).toUpperCase() + lookupKey.slice(1)] ||
-                                                {};
+                        <td className="p-2 text-center text-sm bg-gold-primary text-ink sticky right-0 z-20 shadow-[-4px_0_12px_rgba(0,0,0,0.1)] border-l border-white/20">
+                            {SIGNS.reduce((acc, s) => {
+                                if (totalBindusArray && totalBindusArray[s - 1] !== undefined) return acc + totalBindusArray[s - 1];
+                                let colTotal = 0;
+                                rowKeys.forEach((p: string) => {
+                                    if (p === 'Lagna' || p === 'Ascendant' || p === 'lagna') return;
+                                    let rowData: any = {};
+                                    if (contributors) {
+                                        const contrib = contributors.find((c: any) => c.contributor === p || (p === 'Lagna' && (c.contributor === 'Ascendant' || c.contributor === 'lagna')));
+                                        if (contrib && Array.isArray(contrib.bindus)) {
+                                            contrib.bindus.forEach((val: number, sIdx: number) => { rowData[sIdx + 1] = val; });
                                         }
-                                        const val = getValBySign(rowData, s);
-                                        if (typeof val === 'number') colTotal += val;
-                                    });
-                                    return acc + colTotal;
-                                }, 0))}
+                                    } else {
+                                        const lookupKey = p === 'Lagna' ? 'Ascendant' : p;
+                                        rowData = matrixPayload[lookupKey] || matrixPayload[lookupKey.toLowerCase()] || {};
+                                    }
+                                    colTotal += getVal(rowData, s);
+                                });
+                                return acc + colTotal;
+                            }, 0)}
                         </td>
                     </tr>
                 </tfoot>

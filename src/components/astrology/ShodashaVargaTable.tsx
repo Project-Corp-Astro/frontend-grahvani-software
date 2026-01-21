@@ -52,20 +52,20 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
     const summary = data.shodasha_varga_summary || data;
 
     return (
-        <div className={cn("overflow-x-auto rounded-[2rem] border border-antique bg-white shadow-2xl", className)}>
-            <div className="p-8 border-b border-copper-100 bg-gradient-to-r from-parchment/30 to-white">
-                <h2 className="text-2xl font-serif text-copper-900 font-black text-center">Shodashvarga Summary</h2>
-                <p className="text-sm text-copper-600 mt-1 text-center font-bold">Signs occupied by planets in Shodashvargas</p>
+        <div className={cn("mx-auto max-w-6xl overflow-x-auto rounded-[1.5rem] border border-antique bg-white shadow-xl", className)}>
+            <div className="p-4 border-b border-copper-100 bg-gradient-to-r from-parchment/30 to-white">
+                <h2 className="text-xl font-serif text-copper-900 font-bold text-center">Shodashvarga Summary</h2>
+                <p className="text-[11px] text-copper-600 mt-0.5 text-center font-bold">Signs occupied by planets in Shodashvargas</p>
             </div>
 
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                     <tr className="bg-parchment/50 border-b border-antique">
-                        <th className="p-4 text-xs font-black uppercase text-copper-900 border-r border-antique sticky left-0 bg-parchment/50 z-10 w-[180px]">
+                        <th className="p-1.5 px-3 text-[10px] font-black uppercase text-copper-900 border-r border-antique sticky left-0 bg-parchment/50 z-10 w-[110px]">
                             Varga
                         </th>
                         {PLANET_ORDER.map(p => (
-                            <th key={p} className="p-3 text-center text-xs font-black text-copper-900 border-r border-antique/50 last:border-r-0">
+                            <th key={p} className="p-1 px-2 text-center text-[10px] font-black uppercase text-copper-900 border-r border-antique/50 last:border-r-0">
                                 {p === 'Ascendant' ? 'Lagna' : p}
                             </th>
                         ))}
@@ -80,7 +80,7 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
                                 idx % 2 === 0 ? "bg-white" : "bg-parchment/20"
                             )}
                         >
-                            <td className="p-3 text-sm font-bold text-copper-900 border-r border-antique sticky left-0 bg-inherit group-hover:bg-inherit z-10">
+                            <td className="p-1.5 px-3 text-xs font-bold text-copper-900 border-r border-antique sticky left-0 bg-inherit group-hover:bg-inherit z-10">
                                 {varga.name}
                             </td>
                             {PLANET_ORDER.map(p => {
@@ -88,7 +88,7 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
                                 return (
                                     <td
                                         key={p}
-                                        className="p-3 text-center text-sm font-medium text-copper-950 border-r border-antique/20 last:border-r-0"
+                                        className="p-1 text-center text-xs font-medium text-copper-950 border-r border-antique/20 last:border-r-0"
                                     >
                                         {getAbbr(sign)}
                                     </td>
@@ -99,11 +99,11 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
                 </tbody>
             </table>
 
-            <div className="p-6 bg-parchment/10 border-t border-antique flex items-center justify-center gap-8 flex-wrap">
+            <div className="p-3 bg-parchment/5 border-t border-antique flex items-center justify-center gap-x-6 gap-y-2 flex-wrap">
                 {Object.entries(SIGN_ABBR).map(([full, abbr]) => (
-                    <div key={full} className="flex items-center gap-2 text-[10px] text-copper-600">
-                        <span className="font-bold text-copper-900">{abbr}:</span>
-                        <span>{full}</span>
+                    <div key={full} className="flex items-center gap-1.5 text-[10px] text-copper-600">
+                        <span className="font-bold text-copper-900/70">{abbr}:</span>
+                        <span className="opacity-80">{full}</span>
                     </div>
                 ))}
             </div>
