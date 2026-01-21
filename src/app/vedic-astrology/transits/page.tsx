@@ -97,18 +97,24 @@ export default function TransitsPage() {
     const activeSystem = settings.ayanamsa.toLowerCase();
 
     const { transitData, natalAscendant, transitPlanets } = React.useMemo(() => {
-        const key = `D1_${activeSystem}`;
-        const d1Chart = processedCharts[key];
+        const d1Key = `D1_${activeSystem}`;
+        const transitKey = `transit_${activeSystem}`;
 
-        if (!d1Chart?.chartData) {
+        const d1Chart = processedCharts[d1Key];
+        const transitChart = processedCharts[transitKey];
+
+        // Transit page needs BOTH: D1 (for natal ascendant/houses) and transit chart (for Gochar positions)
+        if (!d1Chart?.chartData || !transitChart?.chartData) {
             return { transitData: [], natalAscendant: 1, transitPlanets: [] };
         }
 
         const natal = d1Chart.chartData;
-        const ascSign = signNameToId[natal.ascendant?.sign] || 1;
-        const transits = mapChartToTransits(natal, ascSign);
+        const transit = transitChart.chartData;
 
-        const planets: Planet[] = Object.entries(natal.planetary_positions || {}).map(([key, value]: [string, any]) => {
+        const ascSign = signNameToId[natal.ascendant?.sign] || 1;
+        const transits = mapChartToTransits(transit, ascSign);
+
+        const planets: Planet[] = Object.entries(transit.planetary_positions || {}).map(([key, value]: [string, any]) => {
             let deg: number | null = null;
             if (typeof value?.degrees === 'number') deg = value.degrees;
             else if (typeof value?.longitude === 'number') deg = value.longitude;
@@ -117,7 +123,7 @@ export default function TransitsPage() {
                 name: key.substring(0, 2).charAt(0).toUpperCase() + key.substring(1, 2),
                 signId: signNameToId[value?.sign] || 1,
                 degree: deg !== null && !isNaN(deg) ? formatDegree(deg) : '',
-                isRetro: value?.retrograde || false,
+                isRetro: value?.retrograde || value?.is_retro || false,
             };
         });
 
