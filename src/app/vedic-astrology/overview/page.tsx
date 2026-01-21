@@ -55,21 +55,21 @@ const formatTime = (timeStr: string) => {
         // If it contains a T, it's an ISO string, extract time part carefully
         // We use string manipulation to avoid timezone shifts if the data is raw storage
         if (timeStr.includes('T')) {
-           const timePart = timeStr.split('T')[1];
-           // Remove Z or offset
-           const cleanTime = timePart.replace('Z', '').split('+')[0].split('.')[0];
-           const [hours, minutes] = cleanTime.split(':');
-           const h = parseInt(hours);
-           const m = parseInt(minutes);
-           const ampm = h >= 12 ? 'PM' : 'AM';
-           const h12 = h % 12 || 12;
-           return `${h12}:${minutes} ${ampm}`;
+            const timePart = timeStr.split('T')[1];
+            // Remove Z or offset
+            const cleanTime = timePart.replace('Z', '').split('+')[0].split('.')[0];
+            const [hours, minutes] = cleanTime.split(':');
+            const h = parseInt(hours);
+            const m = parseInt(minutes);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${h12}:${minutes} ${ampm}`;
         }
-        
+
         // Fallback to Date parsing if standard time string
         const date = new Date(`1970-01-01T${timeStr}`);
         if (!isNaN(date.getTime())) {
-             return date.toLocaleTimeString('en-US', {
+            return date.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true
@@ -84,34 +84,27 @@ const formatTime = (timeStr: string) => {
 // ... (other imports)
 
 export default function VedicOverviewPage() {
-    const { clientDetails } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { settings } = useAstrologerSettings();
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
-    const [charts, setCharts] = useState<any[]>([]);
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
     const [dashaLoading, setDashaLoading] = useState(false);
     const [notes, setNotes] = useState("");
     const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
 
+    const activeSystem = settings.ayanamsa.toLowerCase();
+
     // Calculate Age
     const age = clientDetails ? new Date().getFullYear() - new Date(clientDetails.dateOfBirth).getFullYear() : 0;
 
     useEffect(() => {
+        if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
+            refreshCharts();
+        }
         if (clientDetails?.id) {
-            fetchCharts();
             fetchDasha();
         }
-    }, [clientDetails, settings.ayanamsa]);
-
-    const fetchCharts = async () => {
-        if (!clientDetails?.id) return;
-        try {
-            const data = await clientApi.getCharts(clientDetails.id);
-            setCharts(data);
-        } catch (error) {
-            console.error("Failed to fetch charts:", error);
-        }
-    };
+    }, [clientDetails?.id, settings.ayanamsa]);
 
     const fetchDasha = async () => {
         if (!clientDetails?.id) return;
@@ -126,65 +119,74 @@ export default function VedicOverviewPage() {
         }
     };
 
-    if (!clientDetails) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 text-gold-primary animate-spin mb-4" />
-                <p className="text-muted font-serif">Loading Client Profile...</p>
-            </div>
-        );
-    }
+    const isLoading = (Object.keys(processedCharts).length === 0 && isLoadingCharts) || !clientDetails;
 
-    // Helper to get processed data for a specific chart type
-    const getProcessedChart = (varga: string) => {
-        const activeSystem = settings.ayanamsa.toLowerCase();
-        const chart = charts.find((c: any) => (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem && c.chartType === varga);
-        return parseChartData(chart?.chartData); // Returns { planets: [], ascendant: 1 } if no data
-    };
+    // Memoize chart data transformations
+    const d1Data = React.useMemo(() => {
+        const key = `D1_${activeSystem}`;
+        return parseChartData(processedCharts[key]?.chartData);
+    }, [processedCharts, activeSystem]);
 
-    const d1Data = getProcessedChart("D1");
-    const d9Data = getProcessedChart("D9");
+    const d9Data = React.useMemo(() => {
+        const key = `D9_${activeSystem}`;
+        return parseChartData(processedCharts[key]?.chartData);
+    }, [processedCharts, activeSystem]);
 
-    // Zoomed chart logic - Get dynamic data based on selected varga
-    const zoomedData = zoomedChart ? getProcessedChart(zoomedChart.varga) : { planets: [], ascendant: 1 };
+    const zoomedData = React.useMemo(() => {
+        if (!zoomedChart) return { planets: [], ascendant: 1 };
+        const key = `${zoomedChart.varga}_${activeSystem}`;
+        return parseChartData(processedCharts[key]?.chartData);
+    }, [zoomedChart, processedCharts, activeSystem]);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* 1. HEADER */}
-            <div className="bg-softwhite border border-antique rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gold-primary to-gold-dark flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg">
-                        {clientDetails.name.charAt(0)}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-xl font-serif font-bold text-ink">{clientDetails.name}</h1>
-                            <span className="text-xs text-muted bg-parchment px-2 py-0.5 rounded-full border border-antique">{age} yrs • {clientDetails.gender}</span>
-                            <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] font-semibold text-green-700 uppercase">Active • {settings.ayanamsa}</span>
+        <div className="space-y-6 animate-in fade-in duration-500 relative">
+            {clientDetails && (
+                <div className="bg-softwhite border border-antique rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gold-primary to-gold-dark flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg">
+                            {clientDetails.name.charAt(0)}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-xl font-serif font-bold text-ink">{clientDetails.name}</h1>
+                                <span className="text-xs text-muted bg-parchment px-2 py-0.5 rounded-full border border-antique">{age} yrs • {clientDetails.gender}</span>
+                                {isGeneratingCharts && (
+                                    <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-200 animate-pulse">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        <span className="text-[10px] font-semibold text-green-700 uppercase">Generating...</span>
+                                    </div>
+                                )}
+                                {isRefreshingCharts && !isGeneratingCharts && (
+                                    <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                        <Loader2 className="w-2.5 h-2.5 text-blue-500 animate-spin" />
+                                        <span className="text-[10px] font-semibold text-blue-700 uppercase">Refreshing...</span>
+                                    </div>
+                                )}
+                                {!isGeneratingCharts && !isRefreshingCharts && (
+                                    <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        <span className="text-[10px] font-semibold text-green-700 uppercase">Active • {settings.ayanamsa}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted mt-1">
+                                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatDate(clientDetails.dateOfBirth)}</span>
+                                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {formatTime(clientDetails.timeOfBirth)}</span>
+                                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {clientDetails.placeOfBirth.city}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted mt-1">
-                            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatDate(clientDetails.dateOfBirth)}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {formatTime(clientDetails.timeOfBirth)}</span>
-                            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {clientDetails.placeOfBirth.city}</span>
-                        </div>
                     </div>
+                    <Link href="/vedic-astrology/workbench" className="px-5 py-2.5 bg-gold-primary text-ink rounded-lg font-semibold text-sm hover:bg-gold-soft transition-colors flex items-center gap-2">
+                        Analytical Workbench <ArrowRight className="w-4 h-4" />
+                    </Link>
                 </div>
-                <Link href="/vedic-astrology/workbench" className="px-5 py-2.5 bg-gold-primary text-ink rounded-lg font-semibold text-sm hover:bg-gold-soft transition-colors flex items-center gap-2">
-                    Analytical Workbench <ArrowRight className="w-4 h-4" />
-                </Link>
-            </div>
+            )}
 
             {/* 2. CORE SIGNATURES - Dynamically extracted from D1 chart */}
             {(() => {
                 // Extract core signatures from D1 chart
-                const d1Chart = charts.find((c: any) =>
-                    (c.chartConfig?.system || 'lahiri').toLowerCase() === settings.ayanamsa.toLowerCase()
-                    && c.chartType === 'D1'
-                );
-                const chartData = d1Chart?.chartData;
+                const key = `D1_${activeSystem}`;
+                const chartData = processedCharts[key]?.chartData;
 
                 // Sign names for ID mapping
                 const signNames = ['', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
@@ -212,7 +214,7 @@ export default function VedicOverviewPage() {
                 const moonData = planets['Moon'] || {};
                 const sunData = planets['Sun'] || {};
 
-                const moonSign = moonData?.sign || clientDetails.rashi || '—';
+                const moonSign = moonData?.sign || clientDetails?.rashi || '—';
                 const moonNakshatra = moonData?.nakshatra || '—';
                 const moonPada = moonData?.pada ? `Pada ${moonData.pada}` : '';
 
@@ -333,8 +335,8 @@ export default function VedicOverviewPage() {
                 <div className="bg-softwhite border border-antique rounded-xl p-4">
                     <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-gold-primary" /> Yogas & Doshas</h3>
                     <div className="space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                        {charts.filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).length > 0 ? (
-                            charts.filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).slice(0, 8).map((c: any, i: number) => {
+                        {Object.values(processedCharts).some((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')) ? (
+                            Object.values(processedCharts).filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).slice(0, 8).map((c: any, i: number) => {
                                 const isYoga = c.chartType.startsWith('yoga_');
                                 const type = isYoga ? 'yoga' : 'dosha';
                                 const subType = c.chartType.replace(isYoga ? 'yoga_' : 'dosha_', '');
@@ -407,13 +409,13 @@ export default function VedicOverviewPage() {
 
                         {analysisModal.type === 'yoga' ? (
                             <YogaAnalysisView
-                                clientId={clientDetails.id!}
+                                clientId={clientDetails?.id || ""}
                                 yogaType={analysisModal.subType}
                                 ayanamsa={settings.ayanamsa}
                             />
                         ) : (
                             <DoshaAnalysis
-                                clientId={clientDetails.id!}
+                                clientId={clientDetails?.id || ""}
                                 doshaType={analysisModal.subType as any}
                                 ayanamsa={settings.ayanamsa}
                             />

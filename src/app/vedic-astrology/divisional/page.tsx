@@ -79,12 +79,10 @@ function getHouseDistributionFromPlanets(planets: Planet[], ascendantSign: numbe
 const DEFAULT_CHART_SLOTS = ['D1', 'D9', 'D4', 'D7', 'D10', 'D3'];
 
 export default function VedicDivisionalPage() {
-    const { clientDetails, isGeneratingCharts } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { settings } = useAstrologerSettings();
 
     const [gridSize, setGridSize] = useState<GridSize>('2x3');
-    const [charts, setCharts] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [chartSlots, setChartSlots] = useState<string[]>(DEFAULT_CHART_SLOTS);
     const [maximizedChart, setMaximizedChart] = useState<string | null>(null);
     const [showSettings, setShowSettings] = useState<number | null>(null);
@@ -101,33 +99,18 @@ export default function VedicDivisionalPage() {
     const gridCols = gridSize === '2x2' ? 'grid-cols-2' : gridSize === '2x3' ? 'grid-cols-3' : 'grid-cols-3';
     const gridRows = gridSize === '2x2' ? 4 : gridSize === '2x3' ? 6 : 9;
 
-    // Fetch all charts
-    const fetchCharts = async () => {
-        if (!clientDetails?.id) return;
-        try {
-            setIsLoading(true);
-            const data = await clientApi.getCharts(clientDetails.id);
-            setCharts(data || []);
-        } catch (err) {
-            console.error('Failed to fetch charts:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchCharts();
+        if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
+            refreshCharts();
+        }
     }, [clientDetails?.id, isGeneratingCharts]);
 
-    // Get chart data by type
-    const getChartData = (chartType: string) => {
+    // Get chart data by type - Optimized for O(1) lookup
+    const getChartData = React.useCallback((chartType: string) => {
         const activeSystem = settings.ayanamsa.toLowerCase();
-        const chart = charts.find(c =>
-            c.chartType === chartType &&
-            (c.chartConfig?.system || 'lahiri').toLowerCase() === activeSystem
-        );
-        return chart?.chartData || null;
-    };
+        const key = `${chartType}_${activeSystem}`;
+        return processedCharts[key]?.chartData || null;
+    }, [processedCharts, settings.ayanamsa]);
 
     // Toggle house details for a specific chart (independent of others)
     const toggleHouseDetails = (chartType: string) => {
@@ -207,9 +190,15 @@ export default function VedicDivisionalPage() {
                             {settings.ayanamsa}
                         </span>
                         {isGeneratingCharts && (
-                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Generating...
+                            </span>
+                        )}
+                        {isRefreshingCharts && !isGeneratingCharts && (
+                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Refreshing...
                             </span>
                         )}
                     </div>
@@ -217,11 +206,11 @@ export default function VedicDivisionalPage() {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={fetchCharts}
-                        disabled={isLoading}
+                        onClick={refreshCharts}
+                        disabled={isLoadingCharts}
                         className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
                     >
-                        <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+                        <RefreshCw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
                     </button>
 
                     {/* Grid Size Selector */}
@@ -237,16 +226,16 @@ export default function VedicDivisionalPage() {
                 </div>
             </header>
 
-            {/* Loading State */}
-            {isLoading && (
+            {/* Loading State - Only show if NO data exists */}
+            {isLoadingCharts && Object.keys(processedCharts).length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20">
                     <Loader2 className="w-10 h-10 text-[#D08C60] animate-spin mb-4" />
                     <p className="font-serif text-[#8B5A2B]">Loading divisional charts...</p>
                 </div>
             )}
 
-            {/* Grid View */}
-            {!isLoading && (
+            {/* Grid View - Show if we have data, even if refreshing */}
+            {Object.keys(processedCharts).length > 0 && (
                 <div className={cn(
                     "grid gap-4",
                     maximizedChart ? "grid-cols-1" : gridCols
@@ -400,7 +389,7 @@ export default function VedicDivisionalPage() {
             )}
 
             {/* Add Chart Button with Selector - FIXED POSITONING */}
-            {!isLoading && !maximizedChart && unusedCharts.length > 0 && (
+            {!isLoadingCharts && !maximizedChart && unusedCharts.length > 0 && (
                 <div className="flex justify-center py-2 relative z-50"> {/* Increased Z-Index context */}
                     <div className="relative">
                         <button
