@@ -1,36 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Added useRouter import
 import { Search, Loader2 } from 'lucide-react';
 import ParchmentInput from "@/components/ui/ParchmentInput";
 import ClientListRow from "@/components/clients/ClientListRow";
-import { clientApi } from "@/lib/api";
+import { useClients } from "@/hooks/queries/useClients"; // Added useClients import
 import { Client } from "@/types/client";
 
 export default function VedicClientSelectionPage() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [clients, setClients] = useState<Client[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    useEffect(() => {
-        const fetchClients = async () => {
-            try {
-                setIsLoading(true);
-                // Fetch only clients belonging to the logged-in astrologer
-                const response = await clientApi.getClients({ myClientsOnly: true, limit: 100 });
-                setClients(response.clients || []);
-            } catch (err) {
-                console.error("Failed to fetch clients:", err);
-                setError("Failed to load soul archives. Please try again.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchClients();
-    }, []);
+    // Clients Query
+    const { data: clientsData, isLoading: loading, error: clientsError } = useClients({
+        myClientsOnly: true,
+        limit: 100
+    });
+    const clients = clientsData?.clients || [];
+    const error = clientsError ? (clientsError as Error).message : null;
 
     const filteredClients = clients.filter(client =>
         (client.firstName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -79,12 +68,16 @@ export default function VedicClientSelectionPage() {
 
             {/* Client List */}
             <div className="space-y-4">
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Loader2 className="w-12 h-12 text-gold-primary animate-spin mb-4" />
-                        <p className="font-serif text-lg text-[#6B4423] animate-pulse">Consulting the archives...</p>
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                        <Loader2 className="w-10 h-10 text-gold-primary animate-spin mb-4" />
+                        <p className="font-serif text-ink/70">Accessing Soul Archives...</p>
                     </div>
-                ) : error ? (
+                )}
+
+                {/* Error State */}
+                {!loading && error && (
                     <div className="text-center py-32 rounded-3xl bg-red-50 border border-red-100">
                         <p className="font-serif text-xl text-red-600 mb-2">{error}</p>
                         <button
@@ -94,13 +87,19 @@ export default function VedicClientSelectionPage() {
                             Try Again
                         </button>
                     </div>
-                ) : filteredClients.length > 0 ? (
+                )}
+
+                {/* Client List */}
+                {!loading && !error && filteredClients.length > 0 && (
                     <div className="grid grid-cols-1 gap-4">
                         {filteredClients.map(client => (
                             <ClientListRow key={client.id} client={client} />
                         ))}
                     </div>
-                ) : (
+                )}
+
+                {/* Empty State */}
+                {!loading && !error && filteredClients.length === 0 && (
                     <div className="text-center py-32 rounded-3xl bg-softwhite border border-antique">
                         <p className="font-serif text-2xl italic text-muted">
                             No constellations match your search.
@@ -110,7 +109,7 @@ export default function VedicClientSelectionPage() {
             </div>
 
             {/* Pagination / Total Count Footer */}
-            {!isLoading && !error && (
+            {!loading && !error && (
                 <div className="pt-8 border-t border-divider text-center">
                     <span className="font-serif text-[10px] text-bronze font-black uppercase tracking-[0.3em]">
                         Synchronized with {filteredClients.length} Collective Records

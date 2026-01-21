@@ -21,8 +21,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi } from '@/lib/api';
+import { useSystemCapabilities } from "@/hooks/queries/useCalculations";
+import { useChartMutations } from "@/hooks/mutations/useChartMutations";
 
 import { parseChartData, signNameToId, signIdToName } from '@/lib/chart-helpers';
 
@@ -64,12 +66,14 @@ const CHART_NAMES: Record<string, string> = {
 
 export default function AnalyticalWorkbenchPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
+    const { generateChart } = useChartMutations();
 
     const [selectedChartType, setSelectedChartType] = useState('D1');
     const [activeTab, setActiveTab] = useState<'chart' | 'dignity' | 'lagna'>('chart');
 
-    const systemCapabilities = clientApi.getSystemCapabilities(settings.ayanamsa);
+    const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
     const divisionalCharts = systemCapabilities.charts.divisional;
     const lagnaCharts = systemCapabilities.charts.lagna;
     const specialCharts = systemCapabilities.charts.special;
@@ -161,7 +165,7 @@ export default function AnalyticalWorkbenchPage() {
                                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
                                         <p className="text-muted italic mb-4">No data for {CHART_NAMES[selectedChartType] || selectedChartType}</p>
                                         <button
-                                            onClick={() => clientApi.generateChart(clientDetails.id!, selectedChartType, activeSystem as any).then(refreshCharts)}
+                                            onClick={() => generateChart.mutateAsync({ clientId: clientDetails.id!, chartType: selectedChartType, ayanamsa: activeSystem }).then(refreshCharts)}
                                             className="px-6 py-2 bg-gold-primary text-ink rounded-xl font-bold hover:shadow-lg transition-all"
                                         >
                                             Generate {selectedChartType}

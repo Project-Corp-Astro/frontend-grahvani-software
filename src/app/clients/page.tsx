@@ -9,6 +9,8 @@ import ClientListRow from "@/components/clients/ClientListRow";
 import { Client, ClientListResponse } from "@/types/client";
 import { clientApi } from "@/lib/api";
 import { useRouter } from 'next/navigation';
+import { useClients } from "@/hooks/queries/useClients";
+import { useClientMutations } from "@/hooks/mutations/useClientMutations";
 
 // Helper to derive firstName/lastName from fullName for display
 const deriveNames = (client: Client): Client => {
@@ -32,51 +34,22 @@ const deriveNames = (client: Client): Client => {
 export default function ClientsPage() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 20 });
 
-    // Fetch clients from API
-    const fetchClients = useCallback(async (search?: string) => {
-        setLoading(true);
-        setError(null);
+    // Query Hooks
+    const { data, isLoading: loading, error: queryError, refetch } = useClients({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: searchQuery || undefined,
+    });
 
-        try {
-            const response: ClientListResponse = await clientApi.getClients({
-                page: pagination.page,
-                limit: pagination.limit,
-                search: search || undefined,
-            });
+    const { deleteClient } = useClientMutations();
 
-            // Derive firstName/lastName for UI compatibility
-            const processedClients = response.clients.map(deriveNames);
-            setClients(processedClients);
-            setPagination(response.pagination);
-        } catch (err: any) {
-            console.error('Failed to fetch clients:', err);
-            setClients([]);
-            setError(err.message || 'Failed to connect to server. Please ensure the client-service is running.');
-        } finally {
-            setLoading(false);
-        }
-    }, [pagination.page, pagination.limit]);
-
-    // Initial fetch
-    useEffect(() => {
-        fetchClients();
-    }, [fetchClients]);
-
-    // Debounced search
-    useEffect(() => {
-        const debounceTimer = setTimeout(() => {
-            fetchClients(searchQuery);
-        }, 300);
-        return () => clearTimeout(debounceTimer);
-    }, [searchQuery, fetchClients]);
-
-    // Use clients directly from API
-    const filteredClients = clients;
+    // Derived State
+    const clients = data?.clients?.map(deriveNames) || [];
+    const total = data?.pagination?.total || 0;
+    const totalPages = data?.pagination?.totalPages || 1;
+    const error = queryError ? (queryError as Error).message : null;
 
     // Handle Editing
     const handleEditClient = (client: Client) => {
@@ -90,9 +63,8 @@ export default function ClientsPage() {
         if (!confirmed) return;
 
         try {
-            await clientApi.deleteClient(client.id);
-            // Refresh the list
-            fetchClients(searchQuery);
+            await deleteClient.mutateAsync(client.id);
+            // Refetch is automatic via invalidation in hook
         } catch (err: any) {
             console.error('Failed to delete client:', err);
             alert(err.message || 'Failed to delete client record. Please try again.');
@@ -146,7 +118,7 @@ export default function ClientsPage() {
                             <span>{error}</span>
                         </div>
                         <button
-                            onClick={() => fetchClients(searchQuery)}
+                            onClick={() => refetch()}
                             className="flex items-center gap-1 text-amber-700 hover:text-amber-800 text-sm font-medium"
                         >
                             <RefreshCw className="w-4 h-4" />
@@ -163,9 +135,9 @@ export default function ClientsPage() {
                         <Loader2 className="w-8 h-8 text-gold-primary mx-auto mb-4 animate-spin" />
                         <p className="font-serif text-xl text-muted">Loading soul records...</p>
                     </div>
-                ) : filteredClients.length > 0 ? (
+                ) : clients.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                        {filteredClients.map(client => (
+                        {clients.map(client => (
                             <ClientListRow
                                 key={client.id}
                                 client={client}
@@ -187,9 +159,9 @@ export default function ClientsPage() {
             {/* Pagination / Total Count Footer */}
             <div className="pt-8 border-t border-divider text-center">
                 <span className="font-serif text-[10px] text-bronze font-black uppercase tracking-[0.3em]">
-                    Synchronized with {pagination.total} Collective Records
-                    {pagination.totalPages > 1 && (
-                        <span className="ml-2">• Page {pagination.page} of {pagination.totalPages}</span>
+                    Synchronized with {total} Collective Records
+                    {totalPages > 1 && (
+                        <span className="ml-2">• Page {pagination.page} of {totalPages}</span>
                     )}
                 </span>
             </div>

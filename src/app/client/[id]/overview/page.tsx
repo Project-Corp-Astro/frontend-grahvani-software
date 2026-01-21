@@ -17,11 +17,12 @@ import {
 import Link from 'next/link';
 import GoldenButton from "@/components/GoldenButton";
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 
 export default function ClientOverviewPage() {
     const { clientDetails, isClientSet } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
 
     // Fallback Mock Data if no client is set in context
     const displayClient = clientDetails || {

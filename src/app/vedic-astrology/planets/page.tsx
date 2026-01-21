@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Compass, Loader2, RefreshCw } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -99,7 +99,8 @@ function mapChartToPlanetInfo(chartData: any): PlanetInfo[] {
 
 export default function VedicPlanetsPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 

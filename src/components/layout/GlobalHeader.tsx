@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Settings, HelpCircle, Clock, User, Bell, ChevronDown } from "lucide-react";
 import GoldenButton from "@/components/GoldenButton";
-import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
+import { useAstrologerStore } from "@/store/useAstrologerStore";
 import { useAuth } from "@/context/AuthContext";
 import { LogOut } from "lucide-react";
 
 export default function GlobalHeader() {
     const pathname = usePathname();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds, updateSettings } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
     const { user, logout } = useAuth();
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
@@ -210,7 +211,8 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
 }
 
 function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const { settings, updateSettings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds, updateSettings } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
     const [tempSettings, setTempSettings] = React.useState(settings);
     const [isSaving, setIsSaving] = React.useState(false);
 

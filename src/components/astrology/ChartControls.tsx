@@ -2,13 +2,15 @@ import React from 'react';
 import { Eye, Settings } from 'lucide-react';
 import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import GoldenButton from "@/components/GoldenButton";
-import { useAstrologerSettings } from "@/context/AstrologerSettingsContext";
+import { useAstrologerStore } from "@/store/useAstrologerStore";
 import { ChevronDown, Info } from 'lucide-react';
 import { clientApi, CHART_METADATA } from '@/lib/api';
 
 
 export default function ChartControls() {
-    const { settings, updateAyanamsa } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds, setAyanamsa } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
+    const updateAyanamsa = setAyanamsa;
     const [showAdvanced, setShowAdvanced] = React.useState(false);
 
     // Get dynamic chart options based on selected Ayanamsa system

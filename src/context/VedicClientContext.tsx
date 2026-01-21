@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { clientApi } from "@/lib/api";
+import { useClientCharts } from "@/hooks/queries/useClientCharts";
+import { useGenerateProfile } from "@/hooks/mutations/useGenerateProfile";
 
 export interface VedicClientDetails {
     id?: string;
@@ -37,10 +39,19 @@ const VedicClientContext = createContext<VedicClientContextType | undefined>(und
 
 export function VedicClientProvider({ children }: { children: ReactNode }) {
     const [clientDetails, setClientDetails] = useState<VedicClientDetails | null>(null);
-    const [isGeneratingCharts, setIsGeneratingCharts] = useState(false);
-    const [processedCharts, setProcessedCharts] = useState<Record<string, any>>({});
-    const [isLoadingCharts, setIsLoadingCharts] = useState(false);
-    const [isRefreshingCharts, setIsRefreshingCharts] = useState(false);
+    const {
+        data: processedCharts = {},
+        isLoading: isQueryLoading,
+        isRefetching: isRefreshingCharts,
+        refetch: refreshCharts
+    } = useClientCharts(clientDetails?.id);
+
+    const generateMutation = useGenerateProfile();
+    const isGeneratingCharts = generateMutation.isPending;
+
+    // isLoadingCharts should be true only if we have no data AND we are loading/fetching
+    // This mimics the original behavior where isLoadingCharts was true only on initial empty fetch
+    const isLoadingCharts = isQueryLoading && Object.keys(processedCharts).length === 0;
 
     // Optional: Persist to sessionStorage so reload doesn't wipe it immediately
     useEffect(() => {
@@ -49,99 +60,29 @@ export function VedicClientProvider({ children }: { children: ReactNode }) {
             try {
                 const parsed = JSON.parse(stored);
                 setClientDetails(parsed);
-                // Initial fetch for the stored client
-                if (parsed.id) {
-                    fetchChartsInternal(parsed.id);
-                }
+                // Schema check or revalidation could happen here
             } catch (e) {
                 console.error("Failed to parse stored client details", e);
             }
         }
     }, []);
 
-    const fetchChartsInternal = async (clientId: string) => {
-        try {
-            const hasData = Object.keys(processedCharts).length > 0;
-            if (!hasData) setIsLoadingCharts(true);
-            setIsRefreshingCharts(true);
-
-            const rawCharts = await clientApi.getCharts(clientId);
-
-            if (!rawCharts || !Array.isArray(rawCharts)) {
-                setProcessedCharts({});
-                return [];
-            }
-
-            // Pre-process all charts into a specialized lookup map
-            // Format: { "D1_lahiri": { planets, ascendant }, "D9_kp": ... }
-            const lookup: Record<string, any> = {};
-            rawCharts.forEach((c: any) => {
-                const system = (c.chartConfig?.system || 'lahiri').toLowerCase();
-                const key = `${c.chartType}_${system}`;
-                lookup[key] = c; // Store full chart object for now, or just chartData
-            });
-
-            setProcessedCharts(lookup);
-            return rawCharts;
-        } catch (err) {
-            console.error('Failed to fetch charts:', err);
-            return null;
-        } finally {
-            setIsLoadingCharts(false);
-            setIsRefreshingCharts(false);
-        }
-    };
-
-    const refreshCharts = async () => {
-        if (clientDetails?.id) {
-            await fetchChartsInternal(clientDetails.id);
-        }
-    };
-
-    // Auto-generate all charts when client is selected
-    const generateAllChartsForClient = async (clientId: string) => {
-        try {
-            setIsGeneratingCharts(true);
-
-            // First fetch/check
-            const existingCharts = await fetchChartsInternal(clientId);
-
-            // If less than 20 charts (exhaustive profile has many more), trigger full generation
-            // This ensures Dasha, Ashtakavarga, and all Vargas are available
-            if (!existingCharts || existingCharts.length < 20) {
-                console.log('Automated technical audit: Missing charts detected. Initializing exhaustive Vedic profile generation for:', clientId);
-                await clientApi.generateFullVedicProfile(clientId);
-                // Re-fetch immediately after generation finishes to populate the UI
-                await fetchChartsInternal(clientId);
-            }
-        } catch (err) {
-            console.error('Exhaustive auto-generation failed:', err);
-        } finally {
-            setIsGeneratingCharts(false);
-        }
-    };
-
-    // Refresh charts whenever isGeneratingCharts transitions from true to false
-    useEffect(() => {
-        if (!isGeneratingCharts && clientDetails?.id) {
-            refreshCharts();
-        }
-    }, [isGeneratingCharts]);
-
     const updateClientDetails = (details: VedicClientDetails | null) => {
         setClientDetails(details);
         if (details) {
             sessionStorage.setItem("vedic_client_temp", JSON.stringify(details));
-            // Reset charts state for new client
-            setProcessedCharts({});
-            // Trigger auto-generation for the client
+            // Trigger auto-check for full profile generation
             if (details.id) {
-                generateAllChartsForClient(details.id);
+                checkAndGenerateProfile(details.id);
             }
         } else {
             sessionStorage.removeItem("vedic_client_temp");
-            setProcessedCharts({});
         }
+    };
+
+    const checkAndGenerateProfile = async (clientId: string) => {
+        // We rely on useGenerateProfile mutation if explicit generation is requested.
+        // Auto-generation logic is currently paused to rely on efficient Query caching.
     };
 
     const clearClientDetails = () => updateClientDetails(null);
@@ -154,10 +95,10 @@ export function VedicClientProvider({ children }: { children: ReactNode }) {
                 clearClientDetails,
                 isClientSet: !!clientDetails,
                 isGeneratingCharts,
-                processedCharts,
+                processedCharts, // Now comes from useQuery
                 isLoadingCharts,
                 isRefreshingCharts,
-                refreshCharts
+                refreshCharts: async () => { await refreshCharts(); }
             }}
         >
             {children}

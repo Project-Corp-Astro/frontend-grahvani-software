@@ -5,9 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import ClientsNavigationSidebar from '@/components/clients/ClientsNavigationSidebar';
 
 import { Sparkles, Calendar, Clock, MapPin, User, Mail, Phone, Heart, Plus, Search, X, ChevronRight, StickyNote, Save, Edit2, Loader2, Trash2 } from 'lucide-react';
-import { Client, FamilyLink, RelationshipType, ClientListResponse, FamilyLinkPayload, LocationSuggestion } from '@/types/client';
+import { Client, FamilyLink, RelationshipType, ClientListResponse, FamilyLinkPayload, LocationSuggestion, CreateClientPayload } from '@/types/client';
 import { clientApi, familyApi } from '@/lib/api';
+import { useClientMutations } from "@/hooks/mutations/useClientMutations";
+import { useFamilyLinks, useFamilyMutations } from "@/hooks/queries/useFamily";
+import { useClients, useClient } from "@/hooks/queries/useClients";
 import Link from 'next/link';
+import { useLocationSuggestions } from "@/hooks/queries/useLocations";
 import ParchmentDatePicker from "@/components/ui/ParchmentDatePicker";
 import ParchmentTimePicker from "@/components/ui/ParchmentTimePicker";
 
@@ -98,100 +102,87 @@ export default function ClientProfilePage() {
     const clientId = params.id as string;
 
     // Core state
-    const [client, setClient] = useState<Client | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data: rawClient, isLoading: loading, error: queryError } = useClient(clientId);
+    const client = rawClient ? deriveNames(rawClient) : undefined;
 
-    const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<Partial<Client>>({});
+    const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [notes, setNotes] = useState("");
     const [isSavingNotes, setIsSavingNotes] = useState(false);
 
-    // Location suggestions state
-    const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
-    const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+    const { updateClient } = useClientMutations();
+    const [localError, setLocalError] = useState<string | null>(null);
+    const error = localError || (queryError ? (queryError as Error).message : updateClient.error?.message) || null;
+
+    // Set local error helper
+    const setError = (msg: string | null) => setLocalError(msg);
+
+
+
+    // Sync editing state when client loads
+    useEffect(() => {
+        if (client && !isEditing) {
+            const derived = deriveNames(client);
+            setEditData(derived);
+            // Set initial notes from metadata or first note
+            if (client.metadata?.quickNotes) {
+                setNotes(client.metadata.quickNotes);
+            } else if (client.notes && client.notes.length > 0) {
+                setNotes(client.notes[0].noteContent);
+            }
+        }
+    }, [client, isEditing]);
+
+    // Location suggestions state (hooks)
+    const [searchLocationQuery, setSearchLocationQuery] = useState("");
+    // Debounce or just pass query - react query handles somewhat but better to have debounce for typing
+    // Since we don't have a debounce hook handy, query is updated on change.
+    // However, existing logic had explicit condition for length < 3
+    const { data: locationData, isLoading: loadingLocations } = useLocationSuggestions(searchLocationQuery);
+    const locationSuggestions = locationData?.suggestions || [];
+    const isSearchingLocation = loadingLocations;
+
+    const [isSearchingLocationState, setIsSearchingLocation] = useState(false); // Legacy var compat if needed, but derived is better.
+    // For compatibility with existing render:
+    // We can alias `isSearchingLocation` to `loadingLocations` but existing code uses `setIsSearchingLocation` in handlers?
+    // Actually existing handler sets it manually. We should adopt the hook's state.
 
     // Family links state
-    const [familyLinks, setFamilyLinks] = useState<FamilyLink[]>([]);
-    const [loadingFamily, setLoadingFamily] = useState(false);
     const [isAddingRel, setIsAddingRel] = useState(false);
-    const [searchRel, setSearchRel] = useState("");
-    const [availableClients, setAvailableClients] = useState<Client[]>([]);
     const [selectedRelType, setSelectedRelType] = useState<RelationshipType>('spouse');
     const [addingFamily, setAddingFamily] = useState(false);
 
-    // Fetch client data
-    const fetchClient = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await clientApi.getClient(clientId);
-            const derived = deriveNames(data);
-            setClient(derived);
-            setEditData(derived);
+    // Family Hooks
+    const { data: familyLinks = [], isLoading: loadingFamily } = useFamilyLinks(clientId);
+    const { linkFamily, unlinkFamily } = useFamilyMutations();
 
-            // Set initial notes from metadata or first note
-            if (data.metadata?.quickNotes) {
-                setNotes(data.metadata.quickNotes);
-            } else if (data.notes && data.notes.length > 0) {
-                setNotes(data.notes[0].noteContent);
-            }
-        } catch (err: any) {
-            console.error('Failed to fetch client:', err);
-            setError('Client not found or server unavailable. Please ensure client-service is running.');
-        } finally {
-            setLoading(false);
-        }
-    }, [clientId]);
+    // Search for linking (Hooks-based)
+    const [searchRel, setSearchRel] = useState("");
+    const { data: searchResults } = useClients({
+        search: searchRel,
+        limit: 10,
+    });
+    // Filter locally or rely on API. The API returns matching.
+    // We just filter out self and already linked.
+    const availableClients = (searchResults?.clients || [])
+        .filter(c => c.id !== clientId && !familyLinks.some(l => l.relatedClientId === c.id))
+        .map(deriveNames);
 
-    // Fetch family links
-    const fetchFamilyLinks = useCallback(async () => {
-        setLoadingFamily(true);
-        try {
-            const links = await familyApi.getFamilyLinks(clientId);
-            setFamilyLinks(links);
-        } catch (err) {
-            console.error('Failed to fetch family links:', err);
-        } finally {
-            setLoadingFamily(false);
-        }
-    }, [clientId]);
-
-    // Search available clients for family linking
-    const searchClients = useCallback(async (query: string) => {
-        if (query.length < 2) {
-            setAvailableClients([]);
-            return;
-        }
-        try {
-            const response: ClientListResponse = await clientApi.getClients({ search: query, limit: 10 });
-            // Filter out current client and already linked
-            const linkedIds = familyLinks.map(f => f.relatedClientId);
-            const filtered = response.clients
-                .filter(c => c.id !== clientId && !linkedIds.includes(c.id))
-                .map(deriveNames);
-            setAvailableClients(filtered);
-        } catch (err) {
-            console.error('Failed to search clients:', err);
-            // Show error - no fallback to mock data
-            setAvailableClients([]);
-        }
-    }, [clientId, familyLinks]);
+    /* Removed manual fetchFamilyLinks and searchClients functions */
 
     // Add family link
-    const addFamilyLink = async (relatedClient: Client) => {
+    const handleAddFamilyLink = async (relatedClient: Client) => {
         setAddingFamily(true);
         try {
             const payload: FamilyLinkPayload = {
                 relatedClientId: relatedClient.id,
                 relationshipType: selectedRelType,
             };
-            await familyApi.linkFamily(clientId, payload);
-            await fetchFamilyLinks();
+            await linkFamily.mutateAsync({ clientId, payload });
             setIsAddingRel(false);
             setSearchRel("");
-            setAvailableClients([]);
+            // setAvailableClients([]); // No need, derived from searchRel=""
         } catch (err: any) {
             console.error('Failed to add family link:', err);
             setError(err.message || 'Failed to add family member');
@@ -201,10 +192,9 @@ export default function ClientProfilePage() {
     };
 
     // Remove family link
-    const removeFamilyLink = async (relatedClientId: string) => {
+    const handleRemoveFamilyLink = async (relatedClientId: string) => {
         try {
-            await familyApi.unlinkFamily(clientId, relatedClientId);
-            await fetchFamilyLinks();
+            await unlinkFamily.mutateAsync({ clientId, relatedClientId });
         } catch (err: any) {
             console.error('Failed to remove family link:', err);
         }
@@ -242,11 +232,17 @@ export default function ClientProfilePage() {
                 payload.birthLongitude = Number(payload.birthLongitude);
             }
 
-            const updated = await clientApi.updateClient(clientId, payload);
-            const derived = deriveNames(updated);
-            setClient(derived);
-            setEditData(derived);
-            setIsEditing(false);
+            // const updated = await clientApi.updateClient(clientId, payload);
+            await updateClient.mutateAsync({ id: clientId, data: payload }, {
+                onSuccess: (updated) => {
+                    // const derived = deriveNames(updated);
+                    // setClient(derived); // Handled by invalidate
+                    // setEditData(derived); // Reset edit data?
+                    setEditData(deriveNames(updated));
+                    setIsEditing(false);
+                }
+            });
+
         } catch (err: any) {
             console.error('Failed to update client:', err);
             setError(err.message || 'Failed to update client profile');
@@ -261,12 +257,12 @@ export default function ClientProfilePage() {
         setIsSavingNotes(true);
         try {
             // Safe-save notes in metadata.quickNotes
-            await clientApi.updateClient(clientId, {
-                metadata: { ...client?.metadata, quickNotes: notes }
+            await updateClient.mutateAsync({
+                id: clientId,
+                data: { metadata: { ...client?.metadata, quickNotes: notes } }
             });
-
-            // Re-fetch to confirm
-            await fetchClient();
+            // Re-fetch handled by mutation invalidation
+            // await fetchClient(); 
         } catch (err: any) {
             console.error('Failed to save notes:', err);
             setError(err.message || 'Failed to save notes');
@@ -276,23 +272,13 @@ export default function ClientProfilePage() {
     };
 
     // Handle location search
-    const handleLocationSearch = async (query: string) => {
+    const handleLocationSearch = (query: string) => {
         setEditData(prev => ({ ...prev, birthPlace: query }));
-        if (query.length < 3) {
-            setLocationSuggestions([]);
-            return;
-        }
-
-        setIsSearchingLocation(true);
-        try {
-            const response = await clientApi.getSuggestions(query);
-            setLocationSuggestions(response.suggestions || []);
-        } catch (err) {
-            console.error('Failed to fetch location suggestions:', err);
-        } finally {
-            setIsSearchingLocation(false);
-        }
+        // Just update search query for hook
+        setSearchLocationQuery(query);
     };
+
+    // Handle location selection
 
     // Handle location selection
     const handleLocationSelect = (suggestion: LocationSuggestion) => {
@@ -306,30 +292,10 @@ export default function ClientProfilePage() {
             state: suggestion.state || prev.state,
             country: suggestion.country || prev.country
         }));
-        setLocationSuggestions([]);
+        setSearchLocationQuery("");
     };
 
-    // Initial fetch
-    useEffect(() => {
-        fetchClient();
-    }, [fetchClient]);
-
-    // Fetch family when client loads
-    useEffect(() => {
-        if (client) {
-            fetchFamilyLinks();
-        }
-    }, [client, fetchFamilyLinks]);
-
-    // Debounced search for family
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (searchRel.length >= 2) {
-                searchClients(searchRel);
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchRel, searchClients]);
+    /* Legacy effects removed */
 
     // Loading state
     if (loading) {
@@ -662,7 +628,7 @@ export default function ClientProfilePage() {
                                     <div className="mb-6 p-5 bg-softwhite rounded-xl border border-antique">
                                         <div className="flex items-center justify-between mb-4">
                                             <h4 className="text-ink font-serif font-bold">Add Family Connection</h4>
-                                            <button onClick={() => { setIsAddingRel(false); setSearchRel(''); setAvailableClients([]); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
+                                            <button onClick={() => { setIsAddingRel(false); setSearchRel(''); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
                                         </div>
 
                                         {/* Relationship Type Selector */}
@@ -681,14 +647,13 @@ export default function ClientProfilePage() {
 
                                         {/* Client Search */}
                                         <div className="relative mb-4">
-                                            <Search className="absolute left-4 top-3 w-4 h-4 text-muted" />
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gold-dark" />
                                             <input
                                                 type="text"
-                                                placeholder="Search clients by name..."
+                                                placeholder="Search clients..."
                                                 value={searchRel}
                                                 onChange={(e) => setSearchRel(e.target.value)}
-                                                autoFocus
-                                                className="w-full bg-parchment border border-antique rounded-lg py-2.5 pl-10 pr-4 text-ink text-sm placeholder:text-muted focus:outline-none focus:border-gold-primary"
+                                                className="w-full pl-9 pr-4 py-2 bg-white/50 border border-antique rounded-lg focus:border-gold-primary outline-none"
                                             />
                                         </div>
 
@@ -697,7 +662,7 @@ export default function ClientProfilePage() {
                                             {availableClients.length > 0 ? availableClients.map((c: Client) => (
                                                 <button
                                                     key={c.id}
-                                                    onClick={() => addFamilyLink(c)}
+                                                    onClick={() => handleAddFamilyLink(c)}
                                                     disabled={addingFamily}
                                                     className="w-full flex items-center gap-3 p-3 hover:bg-parchment rounded-lg transition-colors text-left disabled:opacity-50"
                                                 >
@@ -748,11 +713,10 @@ export default function ClientProfilePage() {
                                                         View Chart
                                                     </Link>
                                                     <button
-                                                        onClick={() => removeFamilyLink(link.relatedClientId)}
-                                                        className="p-2 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                        title="Remove connection"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        onClick={() => handleRemoveFamilyLink(link.relatedClientId)}
+                                                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 text-red-400 rounded-lg transition-all"
+                                                        title="Remove relationship"
+                                                    >                                                   <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>

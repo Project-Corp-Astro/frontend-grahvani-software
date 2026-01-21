@@ -13,36 +13,27 @@ import {
     Hexagon
 } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi } from '@/lib/api';
+import { useSudarshanChakra } from '@/hooks/queries/useCalculations';
 import { cn } from '@/lib/utils';
 import SudarshanChakraFinal from '@/components/astrology/SudarshanChakraFinal';
 
 export default function ChakrasPage() {
     const { clientDetails } = useVedicClient();
-    const { settings } = useAstrologerSettings();
-    const [loading, setLoading] = useState(true);
-    const [chakraData, setChakraData] = useState<any>(null);
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
+    // Query for Sudarshan Chakra
+    const { data: chakraResponse, isLoading: chakraLoading, refetch } = useSudarshanChakra(
+        clientDetails?.id || '',
+        settings.ayanamsa.toLowerCase()
+    );
 
-    const fetchChakraData = async () => {
-        if (!clientDetails?.id) return;
-        setLoading(true);
-        try {
-            const result = await clientApi.generateSudarshanChakra(clientDetails.id, settings.ayanamsa);
-            // Handle nested data if present
-            setChakraData(result.data || result);
-        } catch (error) {
-            console.error("Failed to fetch Sudarshan Chakra:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const loading = chakraLoading;
+    const chakraData = chakraResponse?.data || chakraResponse;
+    const fetchChakraData = refetch; // Map refetch to old handler name for compatibility if needed, or update usage
 
-    useEffect(() => {
-        if (clientDetails?.id) {
-            fetchChakraData();
-        }
-    }, [clientDetails?.id, settings.ayanamsa]);
+    /* Removed manual fetchChakraData and useEffect */
 
     if (!clientDetails) {
         return (
@@ -68,7 +59,7 @@ export default function ChakrasPage() {
 
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={fetchChakraData}
+                        onClick={() => fetchChakraData()}
                         className="p-3 bg-white text-copper-600 hover:bg-copper-50 rounded-2xl border border-copper-200 shadow-sm transition-all active:scale-95"
                         title="Recalculate Diagram"
                     >

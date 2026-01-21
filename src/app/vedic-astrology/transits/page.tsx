@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCcw, AlertTriangle, ShieldAlert, Loader2, Calendar, Info } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { cn } from "@/lib/utils";
 import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart';
 import { clientApi } from '@/lib/api';
@@ -92,7 +92,8 @@ function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlan
 
 export default function TransitsPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 

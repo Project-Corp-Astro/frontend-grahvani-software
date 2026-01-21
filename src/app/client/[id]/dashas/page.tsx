@@ -6,6 +6,8 @@ import { Clock, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import { clientApi } from "@/lib/api";
+import { useClient } from "@/hooks/queries/useClients";
+import { useDasha, useOtherDasha } from "@/hooks/queries/useCalculations";
 
 // --- Types ---
 interface DashaPeriod {
@@ -167,76 +169,76 @@ export default function DashaPage() {
 
     const [selectedSystem, setSelectedSystem] = useState("vimshottari");
     const [dashaData, setDashaData] = useState<DashaData | null>(null);
-    const [clientBirthDate, setClientBirthDate] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // const [clientBirthDate, setClientBirthDate] = useState<string | null>(null); // derived from hook
+    // const [isLoading, setIsLoading] = useState(true); // derived
+    // const [error, setError] = useState<string | null>(null); // derived
 
     // Navigation state
     const [currentLevel, setCurrentLevel] = useState<DashaLevel>('Mahadasha');
     const [navigationPath, setNavigationPath] = useState<DashaPeriod[]>([]);
     const [currentPeriods, setCurrentPeriods] = useState<DashaPeriod[]>([]);
 
-    // Fetch dasha data when client or system changes
+    // Fetch Client Data
+    const { data: client, isLoading: clientLoading } = useClient(clientId);
+
+    // Determine system params
+    const isVimshottari = selectedSystem === 'vimshottari';
+
+    // Parallel Dasha Queries
+    const { data: vimData, isLoading: vimLoading, error: vimError } = useDasha(
+        clientId,
+        'prana', // Endpoint used in original code for vimshottari
+        'lahiri', // Hardcoded in original code
+    );
+
+    const { data: otherData, isLoading: otherLoading, error: otherError } = useOtherDasha(
+        clientId,
+        selectedSystem,
+        'lahiri'
+    );
+
+    const dashaResponse = isVimshottari ? vimData : otherData;
+    const isLoading = clientLoading || (isVimshottari ? vimLoading : otherLoading);
+    const errorMsg = (isVimshottari ? vimError : otherError);
+
+    // Sync Data
     useEffect(() => {
-        if (!clientId) return;
-
-        const fetchDasha = async () => {
-            setIsLoading(true);
-            setError(null);
-            resetToMahadasha();
-
-            try {
-                // First fetch client details to get birth date for fallback
-                let birthDate = clientBirthDate;
-                if (!birthDate) {
-                    const client = await clientApi.getClient(clientId);
-                    if (client?.birthDate && client?.birthTime) {
-                        const bd = new Date(client.birthDate);
-                        const btArr = client.birthTime.split(':');
-                        bd.setUTCHours(parseInt(btArr[0]), parseInt(btArr[1]), 0);
-                        birthDate = bd.toISOString();
-                        setClientBirthDate(birthDate);
-                    }
-                }
-
-                const systemConfig = DASHA_SYSTEMS.find(s => s.value === selectedSystem);
-                const level = systemConfig?.endpoint || 'prana';
-
-                // Call the endpoint to get dasha hierarchy
-                const response = await clientApi.generateDasha(
-                    clientId,
-                    level,
-                    'lahiri',
-                    false
-                );
-
-                const data = response?.data || response;
-
-                // Handle both mahadashas and dasha_list response formats
-                const rawPeriods = (data as any)?.mahadashas || (data as any)?.dasha_list || [];
-
-                if (rawPeriods && rawPeriods.length > 0) {
-                    // Process the entire hierarchy recursively (handles missing start dates)
-                    const processedPeriods = processDashaHierarchy(rawPeriods as DashaPeriod[], birthDate || undefined);
-
-                    setDashaData({
-                        mahadashas: processedPeriods,
-                        ...data
-                    } as DashaData);
-                    setCurrentPeriods(processedPeriods);
-                } else {
-                    setError(`No ${systemConfig?.label || 'Dasha'} data available for this client`);
-                }
-            } catch (err: any) {
-                console.error('Dasha fetch error:', err);
-                setError(err.message || 'Failed to load Dasha data');
-            } finally {
-                setIsLoading(false);
+        if (client && dashaResponse) {
+            const birthDate = client.birthDate ? new Date(client.birthDate).toISOString() : undefined;
+            // Handle birth time adjustment if needed (copied from original logic)
+            if (client.birthDate && client.birthTime) {
+                const bd = new Date(client.birthDate);
+                const btArr = client.birthTime.split(':');
+                bd.setUTCHours(parseInt(btArr[0]), parseInt(btArr[1]), 0);
+                // Date string updated
             }
-        };
 
-        fetchDasha();
-    }, [clientId, selectedSystem]);
+            const data = dashaResponse.data || dashaResponse;
+            const rawPeriods = (data as any)?.mahadashas || (data as any)?.dasha_list || [];
+
+            if (rawPeriods && rawPeriods.length > 0) {
+                const processedPeriods = processDashaHierarchy(rawPeriods as DashaPeriod[], birthDate);
+                setDashaData({
+                    mahadashas: processedPeriods,
+                    ...data
+                } as DashaData);
+
+                // Only reset View if we don't have a path (avoid resetting during deep navigation if re-fetched?) 
+                // Actually this page loads full tree so navigation is local.
+                // So we usually just set currentPeriods to root IF navigationPath is empty.
+                if (navigationPath.length === 0) {
+                    setCurrentPeriods(processedPeriods);
+                }
+            }
+        }
+    }, [client, dashaResponse, navigationPath.length]);
+
+    // Handle system change reset
+    useEffect(() => {
+        resetToMahadasha();
+    }, [selectedSystem]);
+
+    /* Removed manual fetchDasha useEffect */
 
     // Handle drilling into a period
     const handlePeriodClick = (period: DashaPeriod) => {
@@ -393,10 +395,10 @@ export default function DashaPage() {
             )}
 
             {/* Error State */}
-            {!isLoading && error && (
+            {!isLoading && errorMsg && (
                 <div className="bg-[#FEFAEA] border border-red-200 rounded-lg p-8 flex flex-col items-center justify-center gap-4">
                     <AlertCircle className="w-8 h-8 text-red-500" />
-                    <p className="text-red-600 font-serif text-center">{error}</p>
+                    <p className="text-red-600 font-serif text-center">{(errorMsg as any)?.message || String(errorMsg)}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="text-sm text-[#9C7A2F] underline hover:no-underline"
@@ -407,7 +409,7 @@ export default function DashaPage() {
             )}
 
             {/* Period List Table */}
-            {!isLoading && !error && currentPeriods.length > 0 && (
+            {!isLoading && !errorMsg && currentPeriods.length > 0 && (
                 <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg overflow-hidden shadow-sm">
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-[#F6EBD6] border-b border-[#E7D6B8]">
@@ -473,7 +475,7 @@ export default function DashaPage() {
             )}
 
             {/* No Data State */}
-            {!isLoading && !error && currentPeriods.length === 0 && (
+            {!isLoading && !errorMsg && currentPeriods.length === 0 && (
                 <div className="bg-[#FEFAEA] border border-[#E7D6B8] rounded-lg p-8 text-center">
                     <p className="text-[#7A5A43] font-serif">No periods available at this level.</p>
                 </div>

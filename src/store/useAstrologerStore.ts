@@ -1,0 +1,51 @@
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+export type Ayanamsa = "Lahiri" | "Raman" | "KP" | "Tropical";
+export type ChartStyle = "North Indian" | "South Indian";
+
+interface AstrologerSettings {
+    ayanamsa: Ayanamsa;
+    chartStyle: ChartStyle;
+    recentClientIds: string[];
+}
+
+interface AstrologerStore extends AstrologerSettings {
+    setAyanamsa: (val: Ayanamsa) => void;
+    setChartStyle: (val: ChartStyle) => void;
+    addRecentClient: (id: string) => void;
+    updateSettings: (newSettings: Partial<AstrologerSettings>) => void;
+}
+
+const DEFAULT_SETTINGS: AstrologerSettings = {
+    ayanamsa: "Lahiri",
+    chartStyle: "North Indian",
+    recentClientIds: [],
+};
+
+export const useAstrologerStore = create<AstrologerStore>()(
+    persist(
+        (set) => ({
+            ...DEFAULT_SETTINGS,
+
+            setAyanamsa: (val) => set({ ayanamsa: val }),
+
+            setChartStyle: (val) => set({ chartStyle: val }),
+
+            addRecentClient: (id) => set((state) => {
+                const filtered = state.recentClientIds.filter(cid => cid !== id);
+                const updatedIds = [id, ...filtered].slice(0, 5);
+                return { recentClientIds: updatedIds };
+            }),
+
+            updateSettings: (newSettings) => set((state) => ({
+                ...state,
+                ...newSettings
+            })),
+        }),
+        {
+            name: 'grahvani_astrologer_settings_store', // unique name
+            storage: createJSONStorage(() => localStorage),
+        }
+    )
+);

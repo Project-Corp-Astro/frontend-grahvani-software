@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import NorthIndianChart, { ChartWithPopup, Planet } from "@/components/astrology/NorthIndianChart";
 import { cn } from "@/lib/utils";
+import { useDasha } from "@/hooks/queries/useCalculations";
 import {
     Calendar,
     Clock,
@@ -26,7 +27,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi, DashaResponse } from '@/lib/api';
 import DoshaAnalysis from '@/components/astrology/DoshaAnalysis';
 import YogaAnalysisView from '@/components/astrology/YogaAnalysis';
@@ -85,10 +86,10 @@ const formatTime = (timeStr: string) => {
 
 export default function VedicOverviewPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
-    const [dashaLoading, setDashaLoading] = useState(false);
     const [notes, setNotes] = useState("");
     const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
 
@@ -101,23 +102,26 @@ export default function VedicOverviewPage() {
         if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
             refreshCharts();
         }
-        if (clientDetails?.id) {
-            fetchDasha();
-        }
+        // Dasha fetching handled by useDasha hook
     }, [clientDetails?.id, settings.ayanamsa]);
 
-    const fetchDasha = async () => {
-        if (!clientDetails?.id) return;
-        setDashaLoading(true);
-        try {
-            const data = await clientApi.generateDasha(clientDetails.id, 'mahadasha', settings.ayanamsa);
-            setDashaData(data);
-        } catch (error) {
-            console.error("Failed to fetch dasha:", error);
-        } finally {
-            setDashaLoading(false);
+    // Dasha Query
+    const { data: dashaDataVal, isLoading: dashaLoadingVal } = useDasha(
+        clientDetails?.id || '',
+        'mahadasha', // 'mahadasha' for overview
+        settings.ayanamsa.toLowerCase()
+    );
+
+    // Sync dasha data
+    useEffect(() => {
+        if (dashaDataVal) {
+            setDashaData(dashaDataVal);
         }
-    };
+    }, [dashaDataVal]);
+
+    const dashaLoading = dashaLoadingVal;
+
+    /* Removed manual fetchDasha */
 
     const isLoading = (Object.keys(processedCharts).length === 0 && isLoadingCharts) || !clientDetails;
 

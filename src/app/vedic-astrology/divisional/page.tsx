@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
 import { cn } from "@/lib/utils";
 import { clientApi, CHART_METADATA } from '@/lib/api';
+import { useSystemCapabilities } from "@/hooks/queries/useCalculations";
 
 import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 
@@ -80,7 +81,8 @@ const DEFAULT_CHART_SLOTS = ['D1', 'D9', 'D4', 'D7', 'D10', 'D3'];
 
 export default function VedicDivisionalPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
 
     const [gridSize, setGridSize] = useState<GridSize>('2x3');
     const [chartSlots, setChartSlots] = useState<string[]>(DEFAULT_CHART_SLOTS);
@@ -92,7 +94,7 @@ export default function VedicDivisionalPage() {
     const [showAddChartSelector, setShowAddChartSelector] = useState(false);
 
     // Get available divisional charts based on system
-    const systemCapabilities = clientApi.getSystemCapabilities(settings.ayanamsa);
+    const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
     const availableCharts = systemCapabilities.charts.divisional;
 
     // Grid columns based on size

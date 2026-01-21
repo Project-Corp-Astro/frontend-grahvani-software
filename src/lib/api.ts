@@ -92,6 +92,76 @@ export const CHART_METADATA: Record<string, { name: string; desc: string; catego
     'karkamsha_d9': { name: 'Karkamsha D9', desc: 'Atmakaraka in Navamsha', category: 'lagna' },
 };
 
+// Dasha system metadata for display
+export const DASHA_TYPES: Record<string, { name: string; years: number; desc: string; category: 'primary' | 'conditional' }> = {
+    vimshottari: {
+        name: 'Vimshottari',
+        years: 120,
+        desc: 'Universal Moon-nakshatra based dasha system',
+        category: 'primary'
+    },
+    tribhagi: {
+        name: 'Tribhagi',
+        years: 40,
+        desc: 'One-third portions of Vimshottari periods',
+        category: 'conditional'
+    },
+    shodashottari: {
+        name: 'Shodashottari',
+        years: 116,
+        desc: 'For Venus in 9th + Lagna in hora of Venus',
+        category: 'conditional'
+    },
+    dwadashottari: {
+        name: 'Dwadashottari',
+        years: 112,
+        desc: 'Venus in Lagna + Moon in Venusian nakshatra',
+        category: 'conditional'
+    },
+    panchottari: {
+        name: 'Panchottari',
+        years: 105,
+        desc: 'Cancer Lagna with Dhanishtha nakshatra',
+        category: 'conditional'
+    },
+    chaturshitisama: {
+        name: 'Chaturshitisama',
+        years: 84,
+        desc: '10th lord posited in 10th house',
+        category: 'conditional'
+    },
+    satabdika: {
+        name: 'Satabdika',
+        years: 100,
+        desc: 'Lagna in Vargottama position',
+        category: 'conditional'
+    },
+    dwisaptati: {
+        name: 'Dwisaptati Sama',
+        years: 72,
+        desc: 'Lagna lord in 7th or 7th lord in Lagna',
+        category: 'conditional'
+    },
+    shastihayani: {
+        name: 'Shastihayani',
+        years: 60,
+        desc: 'Sun posited in the Lagna',
+        category: 'conditional'
+    },
+    shattrimshatsama: {
+        name: 'Shattrimshatsama',
+        years: 36,
+        desc: 'Born in daytime with Moon in Lagna',
+        category: 'conditional'
+    },
+    chara: {
+        name: 'Chara (Jaimini)',
+        years: 0,
+        desc: 'Sign-based Jaimini dasha system',
+        category: 'conditional'
+    },
+};
+
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001/api/v1';
 const USER_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:3002/api/v1';
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_SERVICE_URL || 'http://localhost:3008/api/v1';
@@ -268,6 +338,21 @@ export const clientApi = {
         apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha`, {
             method: 'POST',
             body: JSON.stringify({ level, ayanamsa, save, ...context }),
+        }),
+
+    /**
+     * Generate Other Dasha Systems (Tribhagi, Shodashottari, etc.)
+     * @param type - tribhagi | shodashottari | dwadashottari | panchottari | chaturshitisama | satabdika | dwisaptati | shastihayani | shattrimshatsama | chara
+     * @param ayanamsa - 'lahiri' | 'raman' | 'kp'
+     */
+    generateOtherDasha: (
+        clientId: string,
+        type: string,
+        ayanamsa: string = 'lahiri'
+    ): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha/other`, {
+            method: 'POST',
+            body: JSON.stringify({ type, ayanamsa }),
         }),
 
     /**

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext } from "react";
 import { authApi, userApi } from "@/lib/api";
+import { useUserProfile } from "@/hooks/queries/useUserProfile";
+import { useAuthMutations } from "@/hooks/mutations/useAuthMutations";
 
 interface UserProfile {
     id: string;
@@ -26,69 +27,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const router = useRouter();
-
-    const refreshProfile = useCallback(async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-            setUser(null);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const profile = await userApi.getMe();
-            setUser(profile);
-        } catch (error) {
-            console.error("Failed to fetch profile:", error);
-            // If profile fetch fails, token might be invalid
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("user");
-            setUser(null);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        // Initial load: check localStorage and fetch profile
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Failed to parse stored user", e);
-            }
-        }
-
-        refreshProfile();
-    }, [refreshProfile]);
+    const { data: user = null, isLoading: loading, refetch: refreshProfile } = useUserProfile();
+    const { loginMutation, logoutMutation } = useAuthMutations();
 
     const login = async (credentials: any) => {
-        const response = await authApi.login(credentials);
-        if (response.tokens?.accessToken) {
-            localStorage.setItem("accessToken", response.tokens.accessToken);
-            localStorage.setItem("user", JSON.stringify(response.user));
-            setUser(response.user);
-            router.push("/dashboard");
-        } else {
-            throw new Error("Invalid response from server");
-        }
+        await loginMutation.mutateAsync(credentials);
     };
 
     const logout = async () => {
-        try {
-            await authApi.logout();
-        } catch (error) {
-            console.error("Logout API call failed:", error);
-        } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("user");
-            setUser(null);
-            router.push("/login");
-        }
+        await logoutMutation.mutateAsync();
     };
 
     return (
@@ -98,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 loading,
                 login,
                 logout,
-                refreshProfile,
+                refreshProfile: async () => { await refreshProfile(); },
                 isAuthenticated: !!user,
             }}
         >

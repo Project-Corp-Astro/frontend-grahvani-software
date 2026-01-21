@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Loader2, RefreshCw, ChevronRight, ChevronLeft, Calendar, Star } from 'lucide-react';
+import { TrendingUp, Loader2, RefreshCw, ChevronRight, ChevronLeft, Calendar, Star, Info, ChevronDown } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
-import { clientApi } from '@/lib/api';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
+import { DASHA_TYPES } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useDasha, useOtherDasha } from '@/hooks/queries/useCalculations';
 
 interface DashaPeriod {
     planet?: string;
     lord?: string;
+    sign?: string;
     startDate?: string;
     start_date?: string;
     endDate?: string;
@@ -45,6 +47,19 @@ const PLANET_COLORS: Record<string, string> = {
     saturn: 'bg-gray-100 text-gray-800 border-gray-200',
     rahu: 'bg-purple-100 text-purple-800 border-purple-200',
     ketu: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    // Signs for Chara Dasha
+    aries: 'bg-red-100 text-red-800 border-red-200',
+    taurus: 'bg-green-100 text-green-800 border-green-200',
+    gemini: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    cancer: 'bg-blue-100 text-blue-800 border-blue-200',
+    leo: 'bg-orange-100 text-orange-800 border-orange-200',
+    virgo: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    libra: 'bg-pink-100 text-pink-800 border-pink-200',
+    scorpio: 'bg-purple-100 text-purple-800 border-purple-200',
+    sagittarius: 'bg-amber-100 text-amber-800 border-amber-200',
+    capricorn: 'bg-stone-100 text-stone-800 border-stone-200',
+    aquarius: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    pisces: 'bg-violet-100 text-violet-800 border-violet-200',
 };
 
 function parseDate(dateStr: string): Date | null {
@@ -98,74 +113,84 @@ function getDaysRemaining(endDate: string): number {
     return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export default function VedicDashasPage() {
-    const { clientDetails } = useVedicClient();
-    const { settings } = useAstrologerSettings();
+import { useQueryClient } from "@tanstack/react-query";
 
+export default function VedicDashasPage() {
+    const queryClient = useQueryClient();
+    const { clientDetails } = useVedicClient();
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
+
+    const [selectedDashaType, setSelectedDashaType] = useState<string>('vimshottari');
     const [dashaData, setDashaData] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // const [isLoading, setIsLoading] = useState(true); // Derived
+    // const [error, setError] = useState<string | null>(null); // Derived
     const [currentLevel, setCurrentLevel] = useState<DashaLevel>('mahadasha');
     const [selectedPath, setSelectedPath] = useState<DashaPeriod[]>([]);
     const [viewingPeriods, setViewingPeriods] = useState<DashaPeriod[]>([]);
+    const [showDashaInfo, setShowDashaInfo] = useState(false);
 
-    const fetchDashaData = async () => {
-        if (!clientDetails?.id) return;
+    const isVimshottari = selectedDashaType === 'vimshottari';
+    const currentDashaInfo = DASHA_TYPES[selectedDashaType];
 
-        try {
-            setIsLoading(true);
-            setError(null);
+    const context: any = {};
+    if (selectedPath.length > 0) context.mahaLord = selectedPath[0].planet || selectedPath[0].lord;
+    if (selectedPath.length > 1) context.antarLord = selectedPath[1].planet || selectedPath[1].lord;
+    if (selectedPath.length > 2) context.pratyantarLord = selectedPath[2].planet || selectedPath[2].lord;
 
-            // Construct context from path for backend drill-down
-            const context: any = {};
-            if (selectedPath.length > 0) context.mahaLord = selectedPath[0].planet || selectedPath[0].lord;
-            if (selectedPath.length > 1) context.antarLord = selectedPath[1].planet || selectedPath[1].lord;
-            if (selectedPath.length > 2) context.pratyantarLord = selectedPath[2].planet || selectedPath[2].lord;
+    // Queries
+    const { data: vimData, isLoading: vimLoading, error: vimError } = useDasha(
+        clientDetails?.id || '',
+        currentLevel as any,
+        settings.ayanamsa.toLowerCase(),
+        context
+    );
 
-            const response = await clientApi.generateDasha(
-                clientDetails.id,
-                currentLevel,
-                settings.ayanamsa.toLowerCase(),
-                false,
-                context
-            );
+    const { data: otherData, isLoading: otherLoading, error: otherError } = useOtherDasha(
+        clientDetails?.id || '',
+        selectedDashaType,
+        settings.ayanamsa.toLowerCase()
+    );
+
+    const response = isVimshottari ? vimData : otherData;
+    const isLoading = isVimshottari ? vimLoading : otherLoading;
+    const errorMsg = (isVimshottari ? vimError : otherError) ? ((isVimshottari ? vimError : otherError) as Error).message : null;
+
+    useEffect(() => {
+        if (response) {
             setDashaData(response);
-
             // Parse the periods - handle various API response formats
             const periods =
                 (response?.data as any)?.mahadashas ||
                 (response?.data as any)?.periods ||
                 (response?.data as any)?.mahadasha_periods ||
                 (response?.data as any)?.antardashas ||
+                (response?.data as any)?.dasha_periods ||
+                response?.data ||
                 [];
-            setViewingPeriods(periods);
-        } catch (err: any) {
-            console.error('Failed to fetch dasha:', err);
-            setError(err.message || 'Failed to load dasha data');
-        } finally {
-            setIsLoading(false);
+
+            // Handle if periods is an array
+            const periodsArray = Array.isArray(periods) ? periods : [];
+            setViewingPeriods(periodsArray);
         }
-    };
+    }, [response]);
+
+    /* Removed manual fetchDashaData */
 
     useEffect(() => {
-        // Only fetch if we are at mahadasha level OR the path changed and we don't have local data
-        if (currentLevel === 'mahadasha') {
-            fetchDashaData();
-        } else if (selectedPath.length > 0) {
-            const lastPeriod = selectedPath[selectedPath.length - 1];
-            const localSubs = lastPeriod.subPeriods || lastPeriod.sub_periods;
-
-            if (localSubs && localSubs.length > 0) {
-                setViewingPeriods(localSubs);
-                setIsLoading(false);
-            } else {
-                fetchDashaData();
-            }
+        // Reset state when dasha type changes
+        if (!isVimshottari) {
+            setCurrentLevel('mahadasha');
+            setSelectedPath([]);
         }
-    }, [clientDetails?.id, settings.ayanamsa, currentLevel, selectedPath.length]);
+    }, [selectedDashaType]);
 
-    // Navigate into a dasha period (drill down)
+    // Optimized local drill-down removed in favor of consistently using the hook which handles caching.
+    // Transitioning between levels updates 'currentLevel' and 'context', triggering the hook.
+
+    // Navigate into a dasha period (drill down) - Vimshottari only
     const drillDown = (period: DashaPeriod) => {
+        if (!isVimshottari) return;
         const currentLevelIndex = LEVEL_ORDER.indexOf(currentLevel);
         if (currentLevelIndex < LEVEL_ORDER.length - 1) {
             setSelectedPath([...selectedPath, period]);
@@ -173,22 +198,30 @@ export default function VedicDashasPage() {
         }
     };
 
-    // Navigate back (drill up)
+    // Navigate back (drill up) - Vimshottari only
     const drillUp = () => {
+        if (!isVimshottari) return;
         const currentLevelIndex = LEVEL_ORDER.indexOf(currentLevel);
         if (currentLevelIndex > 0) {
             const newPath = selectedPath.slice(0, -1);
             const parentLevel = LEVEL_ORDER[currentLevelIndex - 1];
-
             setSelectedPath(newPath);
             setCurrentLevel(parentLevel);
         }
     };
 
+    const handleDashaTypeChange = (type: string) => {
+        setSelectedDashaType(type);
+        setCurrentLevel('mahadasha');
+        setSelectedPath([]);
+        setViewingPeriods([]);
+        setDashaData(null);
+    };
+
     if (!clientDetails) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-                <p className="font-serif text-xl text-[#8B5A2B]">Please select a client to view Vimshottari Dasha</p>
+                <p className="font-serif text-xl text-[#8B5A2B]">Please select a client to view Dasha details</p>
             </div>
         );
     }
@@ -196,15 +229,15 @@ export default function VedicDashasPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#D08C60]/10 flex items-center justify-center">
                         <TrendingUp className="w-6 h-6 text-[#D08C60]" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-serif font-bold text-[#3E2A1F]">Vimshottari Dasha</h1>
+                        <h1 className="text-2xl font-serif font-bold text-[#3E2A1F]">Dasha Systems</h1>
                         <div className="flex items-center gap-2">
-                            <p className="text-sm text-[#8B5A2B]">Time Lord Sequence for {clientDetails.name}</p>
+                            <p className="text-sm text-[#8B5A2B]">Time Lord Analysis for {clientDetails.name}</p>
                             <span className="px-2 py-0.5 bg-[#D08C60]/10 text-[#D08C60] text-[10px] font-bold uppercase rounded-full border border-[#D08C60]/30">
                                 {settings.ayanamsa}
                             </span>
@@ -212,7 +245,7 @@ export default function VedicDashasPage() {
                     </div>
                 </div>
                 <button
-                    onClick={fetchDashaData}
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['dasha'] })}
                     disabled={isLoading}
                     className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
                 >
@@ -220,75 +253,137 @@ export default function VedicDashasPage() {
                 </button>
             </div>
 
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-2 bg-[#FAF7F2] border border-[#D08C60]/20 rounded-xl px-4 py-3">
-                <button
-                    onClick={() => {
-                        setCurrentLevel('mahadasha');
-                        setSelectedPath([]);
-                    }}
-                    className={cn(
-                        "text-sm font-bold",
-                        currentLevel === 'mahadasha' ? "text-[#D08C60]" : "text-[#8B5A2B] hover:text-[#D08C60]"
-                    )}
-                >
-                    Mahadasha
-                </button>
-                {selectedPath.map((period, idx) => (
-                    <React.Fragment key={idx}>
-                        <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
-                        <button
-                            onClick={() => {
-                                setSelectedPath(selectedPath.slice(0, idx + 1));
-                                setCurrentLevel(LEVEL_ORDER[idx + 1]);
-                            }}
-                            className={cn(
-                                "text-sm font-bold px-2 py-0.5 rounded",
-                                PLANET_COLORS[(period.planet || period.lord || 'unknown').toLowerCase()] || "bg-gray-100 text-gray-800"
-                            )}
-                        >
-                            {period.planet || period.lord} {LEVEL_LABELS[LEVEL_ORDER[idx]]}
-                        </button>
-                    </React.Fragment>
-                ))}
-                <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
-                <span className="text-sm font-bold text-[#D08C60]">{LEVEL_LABELS[currentLevel]}</span>
-            </div>
-
-            {/* Active Path Summary */}
-            <div className="bg-white border border-[#D08C60]/20 rounded-2xl p-4 flex items-center gap-6 overflow-x-auto shadow-sm">
-                <div className="flex items-center gap-2 text-[#8B5A2B] font-bold text-xs uppercase tracking-wider border-r border-[#D08C60]/20 pr-6 shrink-0">
-                    <Star className="w-4 h-4 text-[#D08C60]" />
-                    <span>Selected Path</span>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#8B5A2B]/60 font-black uppercase tracking-tighter">Root</span>
-                        <ChevronRight className="w-3 h-3 text-[#D08C60]/40" />
+            {/* Dasha Type Selector */}
+            <div className="bg-white border border-[#D08C60]/20 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-3">
+                        <label className="text-sm font-bold text-[#3E2A1F] uppercase tracking-wider">Dasha System</label>
+                        <div className="relative">
+                            <select
+                                value={selectedDashaType}
+                                onChange={(e) => handleDashaTypeChange(e.target.value)}
+                                className="appearance-none bg-[#FAF7F2] border border-[#D08C60]/30 rounded-xl px-4 py-2.5 pr-10 text-[#3E2A1F] font-medium focus:outline-none focus:ring-2 focus:ring-[#D08C60]/40 cursor-pointer min-w-[200px]"
+                            >
+                                <optgroup label="Primary Systems">
+                                    <option value="vimshottari">Vimshottari (120 Years)</option>
+                                </optgroup>
+                                <optgroup label="Conditional Systems">
+                                    {Object.entries(DASHA_TYPES)
+                                        .filter(([key, val]) => val.category === 'conditional')
+                                        .map(([key, val]) => (
+                                            <option key={key} value={key}>
+                                                {val.name} {val.years > 0 ? `(${val.years} Years)` : ''}
+                                            </option>
+                                        ))
+                                    }
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B5A2B] pointer-events-none" />
+                        </div>
                     </div>
-                    {selectedPath.length > 0 ? selectedPath.map((period, idx) => (
-                        <React.Fragment key={idx}>
-                            <div className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all",
-                                PLANET_COLORS[(period.planet || period.lord || 'unknown').toLowerCase()] || "bg-gray-50 border-gray-100"
-                            )}>
-                                <span className="text-sm font-bold">{period.planet || period.lord}</span>
-                                {period.isCurrent || period.is_current ? (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                ) : null}
-                            </div>
-                            {idx < selectedPath.length - 1 && (
-                                <ChevronRight className="w-4 h-4 text-[#D08C60]/30" />
-                            )}
-                        </React.Fragment>
-                    )) : (
-                        <span className="text-sm text-[#8B5A2B]/40 italic">Overview Level</span>
-                    )}
+                    <button
+                        onClick={() => setShowDashaInfo(!showDashaInfo)}
+                        className="flex items-center gap-2 text-sm text-[#8B5A2B] hover:text-[#D08C60] transition-colors"
+                    >
+                        <Info className="w-4 h-4" />
+                        <span>About this Dasha</span>
+                    </button>
                 </div>
+
+                {/* Dasha Info Panel */}
+                {showDashaInfo && currentDashaInfo && (
+                    <div className="mt-4 pt-4 border-t border-[#D08C60]/10">
+                        <div className="bg-[#FAF7F2] rounded-xl p-4">
+                            <h4 className="font-bold text-[#3E2A1F] mb-2">{currentDashaInfo.name} Dasha</h4>
+                            <p className="text-sm text-[#8B5A2B] mb-2">{currentDashaInfo.desc}</p>
+                            {currentDashaInfo.years > 0 && (
+                                <p className="text-xs text-[#8B5A2B]/70">
+                                    <span className="font-bold">Total Cycle:</span> {currentDashaInfo.years} years
+                                </p>
+                            )}
+                            {currentDashaInfo.category === 'conditional' && (
+                                <p className="text-xs text-amber-600 mt-2">
+                                    ⚠️ This is a conditional dasha system. It may only be applicable under specific chart conditions.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Back Button */}
-            {currentLevel !== 'mahadasha' && (
+            {/* Vimshottari-specific: Breadcrumb Navigation */}
+            {isVimshottari && (
+                <div className="flex items-center gap-2 bg-[#FAF7F2] border border-[#D08C60]/20 rounded-xl px-4 py-3">
+                    <button
+                        onClick={() => {
+                            setCurrentLevel('mahadasha');
+                            setSelectedPath([]);
+                        }}
+                        className={cn(
+                            "text-sm font-bold",
+                            currentLevel === 'mahadasha' ? "text-[#D08C60]" : "text-[#8B5A2B] hover:text-[#D08C60]"
+                        )}
+                    >
+                        Mahadasha
+                    </button>
+                    {selectedPath.map((period, idx) => (
+                        <React.Fragment key={idx}>
+                            <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
+                            <button
+                                onClick={() => {
+                                    setSelectedPath(selectedPath.slice(0, idx + 1));
+                                    setCurrentLevel(LEVEL_ORDER[idx + 1]);
+                                }}
+                                className={cn(
+                                    "text-sm font-bold px-2 py-0.5 rounded",
+                                    PLANET_COLORS[(period.planet || period.lord || 'unknown').toLowerCase()] || "bg-gray-100 text-gray-800"
+                                )}
+                            >
+                                {period.planet || period.lord} {LEVEL_LABELS[LEVEL_ORDER[idx]]}
+                            </button>
+                        </React.Fragment>
+                    ))}
+                    <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
+                    <span className="text-sm font-bold text-[#D08C60]">{LEVEL_LABELS[currentLevel]}</span>
+                </div>
+            )}
+
+            {/* Vimshottari-specific: Active Path Summary */}
+            {isVimshottari && (
+                <div className="bg-white border border-[#D08C60]/20 rounded-2xl p-4 flex items-center gap-6 overflow-x-auto shadow-sm">
+                    <div className="flex items-center gap-2 text-[#8B5A2B] font-bold text-xs uppercase tracking-wider border-r border-[#D08C60]/20 pr-6 shrink-0">
+                        <Star className="w-4 h-4 text-[#D08C60]" />
+                        <span>Selected Path</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-[#8B5A2B]/60 font-black uppercase tracking-tighter">Root</span>
+                            <ChevronRight className="w-3 h-3 text-[#D08C60]/40" />
+                        </div>
+                        {selectedPath.length > 0 ? selectedPath.map((period, idx) => (
+                            <React.Fragment key={idx}>
+                                <div className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all",
+                                    PLANET_COLORS[(period.planet || period.lord || 'unknown').toLowerCase()] || "bg-gray-50 border-gray-100"
+                                )}>
+                                    <span className="text-sm font-bold">{period.planet || period.lord}</span>
+                                    {(period.isCurrent || period.is_current) ? (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    ) : null}
+                                </div>
+                                {idx < selectedPath.length - 1 && (
+                                    <ChevronRight className="w-4 h-4 text-[#D08C60]/30" />
+                                )}
+                            </React.Fragment>
+                        )) : (
+                            <span className="text-sm text-[#8B5A2B]/40 italic">Overview Level</span>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Vimshottari-specific: Back Button */}
+            {isVimshottari && currentLevel !== 'mahadasha' && (
                 <button
                     onClick={drillUp}
                     className="flex items-center gap-2 text-sm font-medium text-[#8B5A2B] hover:text-[#D08C60]"
@@ -302,16 +397,21 @@ export default function VedicDashasPage() {
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-20">
                     <Loader2 className="w-10 h-10 text-[#D08C60] animate-spin mb-4" />
-                    <p className="font-serif text-[#8B5A2B]">Calculating {LEVEL_LABELS[currentLevel]} periods...</p>
+                    <p className="font-serif text-[#8B5A2B]">
+                        {isVimshottari
+                            ? `Calculating ${LEVEL_LABELS[currentLevel]} periods...`
+                            : `Loading ${currentDashaInfo?.name || 'Dasha'} periods...`
+                        }
+                    </p>
                 </div>
             )}
 
             {/* Error State */}
-            {!isLoading && error && (
+            {!isLoading && errorMsg && (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <p className="font-serif text-red-600 mb-4">{error}</p>
+                    <p className="font-serif text-red-600 mb-4">{errorMsg}</p>
                     <button
-                        onClick={fetchDashaData}
+                        onClick={() => queryClient.invalidateQueries({ queryKey: ['dasha'] })}
                         className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
                     >
                         Retry
@@ -320,33 +420,38 @@ export default function VedicDashasPage() {
             )}
 
             {/* Dasha Table */}
-            {!isLoading && !error && (
+            {!isLoading && !errorMsg && (
                 <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl overflow-hidden">
                     <div className="p-4 border-b border-[#D08C60]/10 bg-[#FAF7F2]">
-                        <h3 className="font-serif font-bold text-[#3E2A1F]">{LEVEL_LABELS[currentLevel]} Periods</h3>
-                        <p className="text-xs text-[#8B5A2B] mt-1">Click on any row to see sub-periods</p>
+                        <h3 className="font-serif font-bold text-[#3E2A1F]">
+                            {isVimshottari ? `${LEVEL_LABELS[currentLevel]} Periods` : `${currentDashaInfo?.name || 'Dasha'} Periods`}
+                        </h3>
+                        <p className="text-xs text-[#8B5A2B] mt-1">
+                            {isVimshottari
+                                ? 'Click on any row to see sub-periods'
+                                : `${viewingPeriods.length} periods calculated`
+                            }
+                        </p>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest">
                                 <tr>
-                                    <th className="px-6 py-3 text-left">Planet</th>
+                                    <th className="px-6 py-3 text-left">{selectedDashaType === 'chara' ? 'Sign' : 'Planet'}</th>
                                     <th className="px-6 py-3 text-left">Start Date</th>
                                     <th className="px-6 py-3 text-left">End Date</th>
                                     <th className="px-6 py-3 text-left">Duration</th>
-                                    <th className="px-6 py-3 text-center">View</th>
+                                    {isVimshottari && <th className="px-6 py-3 text-center">View</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#D08C60]/10">
                                 {viewingPeriods.length > 0 ? viewingPeriods.map((period, idx) => {
-                                    const planetName = period.planet || period.lord || 'Unknown';
+                                    const periodLabel = period.planet || period.lord || period.sign || 'Unknown';
                                     const start = period.startDate || period.start_date || '';
                                     const end = period.endDate || period.end_date || '';
                                     const isCurrent = period.isCurrent || period.is_current || false;
-                                    const daysLeft = isCurrent ? getDaysRemaining(end) : null;
-                                    const colorClass = PLANET_COLORS[planetName.toLowerCase()] || 'bg-gray-100 text-gray-800 border-gray-200';
-
-                                    const canDrillDown = LEVEL_ORDER.indexOf(currentLevel) < LEVEL_ORDER.length - 1;
+                                    const colorClass = PLANET_COLORS[periodLabel.toLowerCase()] || 'bg-gray-100 text-gray-800 border-gray-200';
+                                    const canDrillDown = isVimshottari && LEVEL_ORDER.indexOf(currentLevel) < LEVEL_ORDER.length - 1;
 
                                     return (
                                         <tr
@@ -364,7 +469,7 @@ export default function VedicDashasPage() {
                                                         "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border",
                                                         colorClass
                                                     )}>
-                                                        {planetName}
+                                                        {periodLabel}
                                                     </span>
                                                     {isCurrent && (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse">
@@ -385,19 +490,29 @@ export default function VedicDashasPage() {
                                             <td className="px-6 py-4 text-sm text-[#8B5A2B]">
                                                 {calculateDuration(start, end)}
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {canDrillDown && (
-                                                    <button className="p-2 rounded-lg hover:bg-[#D08C60]/10 text-[#D08C60] transition-colors">
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </td>
+                                            {isVimshottari && (
+                                                <td className="px-6 py-4 text-center">
+                                                    {canDrillDown && (
+                                                        <button className="p-2 rounded-lg hover:bg-[#D08C60]/10 text-[#D08C60] transition-colors">
+                                                            <ChevronRight className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 }) : (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-[#8B5A2B]">
-                                            No dasha data available
+                                        <td colSpan={isVimshottari ? 5 : 4} className="px-6 py-12 text-center text-[#8B5A2B]">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <p className="font-medium">No dasha data available</p>
+                                                <p className="text-xs text-[#8B5A2B]/60">
+                                                    {currentDashaInfo?.category === 'conditional'
+                                                        ? 'This conditional dasha may not be applicable for this chart.'
+                                                        : 'Please try refreshing or check the backend connection.'
+                                                    }
+                                                </p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}

@@ -12,10 +12,12 @@ import {
     Compass,
     Grid3X3
 } from 'lucide-react';
+import { useQueryClient } from "@tanstack/react-query";
 import AshtakavargaMatrix from '@/components/astrology/AshtakavargaMatrix';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi } from '@/lib/api';
+import { useAshtakavarga } from '@/hooks/queries/useCalculations';
 import { cn } from '@/lib/utils';
 import NorthIndianChart from '@/components/astrology/NorthIndianChart/NorthIndianChart';
 import AshtakavargaChart from '@/components/astrology/AshtakavargaChart';
@@ -57,46 +59,38 @@ const AnalyzeCard = ({ icon, title, desc, color }: { icon: React.ReactNode; titl
 );
 
 export default function AshtakavargaPage() {
+    const queryClient = useQueryClient();
     const { clientDetails } = useVedicClient();
-    const { settings } = useAstrologerSettings();
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState<AshtakavargaData | null>(null);
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
     const [activeTab, setActiveTab] = useState<'sarva' | 'bhinna' | 'shodasha'>('sarva');
     const [selectedPlanet, setSelectedPlanet] = useState<string>('Lagna');
 
-    const fetchAshtakavarga = async (type: 'bhinna' | 'sarva' | 'shodasha') => {
-        if (!clientDetails?.id) return;
-        setLoading(true);
-        try {
-            const result = await clientApi.generateAshtakavarga(
-                clientDetails.id,
-                settings.ayanamsa,
-                type
-            );
+    // Parallel Queries
+    const { data: sarvaData, isLoading: sarvaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'sarva');
+    const { data: bhinnaData, isLoading: bhinnaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'bhinna');
+    const { data: shodashaData, isLoading: shodashaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'shodasha');
 
-            const ashtResult = (result as any);
-            const ascFromResponse = ashtResult.ascendant?.sign || ashtResult.data?.ascendant?.sign || ashtResult.ashtakvarga?.ascendant?.sign;
-            const asc = SIGN_MAP[ascFromResponse] || data?.ascendant;
+    const loading = sarvaLoading || bhinnaLoading || shodashaLoading;
 
-            setData(prev => ({
-                ...prev,
-                [type]: ashtResult.data || ashtResult.ashtakvarga || ashtResult,
-                ascendant: asc
-            }));
-        } catch (error) {
-            console.error(`Failed to fetch ${type} ashtakavarga:`, error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Derived Data Object
+    const data: AshtakavargaData | null = React.useMemo(() => {
+        if (!sarvaData && !bhinnaData && !shodashaData) return null;
 
-    useEffect(() => {
-        if (clientDetails?.id) {
-            fetchAshtakavarga('sarva');
-            fetchAshtakavarga('bhinna');
-            fetchAshtakavarga('shodasha');
-        }
-    }, [clientDetails?.id, settings.ayanamsa]);
+        // Try to get ascendant from any available data
+        const anyResult = (sarvaData || bhinnaData || shodashaData) as any;
+        const ascFromResponse = anyResult?.ascendant?.sign || anyResult?.data?.ascendant?.sign || anyResult?.ashtakvarga?.ascendant?.sign;
+        const asc = SIGN_MAP[ascFromResponse] || 1; // Default to 1 (Aries) if not found
+
+        return {
+            sarva: (sarvaData as any)?.data || (sarvaData as any)?.ashtakvarga || sarvaData,
+            bhinna: (bhinnaData as any)?.data || (bhinnaData as any)?.ashtakvarga || bhinnaData,
+            shodasha: (shodashaData as any)?.data || (shodashaData as any)?.ashtakvarga || shodashaData,
+            ascendant: asc
+        };
+    }, [sarvaData, bhinnaData, shodashaData]);
+
+    /* Removed fetchAshtakavarga and useEffect */
 
     if (!clientDetails) {
         return (
@@ -193,7 +187,7 @@ export default function AshtakavargaPage() {
                         ))}
                     </div>
                     <button
-                        onClick={() => fetchAshtakavarga(activeTab)}
+                        onClick={() => queryClient.invalidateQueries({ queryKey: ['ashtakavarga'] })}
                         className="p-2 text-copper-600 hover:bg-copper-100 rounded-lg border border-copper-200 transition-all"
                     >
                         <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />

@@ -11,6 +11,7 @@ import ParchmentDatePicker from "@/components/ui/ParchmentDatePicker";
 import ParchmentTimePicker from "@/components/ui/ParchmentTimePicker";
 import { clientApi, geocodeApi } from "@/lib/api";
 import { LocationSuggestion, CreateClientPayload, Client } from "@/types/client";
+import { useClientMutations } from "@/hooks/mutations/useClientMutations";
 
 interface ClientFormProps {
     mode?: 'create' | 'edit';
@@ -22,6 +23,7 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { createClient, updateClient } = useClientMutations();
 
     // Location Autocomplete State
     const [locationQuery, setLocationQuery] = useState('');
@@ -204,24 +206,43 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                 notes: formData.notes || undefined,
             } as any;
 
-            let client: Client;
-
             if (mode === 'edit' && initialData?.id) {
-                client = await clientApi.updateClient(initialData.id, payload);
+                const updateVariables = { id: initialData.id, data: payload };
+                await updateClient.mutateAsync(updateVariables, {
+                    onSuccess: (updated) => {
+                        console.log("Client updated (via mutation):", updated);
+                        if (onSuccess) {
+                            onSuccess(updated as any);
+                        } else {
+                            router.push('/clients');
+                        }
+                    },
+                    onError: (err: any) => {
+                        console.error("Failed to update client:", err);
+                        setError(err.message || 'Failed to update client. Please try again.');
+                    }
+                });
             } else {
-                client = await clientApi.createClient(payload);
-            }
-
-            console.log("Client saved:", client);
-
-            if (onSuccess) {
-                onSuccess(client);
-            } else {
-                router.push('/clients');
+                await createClient.mutateAsync(payload, {
+                    onSuccess: (newClient) => {
+                        console.log("Client created (via mutation):", newClient);
+                        if (onSuccess) {
+                            onSuccess(newClient as any);
+                        } else {
+                            router.push('/clients');
+                        }
+                    },
+                    onError: (err: any) => {
+                        console.error("Failed to create client:", err);
+                        setError(err.message || 'Failed to create client. Please try again.');
+                    }
+                });
             }
         } catch (err: any) {
-            console.error("Failed to save client:", err);
-            setError(err.message || 'Failed to save client. Please try again.');
+            // This catch block might be redundant with onError callbacks but serves as a safety net
+            console.error("Unexpected error in submission:", err);
+            // setError handles safely inside mutation callbacks usually, but if something fails outside mutation:
+            setError(err.message || "An unexpected error occurred.");
         } finally {
             setLoading(false);
         }

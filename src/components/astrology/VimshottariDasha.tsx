@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronRight, Calendar, Star, Zap, Loader2 } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
-import { clientApi } from '@/lib/api';
-import { useAstrologerSettings } from '@/context/AstrologerSettingsContext';
+import { clientApi } from '@/lib/api'; // Keep for now if we do manual expansion triggers, or remove if fully hookified
+import { useAstrologerStore } from '@/store/useAstrologerStore';
+import { useDasha } from '@/hooks/queries/useCalculations';
 
 interface DashaLevel {
     planet: string;
@@ -28,20 +29,23 @@ const formatDate = (dateStr: string) => {
 
 export default function VimshottariDasha({ compact = false }: VimshottariDashaProps) {
     const { clientDetails } = useVedicClient();
-    const { settings } = useAstrologerSettings();
-    const [loading, setLoading] = useState(true);
+    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const settings = { ayanamsa, chartStyle, recentClientIds };
     const [dashaData, setDashaData] = useState<DashaLevel[]>([]);
     const [expanded, setExpanded] = useState<string[]>([]);
     const [currentMaha, setCurrentMaha] = useState<string>('');
 
-    const fetchDashaData = async () => {
-        if (!clientDetails?.id) return;
-        setLoading(true);
-        try {
-            // Fetch deep dasha tree
-            const result = await clientApi.generateDasha(clientDetails.id, 'deep', settings.ayanamsa);
-            const rawList = result.dasha_list || result.data?.mahadashas || [];
+    // Initial Query
+    const { data: initialData, isLoading: loading } = useDasha(
+        clientDetails?.id || '',
+        'deep',
+        settings.ayanamsa.toLowerCase()
+    );
 
+    // Sync initial data
+    useEffect(() => {
+        if (initialData) {
+            const rawList = initialData.dasha_list || initialData.data?.mahadashas || [];
             // Map backend data to UI format
             const mapped: DashaLevel[] = rawList.map((d: any) => ({
                 planet: d.planet,
@@ -51,6 +55,7 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
                     planet: s.planet,
                     start: s.start_date,
                     end: s.end_date,
+                    sublevels: [] // Start empty for sub-levels unless provided
                 }))
             }));
 
@@ -58,21 +63,16 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
 
             // Find current active mahadasha
             const now = new Date();
-            const current = mapped.find(d => new Date(d.start) <= now && new Date(d.end) >= now);
+            const current = mapped.find((d: DashaLevel) => new Date(d.start) <= now && new Date(d.end) >= now);
             if (current) {
                 setCurrentMaha(current.planet);
-                setExpanded([current.planet]);
+                // Auto-expand current if not already set
+                if (expanded.length === 0) {
+                    setExpanded([current.planet]);
+                }
             }
-        } catch (error) {
-            console.error("Failed to fetch Dasha:", error);
-        } finally {
-            setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchDashaData();
-    }, [clientDetails?.id, settings.ayanamsa]);
+    }, [initialData]);
 
     const fetchLevel = async (
         parent: DashaLevel,
