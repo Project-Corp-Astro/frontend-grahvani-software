@@ -319,13 +319,23 @@ export default function VedicOverviewPage() {
                         <p className="text-[11px] text-muted mt-1 leading-relaxed">Aligned life-dimension analysis. Triple-layer view of Body, Mind, and Soul alignment.</p>
                     </div>
 
-                    <div className="group bg-copper-900 text-amber-50 rounded-2xl p-5 hover:shadow-xl transition-all cursor-pointer">
+                    <div className="group bg-copper-900 text-amber-50 rounded-2xl p-5 hover:shadow-xl transition-all cursor-pointer" onClick={() => window.location.href = '/vedic-astrology/workbench'}>
                         <div className="flex justify-between mb-4">
                             <div className="p-2 bg-white/10 rounded-xl text-amber-400"><Star className="w-5 h-5" /></div>
                             <ArrowRight className="w-4 h-4 text-copper-400 group-hover:translate-x-1" />
                         </div>
                         <h3 className="font-serif font-bold text-amber-200">Esoteric Lahiri Points</h3>
-                        <p className="text-[11px] text-copper-300 mt-1 leading-relaxed">Arudha Lagna and Karkamsha charts for deep karmic manifestation analysis.</p>
+                        <div className="mt-3 space-y-2">
+                            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                <span className="text-[10px] text-copper-300 uppercase tracking-wider">Arudha Lagna</span>
+                                <span className="text-sm font-serif font-bold text-white">{processedCharts[`arudha_lagna_${activeSystem}`]?.chartData?.ascendant?.sign || '—'}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-copper-300 uppercase tracking-wider">Karkamsha (D1)</span>
+                                <span className="text-sm font-serif font-bold text-white">{processedCharts[`karkamsha_d1_${activeSystem}`]?.chartData?.ascendant?.sign || '—'}</span>
+                            </div>
+                        </div>
+                        <p className="text-[9px] text-copper-400 mt-4 leading-relaxed">Arudha Lagna and Karkamsha charts for deep karmic manifestation analysis.</p>
                     </div>
                 </div>
             </div>
@@ -363,8 +373,29 @@ export default function VedicOverviewPage() {
                 <div className="bg-softwhite border border-antique rounded-xl p-4">
                     <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Transit Alerts</h3>
                     <div className="space-y-2">
-                        <AlertItem level="high" text="Saturn transit 7th — relationship pressure" />
-                        <AlertItem level="medium" text="Mars Antardasha — increased drive" />
+                        {(() => {
+                            const transitChart = processedCharts[`transit_${activeSystem}`];
+                            const transitPlanets = transitChart?.chartData?.planetary_positions || {};
+
+                            const saturn = transitPlanets['Saturn'];
+                            const jupiter = transitPlanets['Jupiter'];
+
+                            if (!saturn && !jupiter) {
+                                return (
+                                    <>
+                                        <AlertItem level="medium" text="Syncing real-time transit data..." />
+                                        <AlertItem level="low" text="Analyzing Gochar patterns..." />
+                                    </>
+                                );
+                            }
+
+                            return (
+                                <>
+                                    {saturn && <AlertItem level="high" text={`Saturn Gochar: Currently in ${saturn.sign} (${saturn.house}th house)`} />}
+                                    {jupiter && <AlertItem level="medium" text={`Jupiter Impact: Moving through ${jupiter.sign}`} />}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
                 <div className="bg-softwhite border border-antique rounded-xl p-4">
