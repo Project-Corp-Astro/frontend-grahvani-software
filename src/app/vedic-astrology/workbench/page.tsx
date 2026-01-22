@@ -72,6 +72,22 @@ export default function AnalyticalWorkbenchPage() {
 
     const [selectedChartType, setSelectedChartType] = useState('D1');
     const [activeTab, setActiveTab] = useState<'chart' | 'dignity' | 'lagna'>('chart');
+    const [isGeneratingLocal, setIsGeneratingLocal] = useState(false);
+
+    // Handler for generating individual charts
+    const handleGenerateChart = async () => {
+        if (!clientDetails?.id) return;
+        setIsGeneratingLocal(true);
+        try {
+            await clientApi.generateChart(clientDetails.id, selectedChartType, settings.ayanamsa.toLowerCase());
+            await refreshCharts();
+        } catch (err: any) {
+            console.error('Chart generation failed:', err);
+            alert(`Failed to generate ${selectedChartType}: ${err.message || 'Unknown error'}`);
+        } finally {
+            setIsGeneratingLocal(false);
+        }
+    };
 
     const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
     const divisionalCharts = systemCapabilities.charts.divisional;
@@ -165,10 +181,17 @@ export default function AnalyticalWorkbenchPage() {
                                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
                                         <p className="text-muted italic mb-4">No data for {CHART_NAMES[selectedChartType] || selectedChartType}</p>
                                         <button
-                                            onClick={() => generateChart.mutateAsync({ clientId: clientDetails.id!, chartType: selectedChartType, ayanamsa: activeSystem }).then(refreshCharts)}
+                                            onClick={() => clientApi.generateChart(clientDetails.id!, selectedChartType, activeSystem as any).then(refreshCharts)}
                                             className="px-6 py-2 bg-gold-primary text-ink rounded-xl font-bold hover:shadow-lg transition-all"
                                         >
-                                            Generate {selectedChartType}
+                                            {isGeneratingLocal ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                `Generate ${selectedChartType}`
+                                            )}
                                         </button>
                                     </div>
                                 )}
