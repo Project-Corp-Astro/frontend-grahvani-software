@@ -8,6 +8,14 @@ import { DASHA_TYPES } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useDasha, useOtherDasha } from '@/hooks/queries/useCalculations';
 
+// Console logger for debugging
+const logger = {
+    debug: (data: any) => console.debug('[Dasha Debug]', data),
+    info: (data: any) => console.info('[Dasha Info]', data),
+    warn: (data: any) => console.warn('[Dasha Warn]', data),
+    error: (data: any) => console.error('[Dasha Error]', data),
+};
+
 interface DashaPeriod {
     planet?: string;
     lord?: string;
@@ -171,7 +179,20 @@ export default function VedicDashasPage() {
 
             // Handle if periods is an array
             const periodsArray = Array.isArray(periods) ? periods : [];
-            setViewingPeriods(periodsArray);
+            
+            // Filter out null/undefined entries
+            const validPeriods = periodsArray.filter(p => p && (p.planet || p.lord || p.sign));
+            
+            setViewingPeriods(validPeriods);
+            
+            // Log if we got empty but valid response
+            if (periodsArray.length === 0 && response?.data !== undefined) {
+                logger.debug({
+                    dashaType: selectedDashaType,
+                    responseData: response?.data,
+                    message: 'Valid empty dasha response (not applicable for this chart)'
+                });
+            }
         }
     }, [response]);
 
@@ -419,8 +440,38 @@ export default function VedicDashasPage() {
                 </div>
             )}
 
+            {/* Empty Data State (Valid) */}
+            {!isLoading && !errorMsg && viewingPeriods.length === 0 && (
+                <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl overflow-hidden">
+                    <div className="p-4 border-b border-[#D08C60]/10 bg-[#FAF7F2]">
+                        <h3 className="font-serif font-bold text-[#3E2A1F]">
+                            {`${currentDashaInfo?.name || 'Dasha'} Periods`}
+                        </h3>
+                    </div>
+                    <div className="p-12 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-4">
+                            <Info className="w-8 h-8 text-amber-600" />
+                        </div>
+                        <p className="font-medium text-[#3E2A1F] mb-2">
+                            No dasha data available
+                        </p>
+                        <p className="text-sm text-[#8B5A2B] max-w-md">
+                            {currentDashaInfo?.category === 'conditional'
+                                ? `${currentDashaInfo?.name} is a conditional dasha system. It only applies under specific astrological conditions. This chart doesn't meet those conditions.`
+                                : 'The requested dasha system is not applicable for this chart configuration.'
+                            }
+                        </p>
+                        <div className="mt-6 pt-6 border-t border-[#D08C60]/10">
+                            <p className="text-xs text-[#8B5A2B]/60 font-mono">
+                                Dasha Type: {selectedDashaType} | System: {settings.ayanamsa}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Dasha Table */}
-            {!isLoading && !errorMsg && (
+            {!isLoading && !errorMsg && viewingPeriods.length > 0 && (
                 <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl overflow-hidden">
                     <div className="p-4 border-b border-[#D08C60]/10 bg-[#FAF7F2]">
                         <h3 className="font-serif font-bold text-[#3E2A1F]">
@@ -445,7 +496,7 @@ export default function VedicDashasPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#D08C60]/10">
-                                {viewingPeriods.length > 0 ? viewingPeriods.map((period, idx) => {
+                                {viewingPeriods.map((period, idx) => {
                                     const periodLabel = period.planet || period.lord || period.sign || 'Unknown';
                                     const start = period.startDate || period.start_date || '';
                                     const end = period.endDate || period.end_date || '';
@@ -501,21 +552,7 @@ export default function VedicDashasPage() {
                                             )}
                                         </tr>
                                     );
-                                }) : (
-                                    <tr>
-                                        <td colSpan={isVimshottari ? 5 : 4} className="px-6 py-12 text-center text-[#8B5A2B]">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <p className="font-medium">No dasha data available</p>
-                                                <p className="text-xs text-[#8B5A2B]/60">
-                                                    {currentDashaInfo?.category === 'conditional'
-                                                        ? 'This conditional dasha may not be applicable for this chart.'
-                                                        : 'Please try refreshing or check the backend connection.'
-                                                    }
-                                                </p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
+                                })}
                             </tbody>
                         </table>
                     </div>
