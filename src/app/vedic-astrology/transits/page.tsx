@@ -52,7 +52,25 @@ function formatDegree(degrees: number | null | undefined): string {
 // Map API data to transit format
 function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlanet[] {
     if (!chartData) return [];
-    const positions = chartData.planetary_positions || chartData.planets;
+
+    // 1. Identify where the planet list is
+    let positions = chartData.transit_positions ||
+        chartData.planetary_positions ||
+        chartData.planets ||
+        (chartData['Sun'] || chartData['Moon'] ? chartData : null);
+
+    // Deep fallback: Duck-typing for direct map without known keys
+    if (!positions) {
+        // EXCLUDE metadata keys from duck typing check to avoid false positives
+        const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
+            !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant'].includes(k.toLowerCase()) &&
+            v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
+        );
+        if (isPlanetMap) {
+            positions = chartData;
+        }
+    }
+
     if (!positions) return [];
 
     const processPlanet = (key: string, value: any): TransitPlanet => {
@@ -115,10 +133,32 @@ export default function TransitsPage() {
         const ascSign = signNameToId[natal.ascendant?.sign] || 1;
         const transits = mapChartToTransits(transit, ascSign);
 
-        const planets: Planet[] = Object.entries(transit.planetary_positions || {}).map(([key, value]: [string, any]) => {
+        // Parse transit planets for North Indian Chart
+        let transitPos = transit.transit_positions ||
+            transit.planetary_positions ||
+            transit.planets ||
+            (transit['Sun'] || transit['Moon'] ? transit : null);
+
+        if (!transitPos) {
+            const isPlanetMap = Object.entries(transit).some(([k, v]: [string, any]) =>
+                !['notes', 'birth_details', 'user_name'].includes(k.toLowerCase()) &&
+                v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
+            );
+            if (isPlanetMap) {
+                transitPos = transit;
+            }
+        }
+
+        const planets: Planet[] = Object.entries(transitPos || {}).map(([key, value]: [string, any]) => {
+            // Skip non-object values (e.g. meta properties)
+            if (!value || typeof value !== 'object') return null;
+
             let deg: number | null = null;
+            // Handle both number and string degrees
             if (typeof value?.degrees === 'number') deg = value.degrees;
             else if (typeof value?.longitude === 'number') deg = value.longitude;
+            else if (typeof value?.degrees === 'string') deg = parseDegree(value.degrees);
+            else if (typeof value?.longitude === 'string') deg = parseDegree(value.longitude);
 
             return {
                 name: key.substring(0, 2).charAt(0).toUpperCase() + key.substring(1, 2),
@@ -126,7 +166,7 @@ export default function TransitsPage() {
                 degree: deg !== null && !isNaN(deg) ? formatDegree(deg) : '',
                 isRetro: value?.retrograde || value?.is_retro || false,
             };
-        });
+        }).filter(Boolean) as Planet[];
 
         return { transitData: transits, natalAscendant: ascSign, transitPlanets: planets };
     }, [processedCharts, activeSystem]);

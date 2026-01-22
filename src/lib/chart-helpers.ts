@@ -28,8 +28,24 @@ const planetMap: Record<string, string> = {
 export function parseChartData(chartData: any): ProcessedChartData {
     if (!chartData) return { planets: [], ascendant: 1 };
 
+    // 1. Identify where the planet list is
+    let positions = chartData.transit_positions ||
+        chartData.planetary_positions ||
+        chartData.planets ||
+        (chartData['Sun'] || chartData['Moon'] ? chartData : null);
+
+    // Deep fallback: Duck-typing for direct map without known keys
+    if (!positions) {
+        const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
+            !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant'].includes(k.toLowerCase()) &&
+            v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
+        );
+        if (isPlanetMap) {
+            positions = chartData;
+        }
+    }
+
     let planets: Planet[] = [];
-    const positions = chartData.planetary_positions || chartData.planets;
 
     if (positions) {
         // Handle both Array and Object formats
@@ -37,21 +53,23 @@ export function parseChartData(chartData: any): ProcessedChartData {
             ? positions.map((p: any) => [p.name || p.planet_name || "??", p])
             : Object.entries(positions);
 
-        planets = entries.map((entry) => {
-            const key = entry[0];
-            const value = entry[1];
+        planets = entries.map(([key, value]) => {
+            // Skip non-planet keys if mixed object (e.g. "ayanamsa" or "meta" keys)
+            if (!value || typeof value !== 'object') return null;
 
-            // Extract planet name from various possible fields
+            // Extract planet name
             const rawName = value?.name || value?.planet_name || value?.planet || value?.label || value?.id || key || "??";
 
             // Normalize for lookup (Capitalize first letter, rest lowercase)
-            const lookupKey = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
-            const name = planetMap[lookupKey] || (rawName.length > 3 ? rawName.substring(0, 2) : rawName);
+            const rawNameStr = String(rawName);
+            const lookupKey = rawNameStr.charAt(0).toUpperCase() + rawNameStr.slice(1).toLowerCase();
+            const name = planetMap[lookupKey] || (rawNameStr.length > 3 ? rawNameStr.substring(0, 2) : rawNameStr);
+
             const sign = value?.sign || value?.sign_name || "";
             const normalizedSign = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
             const rawDegree = value?.degrees || value?.longitude || value?.degree;
-            // Parse house if available (ensure it's a number)
-            const house = value?.house ? parseInt(value.house) : undefined;
+            // Parse house if available
+            const house = value?.house ? parseInt(String(value.house)) : undefined;
 
             // Rahu and Ketu are always retrograde - don't show marker (Vedic convention)
             const isRahuKetu = name === 'Ra' || name === 'Ke';
@@ -61,10 +79,10 @@ export function parseChartData(chartData: any): ProcessedChartData {
                 name,
                 signId: signNameToId[normalizedSign] || 1,
                 degree: formatPlanetDegree(rawDegree),
-                isRetro: isRahuKetu ? false : hasRetrograde, // Never show R for Rahu/Ketu
+                isRetro: isRahuKetu ? false : hasRetrograde,
                 house
             };
-        });
+        }).filter(Boolean) as Planet[];
     }
 
     // Process Ascendant
@@ -82,7 +100,7 @@ export function parseChartData(chartData: any): ProcessedChartData {
             signId: ascendant,
             degree: formatPlanetDegree(rawDegree),
             isRetro: false,
-            house: 1 // Ascendant is always in House 1 (Lagna)
+            house: 1
         });
     }
 
