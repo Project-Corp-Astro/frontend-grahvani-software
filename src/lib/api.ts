@@ -349,10 +349,41 @@ export const clientApi = {
         clientId: string,
         type: string,
         ayanamsa: string = 'lahiri'
-    ): Promise<any> =>
-        apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha/other`, {
+    ): Promise<DashaResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha/${type}`, {
             method: 'POST',
-            body: JSON.stringify({ type, ayanamsa }),
+            body: JSON.stringify({ ayanamsa, level: 'mahadasha', save: false }),
+        }).then((response: any) => {
+            // Normalize response format to match frontend expectations
+            const normalizedData: DashaResponse = {
+                clientId: response.clientId || clientId,
+                clientName: response.clientName || '',
+                level: response.level || 'mahadasha',
+                ayanamsa: response.ayanamsa || ayanamsa,
+                data: {
+                    mahadashas: response.data || response.periods || [],
+                    current_dasha: response.current_dasha || undefined,
+                },
+                cached: response.cached || (response.cacheSource ? true : false),
+                calculatedAt: response.calculatedAt || new Date().toISOString(),
+            };
+            return normalizedData;
+        }).catch((error: Error) => {
+            // If no data, return valid empty structure instead of throwing
+            console.warn(`Dasha ${type} not applicable for this chart:`, error.message);
+            const emptyResponse: DashaResponse = {
+                clientId,
+                clientName: '',
+                level: 'mahadasha',
+                ayanamsa,
+                data: {
+                    mahadashas: [],
+                    current_dasha: undefined,
+                },
+                cached: false,
+                calculatedAt: new Date().toISOString(),
+            };
+            return emptyResponse;
         }),
 
     /**
