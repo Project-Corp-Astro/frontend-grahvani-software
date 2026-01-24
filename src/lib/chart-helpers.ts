@@ -32,16 +32,35 @@ export function parseChartData(chartData: any): ProcessedChartData {
     let positions = chartData.transit_positions ||
         chartData.planetary_positions ||
         chartData.planets ||
+        chartData.data?.transit_positions || // NEW: Support nested transit positions
+        chartData.data?.planetary_positions || // Handle nested data wrapper
+        chartData.data?.planets ||
         (chartData['Sun'] || chartData['Moon'] ? chartData : null);
 
     // Deep fallback: Duck-typing for direct map without known keys
     if (!positions) {
-        const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
-            !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant'].includes(k.toLowerCase()) &&
-            v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
-        );
-        if (isPlanetMap) {
-            positions = chartData;
+        // Search first level values for something that looks like a planet map
+        const potentialKey = Object.keys(chartData).find(key => {
+            const val = chartData[key];
+            // Check if value is object and has planet-like properties
+            return val && typeof val === 'object' && !Array.isArray(val) && (
+                (val.Sun && val.Moon) ||
+                (val['Sun'] && val['Moon']) ||
+                (val[0]?.name === 'Sun')
+            );
+        });
+
+        if (potentialKey) {
+            positions = chartData[potentialKey];
+        } else {
+            // Deep fallback 2: Check standard planet keys at root even if duck typing failed
+            const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
+                !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant', 'ayanamsa', 'chart_type'].includes(k.toLowerCase()) &&
+                v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
+            );
+            if (isPlanetMap) {
+                positions = chartData;
+            }
         }
     }
 
@@ -89,8 +108,9 @@ export function parseChartData(chartData: any): ProcessedChartData {
 
     // Process Ascendant
     let ascendant = 1; // Default Aries
-    if (chartData.ascendant) {
-        const asc = chartData.ascendant;
+    const asc = chartData.ascendant || chartData.data?.natal_ascendant || chartData.data?.ascendant;
+
+    if (asc) {
         const sign = asc.sign || asc.sign_name || "Aries";
         const normalizedSign = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
         ascendant = signNameToId[normalizedSign] || 1;

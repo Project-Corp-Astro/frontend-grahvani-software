@@ -58,37 +58,48 @@ const AnalyzeCard = ({ icon, title, desc, color }: { icon: React.ReactNode; titl
     </div>
 );
 
+import { parseChartData } from '@/lib/chart-helpers';
+
 export default function AshtakavargaPage() {
     const queryClient = useQueryClient();
-    const { clientDetails } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts } = useVedicClient();
     const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
     const [activeTab, setActiveTab] = useState<'sarva' | 'bhinna' | 'shodasha'>('sarva');
     const [selectedPlanet, setSelectedPlanet] = useState<string>('Lagna');
 
-    // Parallel Queries
-    const { data: sarvaData, isLoading: sarvaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'sarva');
-    const { data: bhinnaData, isLoading: bhinnaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'bhinna');
-    const { data: shodashaData, isLoading: shodashaLoading } = useAshtakavarga(clientDetails?.id || '', settings.ayanamsa.toLowerCase(), 'shodasha');
+    const activeSystem = settings.ayanamsa.toLowerCase();
 
-    const loading = sarvaLoading || bhinnaLoading || shodashaLoading;
+    // Replaced slow useAshtakavarga hooks with instant pre-fetched data from context
+    const { data, loading } = React.useMemo(() => {
+        const sarvaKey = `ashtakavarga_sarva_${activeSystem}`;
+        const bhinnaKey = `ashtakavarga_bhinna_${activeSystem}`;
+        const shodashaKey = `ashtakavarga_shodasha_${activeSystem}`;
+        const d1Key = `D1_${activeSystem}`;
 
-    // Derived Data Object
-    const data: AshtakavargaData | null = React.useMemo(() => {
-        if (!sarvaData && !bhinnaData && !shodashaData) return null;
+        const sarvaRaw = processedCharts[sarvaKey]?.chartData;
+        const bhinnaRaw = processedCharts[bhinnaKey]?.chartData;
+        const shodashaRaw = processedCharts[shodashaKey]?.chartData;
+        const d1Raw = processedCharts[d1Key]?.chartData;
 
-        // Try to get ascendant from any available data
-        const anyResult = (sarvaData || bhinnaData || shodashaData) as any;
-        const ascFromResponse = anyResult?.ascendant?.sign || anyResult?.data?.ascendant?.sign || anyResult?.ashtakvarga?.ascendant?.sign;
-        const asc = SIGN_MAP[ascFromResponse] || 1; // Default to 1 (Aries) if not found
+        // Still loading if context is empty and client is active
+        if (!sarvaRaw && !bhinnaRaw && !shodashaRaw && isLoadingCharts) {
+            return { data: null, loading: true };
+        }
+
+        // Get ascendant via robust parser
+        const { ascendant } = parseChartData(d1Raw);
 
         return {
-            sarva: (sarvaData as any)?.data || (sarvaData as any)?.ashtakvarga || sarvaData,
-            bhinna: (bhinnaData as any)?.data || (bhinnaData as any)?.ashtakvarga || bhinnaData,
-            shodasha: (shodashaData as any)?.data || (shodashaData as any)?.ashtakvarga || shodashaData,
-            ascendant: asc
+            loading: false,
+            data: {
+                sarva: sarvaRaw?.data || sarvaRaw,
+                bhinna: bhinnaRaw?.data || bhinnaRaw,
+                shodasha: shodashaRaw?.data || shodashaRaw,
+                ascendant
+            }
         };
-    }, [sarvaData, bhinnaData, shodashaData]);
+    }, [processedCharts, activeSystem, isLoadingCharts]);
 
     /* Removed fetchAshtakavarga and useEffect */
 
