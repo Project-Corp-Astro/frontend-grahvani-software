@@ -47,101 +47,169 @@ const MOCK_CLIENTS = [
     },
 ];
 
-// Vimshottari Dasha Periods with full 5-level data
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+const parseDate = (dateStr: string): Date => {
+    const parts = dateStr.split('-').map(Number);
+    // Check if first part is Year (YYYY-MM-DD)
+    if (parts[0] > 1000) {
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    // Assume DD-MM-YYYY
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+};
+
+const formatDateShort = (dateStr: string): string => {
+    try {
+        if (!dateStr) return 'Invalid Date';
+        const date = parseDate(dateStr);
+        return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) { return 'Invalid Date'; }
+};
+
+const calculateProgress = (startDate: string, endDate: string): number => {
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+    const now = new Date();
+    const total = end.getTime() - start.getTime();
+    const elapsed = now.getTime() - start.getTime();
+    return Math.max(0, Math.min(100, (elapsed / total) * 100));
+};
+
+const getDaysRemaining = (endDate: string): number => {
+    // Handle both 'DD-MM-YYYY' and 'YYYY-MM-DD'
+    let end: Date;
+    if (endDate.includes('-')) {
+        const parts = endDate.split('-');
+        if (parts[0].length === 4) { // YYYY-MM-DD
+            end = new Date(endDate);
+        } else { // DD-MM-YYYY
+            end = parseDate(endDate);
+        }
+    } else {
+        end = new Date(endDate);
+    }
+    const now = new Date();
+    return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+};
+
+// =============================================================================
+// REAL DATA INTEGRATION
+// =============================================================================
+import RAW_DASHA_DATA from './raw-dasha-data.json';
+
+// Helper to map 5-level nested structure
+const mapDashaLevel = (node: any, level: number, inheritedStartDate?: string): any => {
+    // 1. Identify children key for this level
+    let childrenKey = '';
+    if (level === 0) childrenKey = 'antardashas'; // Parent is Mahadasha (L0) -> Child is Antar (L1)
+    if (level === 1) childrenKey = 'pratyantardashas';
+    if (level === 2) childrenKey = 'sookshma_dashas';
+    if (level === 3) childrenKey = 'pran_dashas';
+
+    // 2. Map children recursively (Waterfall Logic)
+    const rawChildren = node[childrenKey];
+    let mappedChildren: any[] = [];
+
+    // START DATE RESOLUTION
+    // Priority: 1. Explicit start_date 2. Inherited from previous sibling (passed in iterator) 3. Inherited from parent (passed in args)
+    let myStartDateRaw = node.start_date;
+    if (!myStartDateRaw && inheritedStartDate) {
+        myStartDateRaw = inheritedStartDate;
+    }
+
+    // Format the resolved start date
+    const myStartDateDisplay = myStartDateRaw ? formatDateShort(myStartDateRaw.split(' ')[0]) : 'Invalid Date';
+
+    if (Array.isArray(rawChildren)) {
+        let runningStart = myStartDateRaw; // First child starts when parent starts
+
+        mappedChildren = rawChildren.map((child: any) => {
+            const mappedChild = mapDashaLevel(child, level + 1, runningStart);
+            // The next child starts when this child ends (using raw string from JSON is safest if available)
+            if (child.end_date) {
+                runningStart = child.end_date;
+            } else if (mappedChild.endDateRaw) {
+                runningStart = mappedChild.endDateRaw;
+            }
+            return mappedChild;
+        });
+    }
+
+    // 3. Find duration
+    const duration = node.duration_years ? `${node.duration_years.toFixed(2)} yrs` :
+        node.duration_days ? `${node.duration_days.toFixed(1)} days` :
+            node.duration_hours ? `${node.duration_hours.toFixed(1)} hrs` : '';
+
+    return {
+        planet: node.planet,
+        startDate: myStartDateDisplay,
+        endDate: node.end_date ? formatDateShort(node.end_date.split(' ')[0]) : '',
+        endDateRaw: node.end_date, // Keep raw for next iteration
+        years: node.duration_years,
+        months: 0,
+        days: node.duration_days,
+        durationStr: duration,
+        isCurrent: isDateCurrent(myStartDateRaw, node.end_date),
+        canDrillFurther: level < 4 && mappedChildren.length > 0,
+        children: mappedChildren
+    };
+};
+
+const isDateCurrent = (start: string, end: string) => {
+    if (!start || !end) return false;
+    const now = new Date();
+    // Parse "YYYY-MM-DD HH:mm:ss"
+    const s = new Date(start.replace(' ', 'T'));
+    const e = new Date(end.replace(' ', 'T'));
+    return now >= s && now <= e;
+};
+
+// Map the root Mahadashas
 const VIMSHOTTARI_DATA = {
-    mahadashas: [
-        {
-            planet: 'Moon',
-            startDate: '15-08-1985',
-            endDate: '15-08-1995',
-            years: 10,
-            antardashas: [
-                { planet: 'Moon', startDate: '15-08-1985', endDate: '15-06-1986', months: 10 },
-                { planet: 'Mars', startDate: '15-06-1986', endDate: '15-01-1987', months: 7 },
-                { planet: 'Rahu', startDate: '15-01-1987', endDate: '15-07-1988', months: 18 },
-                { planet: 'Jupiter', startDate: '15-07-1988', endDate: '15-11-1989', months: 16 },
-                { planet: 'Saturn', startDate: '15-11-1989', endDate: '15-06-1991', months: 19 },
-                { planet: 'Mercury', startDate: '15-06-1991', endDate: '15-11-1992', months: 17 },
-                { planet: 'Ketu', startDate: '15-11-1992', endDate: '15-06-1993', months: 7 },
-                { planet: 'Venus', startDate: '15-06-1993', endDate: '15-02-1995', months: 20 },
-                { planet: 'Sun', startDate: '15-02-1995', endDate: '15-08-1995', months: 6 },
-            ]
-        },
-        {
-            planet: 'Mars',
-            startDate: '15-08-1995',
-            endDate: '15-08-2002',
-            years: 7,
-            antardashas: [
-                { planet: 'Mars', startDate: '15-08-1995', endDate: '15-01-1996', months: 5 },
-                { planet: 'Rahu', startDate: '15-01-1996', endDate: '15-02-1997', months: 13 },
-                { planet: 'Jupiter', startDate: '15-02-1997', endDate: '15-01-1998', months: 11 },
-                { planet: 'Saturn', startDate: '15-01-1998', endDate: '15-02-1999', months: 13 },
-                { planet: 'Mercury', startDate: '15-02-1999', endDate: '15-02-2000', months: 12 },
-                { planet: 'Ketu', startDate: '15-02-2000', endDate: '15-07-2000', months: 5 },
-                { planet: 'Venus', startDate: '15-07-2000', endDate: '15-09-2001', months: 14 },
-                { planet: 'Sun', startDate: '15-09-2001', endDate: '15-01-2002', months: 4 },
-                { planet: 'Moon', startDate: '15-01-2002', endDate: '15-08-2002', months: 7 },
-            ]
-        },
-        {
-            planet: 'Rahu',
-            startDate: '15-08-2002',
-            endDate: '15-08-2020',
-            years: 18,
-            isCurrent: false,
-            antardashas: [
-                { planet: 'Rahu', startDate: '15-08-2002', endDate: '15-04-2005', months: 32 },
-                { planet: 'Jupiter', startDate: '15-04-2005', endDate: '15-09-2007', months: 29 },
-                { planet: 'Saturn', startDate: '15-09-2007', endDate: '15-07-2010', months: 34 },
-                { planet: 'Mercury', startDate: '15-07-2010', endDate: '15-02-2013', months: 31 },
-                { planet: 'Ketu', startDate: '15-02-2013', endDate: '15-02-2014', months: 12 },
-                { planet: 'Venus', startDate: '15-02-2014', endDate: '15-02-2017', months: 36 },
-                { planet: 'Sun', startDate: '15-02-2017', endDate: '15-01-2018', months: 11 },
-                { planet: 'Moon', startDate: '15-01-2018', endDate: '15-07-2019', months: 18 },
-                { planet: 'Mars', startDate: '15-07-2019', endDate: '15-08-2020', months: 13 },
-            ]
-        },
-        {
-            planet: 'Jupiter',
-            startDate: '15-08-2020',
-            endDate: '15-08-2036',
-            years: 16,
-            isCurrent: true,
-            antardashas: [
-                { planet: 'Jupiter', startDate: '15-08-2020', endDate: '15-10-2022', months: 26 },
-                { planet: 'Saturn', startDate: '15-10-2022', endDate: '15-04-2025', months: 30, isCurrent: true },
-                { planet: 'Mercury', startDate: '15-04-2025', endDate: '15-07-2027', months: 27 },
-                { planet: 'Ketu', startDate: '15-07-2027', endDate: '15-06-2028', months: 11 },
-                { planet: 'Venus', startDate: '15-06-2028', endDate: '15-02-2031', months: 32 },
-                { planet: 'Sun', startDate: '15-02-2031', endDate: '15-12-2031', months: 10 },
-                { planet: 'Moon', startDate: '15-12-2031', endDate: '15-04-2033', months: 16 },
-                { planet: 'Mars', startDate: '15-04-2033', endDate: '15-03-2034', months: 11 },
-                { planet: 'Rahu', startDate: '15-03-2034', endDate: '15-08-2036', months: 29 },
-            ]
-        },
-        {
-            planet: 'Saturn',
-            startDate: '15-08-2036',
-            endDate: '15-08-2055',
-            years: 19,
-            antardashas: [
-                { planet: 'Saturn', startDate: '15-08-2036', endDate: '15-08-2039', months: 36 },
-                { planet: 'Mercury', startDate: '15-08-2039', endDate: '15-05-2042', months: 33 },
-                { planet: 'Ketu', startDate: '15-05-2042', endDate: '15-06-2043', months: 13 },
-                { planet: 'Venus', startDate: '15-06-2043', endDate: '15-08-2046', months: 38 },
-                { planet: 'Sun', startDate: '15-08-2046', endDate: '15-08-2047', months: 12 },
-                { planet: 'Moon', startDate: '15-08-2047', endDate: '15-03-2049', months: 19 },
-                { planet: 'Mars', startDate: '15-03-2049', endDate: '15-04-2050', months: 13 },
-                { planet: 'Rahu', startDate: '15-04-2050', endDate: '15-02-2053', months: 34 },
-                { planet: 'Jupiter', startDate: '15-02-2053', endDate: '15-08-2055', months: 30 },
-            ]
-        },
-        { planet: 'Mercury', startDate: '15-08-2055', endDate: '15-08-2072', years: 17 },
-        { planet: 'Ketu', startDate: '15-08-2072', endDate: '15-08-2079', years: 7 },
-        { planet: 'Venus', startDate: '15-08-2079', endDate: '15-08-2099', years: 20 },
-        { planet: 'Sun', startDate: '15-08-2099', endDate: '15-08-2105', years: 6 },
-    ]
+    mahadashas: (() => {
+        // Safe access to raw data
+        const rawData = (RAW_DASHA_DATA as any);
+        if (!rawData || !Array.isArray(rawData.mahadashas)) return [];
+
+        let currentStart = '';
+
+        // Try to find the first meaningful start date in the entire tree to seed the sequence
+        // This is a failsafe if the first mahadasha is missing a start_date
+        const findFirstDate = (nodes: any[]): string | undefined => {
+            for (const node of nodes) {
+                if (node.start_date) return node.start_date;
+                if (node.antardashas) {
+                    const found = findFirstDate(node.antardashas);
+                    if (found) return found;
+                }
+            }
+            return undefined;
+        };
+
+        if (rawData.mahadashas.length > 0 && !rawData.mahadashas[0].start_date) {
+            const firstDate = findFirstDate(rawData.mahadashas);
+            if (firstDate) currentStart = firstDate;
+        }
+
+        return rawData.mahadashas.map((m: any) => {
+            // If this node has its own start date, use it and reset the sequence
+            if (m.start_date) {
+                currentStart = m.start_date;
+            }
+
+            const mapped = mapDashaLevel(m, 0, currentStart);
+
+            // Update currentStart for the NEXT sibling to be this node's end date
+            if (mapped.endDateRaw) {
+                currentStart = mapped.endDateRaw;
+            }
+
+            return mapped;
+        });
+    })()
 };
 
 // All 11 Dasha Systems metadata
@@ -237,34 +305,8 @@ const PLANET_COLORS: Record<string, string> = {
     Ketu: 'bg-indigo-100 text-indigo-800 border-indigo-300',
 };
 
-// =============================================================================
-// UTILITY FUNCTIONS
-// =============================================================================
 
-const parseDate = (dateStr: string): Date => {
-    const [d, m, y] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-};
-
-const formatDateShort = (dateStr: string): string => {
-    const date = parseDate(dateStr);
-    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-};
-
-const calculateProgress = (startDate: string, endDate: string): number => {
-    const start = parseDate(startDate);
-    const end = parseDate(endDate);
-    const now = new Date();
-    const total = end.getTime() - start.getTime();
-    const elapsed = now.getTime() - start.getTime();
-    return Math.max(0, Math.min(100, (elapsed / total) * 100));
-};
-
-const getDaysRemaining = (endDate: string): number => {
-    const end = parseDate(endDate);
-    const now = new Date();
-    return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-};
+// Update calculate progress to also handle YYYY-MM-DD if needed, though formatShort standardizes it
 
 // =============================================================================
 // COMPONENTS
@@ -328,7 +370,7 @@ export default function DashaDemoPage() {
     const viewingPeriods = useMemo(() => {
         if (selectedDashaSystem !== 'vimshottari') {
             // For non-Vimshottari, return simplified mock data
-            return VIMSHOTTARI_DATA.mahadashas.slice(0, 5).map(m => ({
+            return VIMSHOTTARI_DATA.mahadashas.slice(0, 5).map((m: any) => ({
                 planet: m.planet,
                 startDate: m.startDate,
                 endDate: m.endDate,
@@ -338,60 +380,27 @@ export default function DashaDemoPage() {
             }));
         }
 
-        // Level 0: Mahadashas
-        if (currentLevel === 0) {
-            return VIMSHOTTARI_DATA.mahadashas.map(m => ({
-                ...m,
-                canDrillFurther: true,
-            }));
-        }
+        // REAL DRILL-DOWN LOGIC
+        // We traverse the `mappedChildren` property we created in `mapDashaLevel`
+        let currentNodes: any[] = VIMSHOTTARI_DATA.mahadashas;
 
-        // Level 1: Antardashas (use pre-defined data)
-        if (currentLevel === 1 && selectedPath.length >= 1) {
-            const maha = VIMSHOTTARI_DATA.mahadashas.find(m => m.planet === selectedPath[0]);
-            if (maha?.antardashas) {
-                return maha.antardashas.map(a => ({
-                    ...a,
-                    canDrillFurther: true,
-                }));
+        // Traverse down to current path
+        for (const planet of selectedPath) {
+            const node = currentNodes.find(n => n.planet === planet);
+            if (node && node.children) {
+                currentNodes = node.children;
+            } else {
+                currentNodes = []; // Path not found or leaf reached
+                break;
             }
         }
 
-        // Levels 2-4: Generate dynamically based on parent period
-        if (currentLevel >= 2 && selectedPath.length >= 2) {
-            // Get the parent period's dates
-            const maha = VIMSHOTTARI_DATA.mahadashas.find(m => m.planet === selectedPath[0]);
-            const antar = maha?.antardashas?.find(a => a.planet === selectedPath[1]);
-
-            if (antar) {
-                let parentStart = antar.startDate;
-                let parentEnd = antar.endDate;
-                let parentPlanet = selectedPath[selectedPath.length - 1];
-
-                // For deeper levels, we recursively subdivide
-                // This is a simplification - real calculation would be more complex
-                const subPeriods = generateSubPeriods(parentPlanet, currentLevel, parentStart, parentEnd);
-
-                // For level 3+, further subdivide from the previous level's selected period
-                if (currentLevel >= 3 && selectedPath.length >= 3) {
-                    // Find the selected sub-period from previous level and subdivide that
-                    const prevLevelPeriods = generateSubPeriods(selectedPath[1], 2, antar.startDate, antar.endDate);
-                    const selectedPratyantar = prevLevelPeriods.find(p => p.planet === selectedPath[2]);
-                    if (selectedPratyantar) {
-                        return generateSubPeriods(selectedPath[2], currentLevel, selectedPratyantar.startDate, selectedPratyantar.endDate);
-                    }
-                }
-
-                return subPeriods;
-            }
-        }
-
-        return VIMSHOTTARI_DATA.mahadashas;
+        return currentNodes;
     }, [selectedDashaSystem, currentLevel, selectedPath]);
 
-    // Current running periods
-    const currentMaha = VIMSHOTTARI_DATA.mahadashas.find(m => m.isCurrent);
-    const currentAntar = currentMaha?.antardashas?.find((a: any) => a.isCurrent);
+    // Current running periods - Traverse deeply
+    const currentMaha = VIMSHOTTARI_DATA.mahadashas.find((m: any) => m.isCurrent) as any;
+    const currentAntar = currentMaha?.children?.find((a: any) => a.isCurrent);
 
     // Handlers
     const handleDrillDown = (planet: string) => {
@@ -692,7 +701,7 @@ export default function DashaDemoPage() {
                                                         {formatDateShort(period.endDate)}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-[#8B5A2B]">
-                                                        {period.years ? `${period.years} years` : period.months ? `${period.months} months` : period.days ? `${period.days} days` : '—'}
+                                                        {period.durationStr || (period.years ? `${period.years} years` : period.months ? `${period.months} months` : period.days ? `${period.days} days` : '—')}
                                                     </td>
                                                     {selectedDashaSystem === 'vimshottari' && (
                                                         <td className="px-4 py-3 text-center">
@@ -718,7 +727,7 @@ export default function DashaDemoPage() {
                                 Life Timeline (Vimshottari)
                             </h3>
                             <div className="flex items-center gap-1 overflow-x-auto pb-2">
-                                {VIMSHOTTARI_DATA.mahadashas.map((maha, idx) => {
+                                {VIMSHOTTARI_DATA.mahadashas.map((maha: any, idx: number) => {
                                     const isCurrent = maha.isCurrent;
                                     const isPast = parseDate(maha.endDate) < new Date();
 

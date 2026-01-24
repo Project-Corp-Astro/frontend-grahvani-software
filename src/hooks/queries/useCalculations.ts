@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { clientApi } from "@/lib/api";
 import { useMemo } from 'react';
 
@@ -16,6 +16,7 @@ export function useDasha(
         },
         enabled: !!clientId,
         staleTime: 1000 * 60 * 60, // 1 hour
+        placeholderData: keepPreviousData,
     });
 }
 
@@ -28,6 +29,7 @@ export function useOtherDasha(clientId: string, type: string, ayanamsa: string) 
         },
         enabled: !!clientId && type !== 'vimshottari',
         staleTime: 1000 * 60 * 60, // 1 hour
+        placeholderData: keepPreviousData,
     });
 }
 
