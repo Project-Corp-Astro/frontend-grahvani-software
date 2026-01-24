@@ -20,18 +20,23 @@ import { cn } from '@/lib/utils';
 import SudarshanChakraFinal from '@/components/astrology/SudarshanChakraFinal';
 
 export default function ChakrasPage() {
-    const { clientDetails } = useVedicClient();
+    const { clientDetails, processedCharts, isLoadingCharts, refreshCharts } = useVedicClient();
     const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
-    // Query for Sudarshan Chakra
-    const { data: chakraResponse, isLoading: chakraLoading, refetch } = useSudarshanChakra(
-        clientDetails?.id || '',
-        settings.ayanamsa.toLowerCase()
-    );
+    const activeSystem = settings.ayanamsa.toLowerCase();
 
-    const loading = chakraLoading;
-    const chakraData = chakraResponse?.data || chakraResponse;
-    const fetchChakraData = refetch; // Map refetch to old handler name for compatibility if needed, or update usage
+    // Use pre-fetched data from context for instant render
+    const { chakraData, loading } = React.useMemo(() => {
+        const key = `sudarshana_${activeSystem}`;
+        const raw = processedCharts[key]?.chartData;
+
+        return {
+            chakraData: raw?.data || raw,
+            loading: !raw && isLoadingCharts
+        };
+    }, [processedCharts, activeSystem, isLoadingCharts]);
+
+    const fetchChakraData = refreshCharts; // Map refetch to the global refresh helper
 
     /* Removed manual fetchChakraData and useEffect */
 

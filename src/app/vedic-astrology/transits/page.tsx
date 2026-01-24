@@ -8,15 +8,7 @@ import { cn } from "@/lib/utils";
 import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart';
 import { clientApi } from '@/lib/api';
 
-// Sign mappings
-const signNameToId: Record<string, number> = {
-    'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
-    'Libra': 7, 'Scorpio': 8, 'Sagittarius': 9, 'Capricorn': 10, 'Aquarius': 11, 'Pisces': 12
-};
-
-const signIdToName: Record<number, string> = Object.fromEntries(
-    Object.entries(signNameToId).map(([k, v]) => [v, k])
-);
+import { parseChartData, signNameToId, signIdToName } from '@/lib/chart-helpers';
 
 interface TransitPlanet {
     planet: string;
@@ -28,84 +20,34 @@ interface TransitPlanet {
     nakshatra: string;
 }
 
-// Safe degree parsing - handles string/number from API
-function parseDegree(value: any): number | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'number') return isNaN(value) ? null : value;
-    if (typeof value === 'string') {
-        const parsed = parseFloat(value);
-        return isNaN(parsed) ? null : parsed;
-    }
-    return null;
-}
-
-// Safe degree formatting - handles null/undefined/NaN
-function formatDegree(degrees: number | null | undefined): string {
-    if (degrees === null || degrees === undefined || isNaN(degrees)) return '—';
-    const deg = degrees % 30;
-    const d = Math.floor(deg);
-    const m = Math.floor((deg - d) * 60);
-    const s = Math.floor(((deg - d) * 60 - m) * 60);
-    return `${d}°${m}'${s}"`;
-}
-
-// Map API data to transit format
+// Map API data to transit format using robust parser
 function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlanet[] {
-    if (!chartData) return [];
+    // Leverage the robust parser we already fixed
+    const { planets } = parseChartData(chartData);
 
-    // 1. Identify where the planet list is
-    let positions = chartData.transit_positions ||
-        chartData.planetary_positions ||
-        chartData.planets ||
-        (chartData['Sun'] || chartData['Moon'] ? chartData : null);
+    if (planets.length === 0) return [];
 
-    // Deep fallback: Duck-typing for direct map without known keys
-    if (!positions) {
-        // EXCLUDE metadata keys from duck typing check to avoid false positives
-        const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
-            !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant'].includes(k.toLowerCase()) &&
-            v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
-        );
-        if (isPlanetMap) {
-            positions = chartData;
-        }
-    }
+    return planets
+        .filter(p => p.name !== 'As') // Exclude Ascendant marker
+        .map(p => {
+            const normalized = p.signId; // signId is 1-12
+            // Calculate house relative to natal ascendant
+            const house = ((normalized - natalAscendant + 12) % 12) + 1;
 
-    if (!positions) return [];
+            // Simplified status logic or map from p.dignity if we extend Planet interface
+            // For now, we assume neutral unless data provided, 
+            // but parseChartData standardizes the core fields.
 
-    const processPlanet = (key: string, value: any): TransitPlanet => {
-        const name = key.charAt(0).toUpperCase() + key.slice(1);
-        const sign = value?.sign || value?.sign_name || "";
-        const normalized = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
-        const signId = signNameToId[normalized] || 1;
-        const house = ((signId - natalAscendant + 12) % 12) + 1;
-
-        // Safely extract degrees - API may return string or number
-        const deg = parseDegree(value?.degrees) ?? parseDegree(value?.longitude) ?? parseDegree(value?.degree);
-
-        let status = 'Neutral';
-        const dignity = value?.dignity || value?.dignity_name || "";
-        if (dignity === 'Exalted') status = 'Exalted';
-        else if (dignity === 'Debilitated') status = 'Debilitated';
-        else if (dignity === 'Own Sign' || dignity === 'Moolatrikona') status = 'Strong';
-        else if (dignity === 'Friend') status = 'Friend';
-
-        return {
-            planet: name,
-            sign: normalized || 'Unknown',
-            degree: formatDegree(deg),
-            house,
-            status,
-            isRetro: value?.retrograde || value?.is_retro || false,
-            nakshatra: value?.nakshatra || value?.nakshatra_name || '—',
-        };
-    };
-
-    if (Array.isArray(positions)) {
-        return positions.map((p: any) => processPlanet(p.name || p.planet_name || "??", p));
-    }
-
-    return Object.entries(positions).map(([key, value]: [string, any]) => processPlanet(key, value));
+            return {
+                planet: p.name,
+                sign: signIdToName[p.signId] || 'Unknown',
+                degree: p.degree,
+                house,
+                status: 'Neutral', // Placeholder or needs extending Planet interface if dignity is critical
+                isRetro: p.isRetro || false,
+                nakshatra: p.nakshatra || '—',
+            };
+        });
 }
 
 export default function TransitsPage() {
@@ -124,49 +66,33 @@ export default function TransitsPage() {
 
         // Transit page needs BOTH: D1 (for natal ascendant/houses) and transit chart (for Gochar positions)
         if (!d1Chart?.chartData || !transitChart?.chartData) {
+            console.log("🔍 DEBUG: Transits Page - Missing Data", {
+                hasD1: !!d1Chart?.chartData,
+                hasTransit: !!transitChart?.chartData,
+                d1Key, transitKey
+            });
             return { transitData: [], natalAscendant: 1, transitPlanets: [] };
         }
+
+        console.log("🔍 DEBUG: Transits Page - Data Found", {
+            d1: d1Chart.chartData ? "OK" : "Missing",
+            transit: transitChart.chartData ? "OK" : "Missing"
+        });
 
         const natal = d1Chart.chartData;
         const transit = transitChart.chartData;
 
-        const ascSign = signNameToId[natal.ascendant?.sign] || 1;
+        // Use parseChartData for NATAL as well to robustly find ascendantSign
+        const { ascendant: ascSign } = parseChartData(natal);
         const transits = mapChartToTransits(transit, ascSign);
 
-        // Parse transit planets for North Indian Chart
-        let transitPos = transit.transit_positions ||
-            transit.planetary_positions ||
-            transit.planets ||
-            (transit['Sun'] || transit['Moon'] ? transit : null);
-
-        if (!transitPos) {
-            const isPlanetMap = Object.entries(transit).some(([k, v]: [string, any]) =>
-                !['notes', 'birth_details', 'user_name'].includes(k.toLowerCase()) &&
-                v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
-            );
-            if (isPlanetMap) {
-                transitPos = transit;
-            }
-        }
-
-        const planets: Planet[] = Object.entries(transitPos || {}).map(([key, value]: [string, any]) => {
-            // Skip non-object values (e.g. meta properties)
-            if (!value || typeof value !== 'object') return null;
-
-            let deg: number | null = null;
-            // Handle both number and string degrees
-            if (typeof value?.degrees === 'number') deg = value.degrees;
-            else if (typeof value?.longitude === 'number') deg = value.longitude;
-            else if (typeof value?.degrees === 'string') deg = parseDegree(value.degrees);
-            else if (typeof value?.longitude === 'string') deg = parseDegree(value.longitude);
-
-            return {
-                name: key.substring(0, 2).charAt(0).toUpperCase() + key.substring(1, 2),
-                signId: signNameToId[value?.sign] || 1,
-                degree: deg !== null && !isNaN(deg) ? formatDegree(deg) : '',
-                isRetro: value?.retrograde || value?.is_retro || false,
-            };
-        }).filter(Boolean) as Planet[];
+        // Parse transit planets for North Indian Chart - REUSE robust 'transits' array
+        const planets: Planet[] = transits.map(t => ({
+            name: t.planet.substring(0, 2), // Short name for chart (Su, Mo, etc.)
+            signId: signNameToId[t.sign] || 1,
+            degree: t.degree,
+            isRetro: t.isRetro
+        }));
 
         return { transitData: transits, natalAscendant: ascSign, transitPlanets: planets };
     }, [processedCharts, activeSystem]);

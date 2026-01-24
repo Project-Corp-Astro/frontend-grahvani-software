@@ -39,62 +39,51 @@ const SIGN_LORDS: Record<string, string> = {
     'Sagittarius': 'Jupiter', 'Capricorn': 'Saturn', 'Aquarius': 'Saturn', 'Pisces': 'Jupiter',
 };
 
-// Safe degree parsing - handles string/number from API
-function parseDegree(value: any): number | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'number') return isNaN(value) ? null : value;
-    if (typeof value === 'string') {
-        const parsed = parseFloat(value);
-        return isNaN(parsed) ? null : parsed;
-    }
-    return null;
-}
 
-// Safe degree formatting - handles null/undefined/NaN
-function formatDegree(degrees: number | null | undefined): string {
-    if (degrees === null || degrees === undefined || isNaN(degrees)) return '—';
-    const deg = degrees % 30;
-    const d = Math.floor(deg);
-    const m = Math.floor((deg - d) * 60);
-    const s = Math.floor(((deg - d) * 60 - m) * 60);
-    return `${d}°${m}'${s}"`;
-}
 
-// Safe longitude formatting
-function formatLongitude(degrees: number | null | undefined): string {
-    if (degrees === null || degrees === undefined || isNaN(degrees)) return '—';
-    return `${Number(degrees).toFixed(2)}°`;
-}
+import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 
 function mapChartToPlanetInfo(chartData: any): PlanetInfo[] {
-    if (!chartData?.planetary_positions) return [];
+    // Leverage the robust parser we alread fixed
+    const { planets } = parseChartData(chartData);
+
+    if (planets.length === 0) return [];
 
     const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+    // Map of short names to long names if needed for sorting or display
+    const longNames: Record<string, string> = {
+        'Su': 'Sun', 'Mo': 'Moon', 'Ma': 'Mars', 'Me': 'Mercury',
+        'Ju': 'Jupiter', 'Ve': 'Venus', 'Sa': 'Saturn', 'Ra': 'Rahu', 'Ke': 'Ketu'
+    };
 
-    const planets = Object.entries(chartData.planetary_positions).map(([key, value]: [string, any]) => {
-        const name = key.charAt(0).toUpperCase() + key.slice(1);
-        const sign = value?.sign || 'Unknown';
-        // Handle various degree formats from API (may be string or number)
-        const deg = parseDegree(value?.degrees) ?? parseDegree(value?.longitude) ?? parseDegree(value?.degree);
+    return planets
+        .filter(p => p.name !== 'As') // Exclude Ascendant from planets list
+        .map(p => {
+            const longName = longNames[p.name] || p.name;
+            const signName = signIdToName[p.signId] || 'Unknown';
+            // Determine Nakshatra Lord
+            const nakLord = p.nakshatra ? NAKSHATRA_LORDS[p.nakshatra] || 'Unknown' : '—';
 
-        const nakLord = value?.nakshatra ? NAKSHATRA_LORDS[value.nakshatra] || 'Unknown' : '—';
-
-        return {
-            planet: name,
-            sign,
-            signLord: SIGN_LORDS[sign] || '—',
-            degree: formatDegree(deg),
-            longitude: formatLongitude(deg),
-            nakshatra: value?.nakshatra || '—',
-            pada: value?.pada || 1,
-            nakshatraLord: nakLord,
-            house: value?.house || 1,
-            dignity: value?.dignity || 'Neutral',
-            retrograde: value?.retrograde || false,
-        };
-    });
-
-    return planets.sort((a, b) => planetOrder.indexOf(a.planet) - planetOrder.indexOf(b.planet));
+            return {
+                planet: longName,
+                sign: signName,
+                signLord: SIGN_LORDS[signName] || '—',
+                degree: p.degree,
+                longitude: '—', // Normalized parser handles degree formatting, raw longitude might be lost but degree is present
+                nakshatra: p.nakshatra || '—',
+                pada: p.pada || 1,
+                nakshatraLord: nakLord,
+                house: p.house || 1,
+                dignity: 'Neutral', // Dignity is complex to calculate, placeholder or needs robust calc
+                retrograde: p.isRetro || false,
+            };
+        })
+        .sort((a, b) => {
+            const idxA = planetOrder.indexOf(a.planet);
+            const idxB = planetOrder.indexOf(b.planet);
+            // Handle if names mismatch (e.g. Su vs Sun)
+            return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+        });
 }
 
 export default function VedicPlanetsPage() {

@@ -98,6 +98,20 @@ export default function VedicOverviewPage() {
     // Calculate Age
     const age = clientDetails ? new Date().getFullYear() - new Date(clientDetails.dateOfBirth).getFullYear() : 0;
 
+    // DEBUG: Check available charts
+    useEffect(() => {
+        if (processedCharts && Object.keys(processedCharts).length > 0) {
+            console.log("🔍 DEBUG: Available Keys:", Object.keys(processedCharts));
+            const d1Key = `D1_${settings.ayanamsa.toLowerCase()}`;
+            console.log(`🔍 DEBUG: Checking ${d1Key}:`, processedCharts[d1Key]);
+            if (processedCharts[d1Key]) {
+                console.log(`🔍 DEBUG: D1 Data Paylod:`, processedCharts[d1Key]?.chartData);
+            }
+        } else {
+            console.log("🔍 DEBUG: No processedCharts yet", { isLoadingCharts, isRefreshingCharts });
+        }
+    }, [processedCharts, settings.ayanamsa, isLoadingCharts, isRefreshingCharts]);
+
     useEffect(() => {
         if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
             refreshCharts();
@@ -186,6 +200,8 @@ export default function VedicOverviewPage() {
                 </div>
             )}
 
+
+
             {/* 2. CORE SIGNATURES - Dynamically extracted from D1 chart */}
             {(() => {
                 // Extract core signatures from D1 chart
@@ -209,35 +225,33 @@ export default function VedicOverviewPage() {
                     'Purva Bhadrapada': 'Jupiter', 'Uttara Bhadrapada': 'Saturn', 'Revati': 'Mercury'
                 };
 
-                // Extract values
-                const ascendant = chartData?.ascendant;
-                const lagnaSign = ascendant?.sign || signNames[d1Data.ascendant] || '—';
-                const lagnaDegs = ascendant?.degrees?.split('°')[0] || '';
+                // Use robust d1Data derived via parseChartData
+                const ascendantSign = signNames[d1Data.ascendant] || '—';
 
-                const planets = chartData?.planetary_positions || {};
-                const moonData = planets['Moon'] || {};
-                const sunData = planets['Sun'] || {};
+                const moon = d1Data.planets.find(p => p.name === 'Mo' || p.name === 'Moon');
+                const sun = d1Data.planets.find(p => p.name === 'Su' || p.name === 'Sun');
 
-                const moonSign = moonData?.sign || clientDetails?.rashi || '—';
-                const moonNakshatra = moonData?.nakshatra || '—';
-                const moonPada = moonData?.pada ? `Pada ${moonData.pada}` : '';
+                const moonSign = moon ? signNames[moon.signId] : (clientDetails?.rashi || '—');
+                const moonNakshatra = moon?.nakshatra || '—';
+                const moonPada = moon?.pada ? `Pada ${moon.pada}` : '';
 
-                const sunSign = sunData?.sign || '—';
-                const sunDegrees = sunData?.degrees?.split("'")[0]?.replace('°', '° ') || '';
+                const sunSign = sun ? signNames[sun.signId] : '—';
+                const sunDegrees = sun?.degree || '';
 
                 const nakshatraLord = nakshatraLords[moonNakshatra] || '—';
 
                 // Planets in 1st house for Lagna sub-text
-                const lagnaHousePlanets = Object.entries(planets)
-                    .filter(([_, p]: [string, any]) => p.house === 1)
-                    .map(([name]) => name.substring(0, 2))
+                // Filter planets where house === 1
+                const lagnaHousePlanets = d1Data.planets
+                    .filter(p => p.house === 1 && p.name !== 'As') // Exclude Ascendant marker itself
+                    .map(p => p.name)
                     .join(', ') || 'No planets';
 
                 return (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <SignatureCard
                             label="Lagna"
-                            value={lagnaSign}
+                            value={ascendantSign}
                             sub={lagnaHousePlanets}
                         />
                         <SignatureCard
@@ -378,11 +392,13 @@ export default function VedicOverviewPage() {
                     <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Transit Alerts</h3>
                     <div className="space-y-2">
                         {(() => {
-                            const transitChart = processedCharts[`transit_${activeSystem}`];
-                            const transitPlanets = transitChart?.chartData?.planetary_positions || {};
+                            const transitKey = `transit_${activeSystem}`;
+                            const transitChart = processedCharts[transitKey];
+                            // Robust parsing for alerts
+                            const { planets: transitPlanets } = parseChartData(transitChart?.chartData);
 
-                            const saturn = transitPlanets['Saturn'];
-                            const jupiter = transitPlanets['Jupiter'];
+                            const saturn = transitPlanets.find(p => p.name === 'Sa' || p.name === 'Saturn');
+                            const jupiter = transitPlanets.find(p => p.name === 'Ju' || p.name === 'Jupiter');
 
                             if (!saturn && !jupiter) {
                                 return (
@@ -393,10 +409,15 @@ export default function VedicOverviewPage() {
                                 );
                             }
 
+                            // Helper to get sign name from ID if needed, or use robust parser's signId if we map it back
+                            // Since parseChartData gives signId, we need sign name
+                            const signNames = ['', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                                'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+
                             return (
                                 <>
-                                    {saturn && <AlertItem level="high" text={`Saturn Gochar: Currently in ${saturn.sign} (${saturn.house}th house)`} />}
-                                    {jupiter && <AlertItem level="medium" text={`Jupiter Impact: Moving through ${jupiter.sign}`} />}
+                                    {saturn && <AlertItem level="high" text={`Saturn Gochar: Currently in ${signNames[saturn.signId]} (${saturn.house}th house)`} />}
+                                    {jupiter && <AlertItem level="medium" text={`Jupiter Impact: Moving through ${signNames[jupiter.signId]}`} />}
                                 </>
                             );
                         })()}

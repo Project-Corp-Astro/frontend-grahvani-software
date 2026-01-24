@@ -30,6 +30,9 @@ export default function NorthIndianChart({
 }: NorthIndianChartProps) {
     const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
 
+    // DEBUG: Check props
+    console.log("🔍 DEBUG: NorthIndianChart Render", { planetsCount: planets.length, ascendantSign });
+
     // Helpers for Heatmap
     const getHouseColor = (houseNum: number) => {
         if (!houseValues || !houseValues[houseNum]) return "transparent";
