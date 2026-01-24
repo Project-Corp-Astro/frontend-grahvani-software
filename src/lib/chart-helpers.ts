@@ -80,7 +80,9 @@ export function parseChartData(chartData: any): ProcessedChartData {
                 signId: signNameToId[normalizedSign] || 1,
                 degree: formatPlanetDegree(rawDegree),
                 isRetro: isRahuKetu ? false : hasRetrograde,
-                house
+                house,
+                nakshatra: value?.nakshatra || value?.nakshatra_name,
+                pada: value?.pada || value?.nakshatra_pada
             };
         }).filter(Boolean) as Planet[];
     }

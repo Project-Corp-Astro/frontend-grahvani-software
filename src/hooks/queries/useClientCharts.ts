@@ -19,7 +19,7 @@ export function useClientCharts(clientId?: string) {
 
             const lookup: ChartLookup = {};
             data.forEach((c: any) => {
-                const system = (c.chartConfig?.system || 'lahiri').toLowerCase();
+                const system = (c.system || c.chartConfig?.system || 'lahiri').toLowerCase();
                 const key = `${c.chartType}_${system}`;
                 lookup[key] = c;
             });

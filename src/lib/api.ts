@@ -532,3 +532,89 @@ export const geocodeApi = {
         }),
 };
 
+// ============ RAMAN API ============
+export const ramanApi = {
+    /**
+     * Get Raman Natal Chart
+     */
+    getNatalChart: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/natal`, {
+            method: 'GET'
+        }).catch(err => {
+            // Fallback if client service proxy isn't ready, try direct engine if possible or handle error
+            console.error("Raman fetch failed", err);
+            throw err;
+        }),
+
+    // Note: If the backend architecture routes through client-service -> astro-engine,
+    // we should check if the client-service has these endpoints exposed.
+    // Based on `api.ts`, most calls go to `${CLIENT_URL}/clients/...`
+    // If not, we might need a direct proxy or check if `clientApi.generateChart` handles it.
+
+    // However, looking at the backend `raman.routes.ts`, they are in `astro-engine`.
+    // Usually the frontend talks to an API Gateway or Client Service.
+    // Let's assume for now we use the pattern of `clientApi` or existing gateway.
+
+    // Wait, the plan was to add `ramanApi`. 
+    // If we look at `clientApi.generateChart`, it sends `chartType` and `ayanamsa`.
+    // Maybe we don't need a separate API call if `generateChart` covers it?
+    // But `generateChart` returns `any`.
+
+    // Let's implement a specific method using the `apiFetch` but targeting the likely endpoint.
+    // If `CLIENT_URL` is the main entry point, likely: `${CLIENT_URL}/clients/${clientId}/raman/natal`
+    // OR directly to the gateway if it exposes raman.
+
+    // Re-reading `api.ts`:
+    // It uses `CLIENT_URL`.
+    // I will assume there is a pass-through or I should use `generateChart` with specialized params?
+    // No, strictly following plan:
+
+    getNatal: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/natal`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Raman Transit Chart
+     */
+    getTransit: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/transit`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Divisional Chart (D-Chart)
+     * type: D1, D9, D10, etc.
+     */
+    getDivisional: (clientId: string, type: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/divisional/${type}`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Ashtakavarga
+     * type: bhinna-ashtakavarga | sarva-ashtakavarga | shodasha-varga
+     */
+    getAshtakavarga: (clientId: string, type: 'bhinna-ashtakavarga' | 'sarva-ashtakavarga' | 'shodasha-varga'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/${type}`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Dasha
+     * level: maha-antar | pratyantar | sookshma | prana
+     */
+    getDasha: (clientId: string, level: 'maha-antar' | 'pratyantar' | 'sookshma' | 'prana'): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/dasha/${level}`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Special Lagna Charts
+     * type: arudha-lagna | bhava-lagna | hora-lagna | karkamsha-d1 | karkamsha-d9
+     */
+    getLagnaChart: (clientId: string, type: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/raman/${type}`, {
+            method: 'POST'
+        }),
+};

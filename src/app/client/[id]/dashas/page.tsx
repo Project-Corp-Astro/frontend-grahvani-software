@@ -8,6 +8,7 @@ import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import { clientApi } from "@/lib/api";
 import { useClient } from "@/hooks/queries/useClients";
 import { useDasha, useOtherDasha } from "@/hooks/queries/useCalculations";
+import { useAstrologerStore } from "@/store/useAstrologerStore";
 
 // --- Types ---
 interface DashaPeriod {
@@ -166,6 +167,7 @@ const buildPathLabel = (path: DashaPeriod[]): string => {
 export default function DashaPage() {
     const params = useParams();
     const clientId = params?.id as string;
+    const { ayanamsa } = useAstrologerStore();
 
     const [selectedSystem, setSelectedSystem] = useState("vimshottari");
     const [dashaData, setDashaData] = useState<DashaData | null>(null);
@@ -188,13 +190,13 @@ export default function DashaPage() {
     const { data: vimData, isLoading: vimLoading, error: vimError } = useDasha(
         clientId,
         'prana', // Endpoint used in original code for vimshottari
-        'lahiri', // Hardcoded in original code
+        ayanamsa, // Use dynamic ayanamsa
     );
 
     const { data: otherData, isLoading: otherLoading, error: otherError } = useOtherDasha(
         clientId,
         selectedSystem,
-        'lahiri'
+        ayanamsa // Use dynamic ayanamsa
     );
 
     const dashaResponse = isVimshottari ? vimData : otherData;

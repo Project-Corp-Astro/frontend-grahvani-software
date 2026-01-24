@@ -19,18 +19,18 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
 
     // House center positions (matching NorthIndianChart houseCenters)
     const houseCenters: Record<number, { x: number; y: number }> = {
-        1: { x: 105, y: 345 },
-        2: { x: 200, y: 295 },
-        3: { x: 295, y: 345 },
-        4: { x: 345, y: 295 },
-        5: { x: 295, y: 200 },
-        6: { x: 295, y: 105 },
-        7: { x: 295, y: 55 },
-        8: { x: 200, y: 105 },
-        9: { x: 105, y: 55 },
-        10: { x: 55, y: 105 },
-        11: { x: 105, y: 200 },
-        12: { x: 55, y: 295 },
+        1: { x: 200, y: 105 },
+        2: { x: 105, y: 45 },
+        3: { x: 45, y: 105 },
+        4: { x: 105, y: 200 },
+        5: { x: 45, y: 295 },
+        6: { x: 105, y: 355 },
+        7: { x: 200, y: 295 },
+        8: { x: 295, y: 355 },
+        9: { x: 355, y: 295 },
+        10: { x: 295, y: 200 },
+        11: { x: 355, y: 105 },
+        12: { x: 295, y: 45 },
     };
 
     const handleHouseClick = (houseNum: number) => {

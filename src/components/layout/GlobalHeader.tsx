@@ -212,7 +212,14 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
 
 function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { ayanamsa, chartStyle, recentClientIds, updateSettings } = useAstrologerStore();
-    const settings = { ayanamsa, chartStyle, recentClientIds };
+
+    // Fix: Memoize settings object to prevent infinite useEffect loop
+    const settings = React.useMemo(() => ({
+        ayanamsa,
+        chartStyle,
+        recentClientIds
+    }), [ayanamsa, chartStyle, recentClientIds]);
+
     const [tempSettings, setTempSettings] = React.useState(settings);
     const [isSaving, setIsSaving] = React.useState(false);
 

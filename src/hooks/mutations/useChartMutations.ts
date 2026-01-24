@@ -13,16 +13,16 @@ export function useChartMutations() {
         },
     });
 
-    const generateSudarshanMutation = useMutation({
-        mutationFn: ({ clientId, ayanamsa }: { clientId: string; ayanamsa: string }) =>
-            clientApi.generateSudarshanChakra(clientId, ayanamsa), // Note: API might be GET or POST, seemingly POST based on analysis
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['sudarshan', variables.clientId] });
-        }
+    const generateFullVedicProfileMutation = useMutation({
+        mutationFn: (clientId: string) => clientApi.generateFullVedicProfile(clientId),
+        onSuccess: (_, clientId) => {
+            queryClient.invalidateQueries({ queryKey: ['charts', clientId] });
+        },
     });
 
     return {
         generateChart: generateChartMutation,
-        // generateSudarshan: generateSudarshanMutation // Sudarshan page uses fetch-on-load usually, but if it has a recalculate button...
+        generateFullVedicProfile: generateFullVedicProfileMutation,
+        isGeneratingFull: generateFullVedicProfileMutation.isPending
     };
 }

@@ -60,10 +60,11 @@ export default function ChartControls() {
                         label="Override Ayanamsa"
                         defaultValue={settings.ayanamsa.toLowerCase()}
                         onChange={(e) => updateAyanamsa(e.target.value as any)}
+                        onClick={() => setShowAdvanced(!showAdvanced)}
                         options={[
-                            { value: 'lahiri', label: 'Lahiri (Chitrapaksha)' },
-                            { value: 'raman', label: 'Raman' },
-                            { value: 'kp', label: 'KP' },
+                            { value: 'Lahiri', label: 'Lahiri (Chitrapaksha)' },
+                            { value: 'Raman', label: 'Raman' },
+                            { value: 'KP', label: 'KP' },
                         ]}
                     />
                     <p className="text-[9px] text-[#9C7A2F]/60 mt-2 italic">* This updates your global astrologer preferences.</p>
