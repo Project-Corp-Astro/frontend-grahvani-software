@@ -10,6 +10,7 @@ export interface DashaNode {
     startDate: string;
     endDate: string;
     isCurrent?: boolean;
+    canDrillFurther?: boolean;
     sublevel?: DashaNode[];
     raw?: any;
     [key: string]: any;
@@ -25,6 +26,22 @@ export interface ActiveDashaPath {
     nodes: DashaNode[];
     progress: number; // Percentage through current deepest period
     metadata?: DashaMetadata;
+}
+
+/**
+ * Robustly find sublevels in a dasha node regardless of naming convention.
+ */
+export function getSublevels(node: any): any[] | null {
+    if (!node) return null;
+    const sublevels = node.sublevels ||
+        node.antardashas ||
+        node.pratyantardashas ||
+        node.sookshma_dashas ||
+        node.sookshmadashas ||
+        node.prandashas ||
+        node.pran_dashas ||
+        node.sublevel;
+    return Array.isArray(sublevels) ? sublevels : null;
 }
 
 /**
@@ -57,10 +74,17 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
             const s = p.start_date || p.startDate || chainStart;
             const e = p.end_date || p.endDate;
 
-            if (s && e && now >= new Date(s) && now <= new Date(e)) {
-                activeNode = p;
-                activeNode._calculated_start = s;
-                break;
+            if (s && e) {
+                const startTime = new Date(s).getTime();
+                const endTime = new Date(e).getTime();
+                const nowTime = now.getTime();
+
+                // Buffer comparison to avoid jumping due to micro-drifts
+                if (nowTime >= startTime && nowTime < endTime) {
+                    activeNode = p;
+                    activeNode._calculated_start = s;
+                    break;
+                }
             }
             if (e) chainStart = e;
         }
@@ -83,7 +107,7 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
         foundNode = activeNode;
         foundStart = sDate;
         parentStart = sDate;
-        currentLevel = activeNode.antardashas || activeNode.pratyantardashas || activeNode.sookshma_dashas || activeNode.pran_dashas || activeNode.sublevels;
+        currentLevel = getSublevels(activeNode);
     }
 
     // Calculate progress for the current (deepest) active node
@@ -101,19 +125,64 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
 }
 
 /**
- * Standardize durations like "2y 1m 5d" -> "2y 1m" or "2y" for clean UI
+ * Standardize durations like 2.5 years -> "2y 6m", or sub-day units for deep dashas.
  */
 export function standardizeDuration(years: number, days?: number): string {
-    if (years > 0) {
-        const decimal = years - Math.floor(years);
-        if (decimal === 0) return `${years}y`;
-        return `${Math.floor(years)}y ${Math.round(decimal * 12)}m`;
+    if (years <= 0 && (!days || days <= 0)) return "0d";
+
+    // Convert everything to total milliseconds for high-precision calculation
+    // Using 365.25 for Julian year alignment with most astro engines
+    const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
+    const totalMs = (years > 0 ? years * msPerYear : 0) + (days && days > 0 ? days * 24 * 60 * 60 * 1000 : 0);
+
+    if (totalMs <= 0) return "0d";
+
+    const MS_PER_MINUTE = 60 * 1000;
+    const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+    const MS_PER_DAY = 24 * MS_PER_HOUR;
+    const MS_PER_MONTH = (365.25 / 12) * MS_PER_DAY;
+    const MS_PER_YEAR = 365.25 * MS_PER_DAY;
+
+    // 1. Years & Months (Major periods)
+    if (totalMs >= MS_PER_YEAR) {
+        const y = Math.floor(totalMs / MS_PER_YEAR);
+        const remaining = totalMs % MS_PER_YEAR;
+        const m = Math.round(remaining / MS_PER_MONTH);
+        if (m === 0) return `${y}y`;
+        if (m === 12) return `${y + 1}y`;
+        return `${y}y ${m}m`;
     }
-    if (days && days > 0) {
-        if (days > 30) return `${Math.floor(days / 30)}m ${days % 30}d`;
-        return `${days}d`;
+
+    // 2. Months & Days (Medium periods)
+    if (totalMs >= MS_PER_MONTH) {
+        const m = Math.floor(totalMs / MS_PER_MONTH);
+        const remaining = totalMs % MS_PER_MONTH;
+        const d = Math.round(remaining / MS_PER_DAY);
+        if (d === 0) return `${m}m`;
+        return `${m}m ${d}d`;
     }
-    return "—";
+
+    // 3. Days & Hours (Deep periods - Sookshma)
+    if (totalMs >= MS_PER_DAY) {
+        const d = Math.floor(totalMs / MS_PER_DAY);
+        const remaining = totalMs % MS_PER_DAY;
+        const h = Math.round(remaining / MS_PER_HOUR);
+        if (h === 0) return `${d}d`;
+        return `${d}d ${h}h`;
+    }
+
+    // 4. Hours & Minutes (Micro periods - Prana)
+    if (totalMs >= MS_PER_HOUR) {
+        const h = Math.floor(totalMs / MS_PER_HOUR);
+        const remaining = totalMs % MS_PER_HOUR;
+        const min = Math.round(remaining / MS_PER_MINUTE);
+        if (min === 0) return `${h}h`;
+        return `${h}h ${min}m`;
+    }
+
+    // 5. Just Minutes
+    const min = Math.round(totalMs / MS_PER_MINUTE);
+    return `${Math.max(1, min)}m`;
 }
 
 /**
@@ -133,11 +202,31 @@ export function standardizeDashaLevels(periods: any[], parentStartDate?: string)
         // Advance currentChainStart for the next sibling
         if (eDate) currentChainStart = eDate;
 
+        // Check if this period has nested sub-levels for drill-down
+        const sublevels = getSublevels(p);
+        const canDrillFurther = Array.isArray(sublevels) && sublevels.length > 0;
+
+        let isCurrent = false;
+        if (sDate && eDate) {
+            const start = new Date(sDate).getTime();
+            const end = new Date(eDate).getTime();
+            const currentTime = now.getTime();
+            isCurrent = currentTime >= start && currentTime < end;
+        }
+
+        // Standardize Duration Display (if engine provides duration_years)
+        let displayDuration = p.duration || "";
+        if (!displayDuration && p.duration_years) {
+            displayDuration = standardizeDuration(p.duration_years);
+        }
+
         return {
-            planet: p.planet || p.lord || p.sign,
+            planet: p.planet || p.lord || p.sign || 'Unknown',
             startDate: sDate,
             endDate: eDate,
-            isCurrent: sDate && eDate ? (now >= new Date(sDate) && now <= new Date(eDate)) : false,
+            duration: displayDuration,
+            isCurrent,
+            canDrillFurther,
             raw: p
         };
     });

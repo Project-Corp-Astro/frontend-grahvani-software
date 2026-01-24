@@ -333,7 +333,7 @@ export const clientApi = {
         level: string = 'mahadasha',
         ayanamsa: string = 'lahiri',
         save: boolean = false,
-        context: { mahaLord?: string; antarLord?: string; pratyantarLord?: string } = {}
+        context: { mahaLord?: string; antarLord?: string; pratyantarLord?: string; drillDownPath?: string[] } = {}
     ): Promise<DashaResponse> =>
         apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha`, {
             method: 'POST',
