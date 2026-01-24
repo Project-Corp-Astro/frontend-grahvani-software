@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 export function useDasha(
     clientId: string,
-    type: 'basic' | 'deep' | 'mahadasha' | 'antardasha' | 'pratyantardasha' | 'sookshma' | 'prana' = 'basic',
+    type: 'basic' | 'deep' | 'tree' | 'mahadasha' | 'antardasha' | 'pratyantardasha' | 'sookshma' | 'prana' = 'basic',
     ayanamsa: string,
     context?: any
 ) {
