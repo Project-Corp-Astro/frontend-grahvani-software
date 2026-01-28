@@ -61,10 +61,23 @@ const parseDate = (dateStr: string): Date => {
     return new Date(parts[2], parts[1] - 1, parts[0]);
 };
 
+const parseApiDate = (dateStr: string): Date => {
+    // API dates are "YYYY-MM-DD HH:mm:ss"
+    return new Date(dateStr.replace(' ', 'T'));
+};
+
 const formatDateShort = (dateStr: string): string => {
     try {
         if (!dateStr) return 'Invalid Date';
         const date = parseDate(dateStr);
+        return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) { return 'Invalid Date'; }
+};
+
+const formatDateDisplay = (dateStr: string): string => {
+    try {
+        if (!dateStr) return 'Invalid Date';
+        const date = parseApiDate(dateStr);
         return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (e) { return 'Invalid Date'; }
 };
@@ -98,7 +111,52 @@ const getDaysRemaining = (endDate: string): number => {
 // =============================================================================
 // REAL DATA INTEGRATION
 // =============================================================================
-import RAW_DASHA_DATA from './raw-dasha-data.json';
+// Import real Vimshottari data
+import rawDashaData from './raw-dasha-data.json';
+
+interface MahaDasha {
+    planet: string;
+    start_date: string;
+    end_date: string;
+    duration_years: number;
+    antardashas?: AntarDasha[];
+}
+
+interface AntarDasha {
+    planet: string;
+    start_date: string;
+    end_date: string;
+    duration_days: number;
+    pratyantardashas?: PratyantarDasha[];
+}
+
+interface PratyantarDasha {
+    planet: string;
+    start_date: string;
+    end_date: string;
+    duration_days: number;
+    sookshma_dashas?: SookshmaDasha[];
+}
+
+interface SookshmaDasha {
+    planet: string;
+    start_date: string;
+    end_date: string;
+    duration_hours: number;
+    pran_dashas?: PranaDasha[];
+}
+
+interface PranaDasha {
+    planet: string;
+    start_date: string;
+    end_date: string;
+    duration_hours: number;
+}
+
+interface VimshottariDataType {
+    mahadashas: MahaDasha[];
+    all_mahadashas_summary?: { planet: string; start_date: string; end_date: string; duration_years: number }[];
+}
 
 // Helper to map 5-level nested structure
 const mapDashaLevel = (node: any, level: number, inheritedStartDate?: string): any => {
@@ -121,7 +179,7 @@ const mapDashaLevel = (node: any, level: number, inheritedStartDate?: string): a
     }
 
     // Format the resolved start date
-    const myStartDateDisplay = myStartDateRaw ? formatDateShort(myStartDateRaw.split(' ')[0]) : 'Invalid Date';
+    const myStartDateDisplay = myStartDateRaw ? formatDateDisplay(myStartDateRaw) : 'Invalid Date';
 
     if (Array.isArray(rawChildren)) {
         let runningStart = myStartDateRaw; // First child starts when parent starts
@@ -146,7 +204,7 @@ const mapDashaLevel = (node: any, level: number, inheritedStartDate?: string): a
     return {
         planet: node.planet,
         startDate: myStartDateDisplay,
-        endDate: node.end_date ? formatDateShort(node.end_date.split(' ')[0]) : '',
+        endDate: node.end_date ? formatDateDisplay(node.end_date) : '',
         endDateRaw: node.end_date, // Keep raw for next iteration
         years: node.duration_years,
         months: 0,
@@ -167,11 +225,19 @@ const isDateCurrent = (start: string, end: string) => {
     return now >= s && now <= e;
 };
 
+const isCurrentPeriod = (start: string, end: string) => {
+    if (!start || !end) return false;
+    const now = new Date();
+    const s = parseApiDate(start);
+    const e = parseApiDate(end);
+    return now >= s && now <= e;
+};
+
 // Map the root Mahadashas
 const VIMSHOTTARI_DATA = {
     mahadashas: (() => {
         // Safe access to raw data
-        const rawData = (RAW_DASHA_DATA as any);
+        const rawData = (rawDashaData as VimshottariDataType);
         if (!rawData || !Array.isArray(rawData.mahadashas)) return [];
 
         let currentStart = '';
@@ -313,6 +379,19 @@ const PLANET_COLORS: Record<string, string> = {
 // =============================================================================
 
 export default function DashaDemoPage() {
+    const data = rawDashaData as VimshottariDataType;
+
+    // Compute summary if missing (for raw data file)
+    const all_mahadashas_summary = useMemo(() => {
+        if (data.all_mahadashas_summary) return data.all_mahadashas_summary;
+
+        return data.mahadashas.map(m => ({
+            planet: m.planet,
+            start_date: m.start_date,
+            end_date: m.end_date,
+            duration_years: m.duration_years
+        }));
+    }, [data]);
     // State
     const [selectedClientId, setSelectedClientId] = useState(MOCK_CLIENTS[0].id);
     const [selectedDashaSystem, setSelectedDashaSystem] = useState('vimshottari');
@@ -369,13 +448,12 @@ export default function DashaDemoPage() {
 
     const viewingPeriods = useMemo(() => {
         if (selectedDashaSystem !== 'vimshottari') {
-            // For non-Vimshottari, return simplified mock data
-            return VIMSHOTTARI_DATA.mahadashas.slice(0, 5).map((m: any) => ({
+            return all_mahadashas_summary.map(m => ({
                 planet: m.planet,
-                startDate: m.startDate,
-                endDate: m.endDate,
-                years: m.years || 0,
-                isCurrent: m.isCurrent,
+                startDate: formatDateDisplay(m.start_date),
+                endDate: formatDateDisplay(m.end_date),
+                years: m.duration_years,
+                isCurrent: isCurrentPeriod(m.start_date, m.end_date),
                 canDrillFurther: false,
             }));
         }
@@ -396,7 +474,7 @@ export default function DashaDemoPage() {
         }
 
         return currentNodes;
-    }, [selectedDashaSystem, currentLevel, selectedPath]);
+    }, [selectedDashaSystem, currentLevel, selectedPath, all_mahadashas_summary]);
 
     // Current running periods - Traverse deeply
     const currentMaha = VIMSHOTTARI_DATA.mahadashas.find((m: any) => m.isCurrent) as any;
@@ -695,10 +773,10 @@ export default function DashaDemoPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-[#3E2A1F] font-mono">
-                                                        {formatDateShort(period.startDate)}
+                                                        {period.startDate}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-[#3E2A1F] font-mono">
-                                                        {formatDateShort(period.endDate)}
+                                                        {period.endDate}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-[#8B5A2B]">
                                                         {period.durationStr || (period.years ? `${period.years} years` : period.months ? `${period.months} months` : period.days ? `${period.days} days` : '—')}
@@ -727,35 +805,27 @@ export default function DashaDemoPage() {
                                 Life Timeline (Vimshottari)
                             </h3>
                             <div className="flex items-center gap-1 overflow-x-auto pb-2">
-                                {VIMSHOTTARI_DATA.mahadashas.map((maha: any, idx: number) => {
-                                    const isCurrent = maha.isCurrent;
-                                    const isPast = parseDate(maha.endDate) < new Date();
-
+                                {all_mahadashas_summary.map((maha, idx) => {
+                                    const isCurrent = isCurrentPeriod(maha.start_date, maha.end_date);
+                                    const isPast = parseApiDate(maha.end_date) < new Date();
                                     return (
                                         <React.Fragment key={idx}>
                                             {idx > 0 && <div className="w-4 h-0.5 bg-[#D08C60]/30 shrink-0" />}
                                             <button
                                                 onClick={() => setSelectedPeriodForInfo(maha.planet)}
-                                                className={`px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all shrink-0 border ${isCurrent
-                                                    ? 'bg-green-100 text-green-800 border-green-300 ring-2 ring-green-400 ring-offset-1'
-                                                    : isPast
-                                                        ? 'bg-gray-100 text-gray-500 border-gray-200'
-                                                        : PLANET_COLORS[maha.planet] || 'bg-gray-100'
+                                                className={`px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all shrink-0 border ${isCurrent ? 'bg-green-100 text-green-800 border-green-300 ring-2 ring-green-400' : isPast ? 'bg-gray-100 text-gray-500 border-gray-200' : PLANET_COLORS[maha.planet] || 'bg-gray-100'
                                                     }`}
                                             >
                                                 {maha.planet}
-                                                <span className="block text-[9px] font-normal opacity-70">
-                                                    {maha.years}y
-                                                </span>
+                                                <span className="block text-[9px] font-normal opacity-70">{maha.duration_years}y</span>
                                             </button>
                                         </React.Fragment>
                                     );
                                 })}
                             </div>
                             <div className="flex justify-between text-[10px] text-[#8B5A2B]/60 mt-2 px-1">
-                                <span>Birth: 1985</span>
-                                <span>Age 40 (Now)</span>
-                                <span>End: 2105 (120 yrs)</span>
+                                <span>Start: {formatDateDisplay(all_mahadashas_summary[0].start_date)}</span>
+                                <span>End: {formatDateDisplay(all_mahadashas_summary[all_mahadashas_summary.length - 1].end_date)}</span>
                             </div>
                         </div>
                     </div>
@@ -807,16 +877,8 @@ export default function DashaDemoPage() {
 
                                 {/* Quick Tips */}
                                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-                                    <p className="text-[10px] uppercase tracking-wider text-amber-800 mb-1 font-bold flex items-center gap-1">
-                                        <Star className="w-3 h-3" /> Astrologer's Tip
-                                    </p>
-                                    <p className="text-xs text-amber-900">
-                                        {selectedPeriodForInfo === 'Jupiter'
-                                            ? 'Best period for education, marriage, and spiritual growth. Wear yellow sapphire for enhanced results.'
-                                            : selectedPeriodForInfo === 'Saturn'
-                                                ? 'Period of discipline and hard work. Blue sapphire may help if Saturn is well-placed.'
-                                                : 'Consult detailed horoscope for personalized remedies.'}
-                                    </p>
+                                    <p className="text-[10px] uppercase text-amber-800 mb-1 font-bold flex items-center gap-1"><Star className="w-3 h-3" /> Data Source</p>
+                                    <p className="text-xs text-amber-900">This data is loaded from <code className="bg-amber-100 px-1 rounded">raw-dasha-data.json</code> - real 5-level dasha calculations!</p>
                                 </div>
                             </div>
                         </div>
@@ -852,7 +914,7 @@ export default function DashaDemoPage() {
 
                 {/* Footer */}
                 <div className="text-center text-sm text-[#8B5A2B] py-4">
-                    <p>Grahvani Dasha Analysis • Demo with Static Data • <a href="/vedic-astrology/dashas" className="text-[#D08C60] hover:underline">Go to Live →</a></p>
+                    <p>Grahvani Dasha Analysis • <strong>Real Data from raw-dasha-data.json</strong> • <a href="/vedic-astrology/dashas" className="text-[#D08C60] hover:underline">Go to Live →</a></p>
                 </div>
             </div>
         </div>
