@@ -40,8 +40,52 @@ export function getSublevels(node: any): any[] | null {
         node.sookshmadashas ||
         node.prandashas ||
         node.pran_dashas ||
-        node.sublevel;
+        node.sublevel ||
+        node.periods; // Added common fallback
     return Array.isArray(sublevels) ? sublevels : null;
+}
+
+/**
+ * Recursively find the first available array in a nested object.
+ * Essential for systems like Tribhagi where dasha periods are buried in data.mahadashas.data.tribhagi_dashas_janma
+ */
+export function extractPeriodsArray(data: any): any[] {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+
+    // If it's an object, check common dasha keys
+    if (typeof data === 'object') {
+        // Dwadashottari/Specialized wrapped structure support
+        if (data.detailed_mahadashas_with_antardashas && Array.isArray(data.detailed_mahadashas_with_antardashas)) {
+            return data.detailed_mahadashas_with_antardashas.map((item: any) => ({
+                ...(item.mahadasha || {}),
+                antardashas: item.antardashas || []
+            }));
+        }
+
+        const keysToTry = [
+            'mahadashas',
+            'periods',
+            'tribhagi_dashas_janma',
+            'yoginis',
+            'chara_dashas',
+            'data', // Check nested data objects
+            'dasha_list'
+        ];
+
+        for (const key of keysToTry) {
+            if (data[key]) {
+                const result = extractPeriodsArray(data[key]);
+                if (result.length > 0) return result;
+            }
+        }
+
+        // Final fallback: Find the first array property
+        const firstArrayKey = Object.keys(data).find(k => Array.isArray(data[k]) && data[k].length > 0);
+        if (firstArrayKey) return data[firstArrayKey];
+    }
+
+    return [];
 }
 
 /**
@@ -59,24 +103,24 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
         userName: rawResponse.user_name || 'Anonymous'
     };
 
-    const mahadashas = rawResponse.mahadashas || [];
+    const mahadashas = extractPeriodsArray(rawResponse);
     let currentLevel = mahadashas;
     let foundNode: any = null;
     let foundStart: string = "";
     let parentStart: string = "";
 
     // Traverse down the hierarchy
-    while (currentLevel && Array.isArray(currentLevel)) {
+    while (currentLevel && Array.isArray(currentLevel) && currentLevel.length > 0) {
         let activeNode: any = null;
         let chainStart = parentStart;
 
         for (const p of currentLevel) {
-            const s = p.start_date || p.startDate || chainStart;
-            const e = p.end_date || p.endDate;
+            const s = p.start_date || p.startDate || p.start || chainStart;
+            const e = p.end_date || p.endDate || p.end;
 
             if (s && e) {
-                const startTime = new Date(s).getTime();
-                const endTime = new Date(e).getTime();
+                const startTime = parseApiDate(s).getTime();
+                const endTime = parseApiDate(e).getTime();
                 const nowTime = now.getTime();
 
                 // Buffer comparison to avoid jumping due to micro-drifts
@@ -92,7 +136,7 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
         if (!activeNode) break;
 
         const sDate = activeNode._calculated_start;
-        const eDate = activeNode.end_date || activeNode.endDate;
+        const eDate = activeNode.end_date || activeNode.endDate || activeNode.end;
 
         const standardizedNode: DashaNode = {
             planet: activeNode.planet || activeNode.lord || activeNode.sign,
@@ -107,14 +151,14 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
         foundNode = activeNode;
         foundStart = sDate;
         parentStart = sDate;
-        currentLevel = getSublevels(activeNode);
+        currentLevel = getSublevels(activeNode) || [];
     }
 
     // Calculate progress for the current (deepest) active node
     let progress = 0;
     if (foundNode) {
-        const start = new Date(foundNode._calculated_start || foundNode.start_date || foundNode.startDate).getTime();
-        const end = new Date(foundNode.end_date || foundNode.endDate).getTime();
+        const start = parseApiDate(foundNode._calculated_start || foundNode.start_date || foundNode.startDate || foundNode.start).getTime();
+        const end = parseApiDate(foundNode.end_date || foundNode.endDate || foundNode.end).getTime();
         const nowMs = now.getTime();
         if (end > start) {
             progress = Math.max(0, Math.min(100, Math.round(((nowMs - start) / (end - start)) * 100)));
@@ -190,6 +234,18 @@ export function standardizeDuration(years: number, days?: number): string {
  */
 export function parseApiDate(dateStr: string): Date {
     if (!dateStr) return new Date();
+
+    // Handle DD-MM-YYYY or DD-MM-YYYY HH:mm:ss
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split(' ')[0].split('-');
+        if (parts[0].length === 2) {
+            // It's DD-MM-YYYY
+            const timePart = dateStr.split(' ')[1] || '00:00:00';
+            const [d, m, y] = parts;
+            return new Date(`${y}-${m}-${d}T${timePart.replace(/:/g, ':')}`);
+        }
+    }
+
     return new Date(dateStr.replace(' ', 'T'));
 }
 
@@ -219,7 +275,7 @@ export function isDateRangeCurrent(start: string, end: string): boolean {
  * Recursive mapper to process the raw Dasha tree.
  * Handles date inheritance (waterfall logic) and standardizes the structure.
  */
-function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: string): DashaNode {
+function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: string, maxLevel: number = 4): DashaNode {
     // 1. Identify children key for this level
     let childrenKey = '';
     if (level === 0) childrenKey = 'antardashas'; // Parent is Mahadasha (L0) -> Child is Antar (L1)
@@ -246,15 +302,9 @@ function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: s
         let runningStart = myStartDateRaw; // First child starts when parent starts
 
         mappedChildren = rawChildren.map((child: any) => {
-            const mappedChild = mapDashaLevelRecursive(child, level + 1, runningStart);
+            const mappedChild = mapDashaLevelRecursive(child, level + 1, runningStart, maxLevel);
             // The next child starts when this child ends
             if (child.end_date || child.endDate || child.end) {
-                runningStart = child.end_date || child.endDate || child.end;
-            } else if (mappedChild.endDate) {
-                // Note: mappedChild.endDate might be formatted, but we need raw for calculation if possible.
-                // However, standardizeDashaLevels previously used raw.
-                // Here we rely on the waterfall.
-                // Ideally we'd keep raw date in the node.
                 runningStart = child.end_date || child.endDate || child.end;
             }
             return mappedChild;
@@ -271,7 +321,7 @@ function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: s
         startDate: sDate,
         endDate: eDate,
         isCurrent,
-        canDrillFurther: level < 4 && hasChildren,
+        canDrillFurther: level < maxLevel && hasChildren,
         sublevel: mappedChildren,
         raw: node
     };
@@ -281,28 +331,17 @@ function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: s
  * Process the full API response into a standardized Dasha tree.
  * robustly handling missing start dates and verifying structure.
  */
-export function processDashaResponse(data: any): DashaNode[] {
+export function processDashaResponse(data: any, maxLevel: number = 4): DashaNode[] {
     if (!data) return [];
 
-    // 1. Identify valid top-level array (mahadashas, yoginis, chara_dashas, etc.)
-    const keys = Object.keys(data);
-    let periodsKey = 'mahadashas';
-    if (!data[periodsKey]) {
-        // Fallback: Find the first array property that looks like dasha periods
-        // Added 'tribhagi_dashas_janma' support by looking for keys ending in 'dashas' or 'dashas_janma'
-        const arrayKey = keys.find(k => Array.isArray(data[k]) && data[k].length > 0 && (k.includes('dasha') || k.includes('godhuli') || k === 'yoginis'));
-        if (arrayKey) periodsKey = arrayKey;
-    }
-
-    const periods = data[periodsKey];
-    if (!Array.isArray(periods)) return [];
+    const periods = extractPeriodsArray(data);
+    if (periods.length === 0) return [];
 
     let currentStart = '';
 
     // Seed the waterfall with the first available date if needed
     if (periods.length > 0 && !periods[0].start_date) {
         // Simple search for any start date to anchor (simplified)
-        // Some systems like Tribhagi use 'start' instead of 'start_date'
         const first = periods[0];
         const s = first.start_date || first.start;
         if (!s) {
@@ -320,7 +359,7 @@ export function processDashaResponse(data: any): DashaNode[] {
         const s = m.start_date || m.start;
         if (s) currentStart = s;
 
-        const mapped = mapDashaLevelRecursive(m, 0, currentStart);
+        const mapped = mapDashaLevelRecursive(m, 0, currentStart, maxLevel);
 
         const e = m.end_date || m.end;
         if (e) currentStart = e;
@@ -346,8 +385,8 @@ export function standardizeDashaLevels(periods: any[], parentStartDate?: string)
     let currentChainStart = parentStartDate || "";
 
     return periods.map((p) => {
-        const sDate = p.start_date || p.startDate || currentChainStart;
-        const eDate = p.end_date || p.endDate;
+        const sDate = p.start_date || p.startDate || p.start || currentChainStart;
+        const eDate = p.end_date || p.endDate || p.end;
 
         // Advance currentChainStart for the next sibling
         if (eDate) currentChainStart = eDate;
@@ -361,7 +400,7 @@ export function standardizeDashaLevels(periods: any[], parentStartDate?: string)
         // But for DashaNode structure we don't strictly need it in the node object unless UI uses it.
         // The UI calculates it or expects d.duration string.
         // We'll leave it as calculated by the UI usually, or pass raw values.
-        const isCurrent = sDate && eDate ? (now >= new Date(sDate) && now <= new Date(eDate)) : false;
+        const isCurrent = sDate && eDate ? (now >= parseApiDate(sDate) && now <= parseApiDate(eDate)) : false;
         const displayDuration = ''; // Placeholder, as duration calculation is complex and often done in UI or a dedicated helper
 
         return {

@@ -2,17 +2,21 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    TrendingUp, Loader2, ChevronRight, ChevronLeft,
-    Calendar, Star, Info, ChevronDown, Clock, MapPin,
-    Sun, Moon as MoonIcon, LayoutDashboard, BrainCircuit, User,
-    FileText
+    Loader2, ChevronRight, ChevronLeft,
+    Calendar, Star, Info, ChevronDown, ChevronUp, Clock,
+    Bug, CheckCircle, XCircle, Database, Zap, Search,
+    User, MapPin, TrendingUp
 } from 'lucide-react';
+import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { DASHA_TYPES } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useDasha, useOtherDasha } from '@/hooks/queries/useCalculations';
 import { useQueryClient } from "@tanstack/react-query";
+import TribhagiDasha from '@/components/astrology/TribhagiDasha';
+import ShodashottariDasha from '@/components/astrology/ShodashottariDasha';
+import DwadashottariDasha from '@/components/astrology/DwadashottariDasha';
 import {
     findActiveDashaPath,
     processDashaResponse,
@@ -103,7 +107,25 @@ export default function VedicDashasPage() {
     const [activeAnalysis, setActiveAnalysis] = useState<ActiveDashaPath | null>(null);
     const [selectedIntelPlanet, setSelectedIntelPlanet] = useState<string | null>(null);
 
+    // 🔧 DEBUG PANEL STATE
+    const [showDebugPanel, setShowDebugPanel] = useState(true);
+    const [expandedDasha, setExpandedDasha] = useState<string | null>(null);
+
+    // Debug: Fetch Tribhagi 40 specifically for testing
+    const tribhagi40Query = useOtherDasha(
+        clientDetails?.id || '',
+        'tribhagi-40',
+        settings.ayanamsa.toLowerCase()
+    );
+
     const isVimshottari = selectedDashaType === 'vimshottari';
+    const isTribhagi = selectedDashaType.includes('tribhagi');
+    const isShodashottari = selectedDashaType === 'shodashottari';
+    const isDwadashottari = selectedDashaType === 'dwadashottari';
+
+    // Systems that support deep drill-down (Pratyantar, Sookshma, Prana)
+    // For now, only Vimshottari supports full 5-level generation in frontend if missing
+    const allowMathematicalDrillDown = isVimshottari;
 
     // Queries
     const { data: treeResponse, isLoading: treeLoading, error: treeError } = useDasha(
@@ -122,10 +144,12 @@ export default function VedicDashasPage() {
 
     // Effect: Initialize and Analyze Tree
     useEffect(() => {
-        const response = isVimshottari ? treeResponse : otherData;
-        if (response?.data) {
+        const dashaData = isVimshottari ? treeResponse?.data : otherData?.data;
+        if (dashaData) {
             // Use the robust processor from utils
-            const processedTree = processDashaResponse(response.data);
+            // HARD-LOCK: Tribhagi gets maxLevel 1 (Antardasha), Vimshottari gets 4 (Prana)
+            const maxLevel = isVimshottari ? 4 : (isTribhagi || isShodashottari || isDwadashottari ? 1 : 4);
+            const processedTree = processDashaResponse(dashaData, maxLevel);
 
             if (processedTree.length > 0) {
                 setDashaTree(processedTree);
@@ -135,7 +159,7 @@ export default function VedicDashasPage() {
                 // Or update findActiveDashaPath to handle processed notes.
                 // dasha-utils findActiveDashaPath handles raw. 
                 // Let's stick to that for the "Active Analysis" widget.
-                const analysis = findActiveDashaPath(response.data);
+                const analysis = findActiveDashaPath(dashaData);
                 setActiveAnalysis(analysis);
 
                 if (analysis.nodes.length > 0) {
@@ -143,7 +167,7 @@ export default function VedicDashasPage() {
                 }
             }
         }
-    }, [treeResponse, otherData, isVimshottari]);
+    }, [treeResponse, otherData, isVimshottari, isTribhagi, isShodashottari, isDwadashottari]);
 
     // Computed Summary for Timeline
     const all_mahadashas_summary = useMemo(() => {
@@ -158,11 +182,25 @@ export default function VedicDashasPage() {
     // Derived Viewing Periods based on drill-down
     // This allows traversing the full 5-level tree
     useEffect(() => {
-        if (!isVimshottari) {
+        if (!allowMathematicalDrillDown && currentLevel > 1) {
+            setCurrentLevel(0);
+            setSelectedPath([]);
+        }
+
+        if (!allowMathematicalDrillDown || (isTribhagi && currentLevel >= 1) || (isShodashottari && currentLevel >= 1) || (isDwadashottari && currentLevel >= 1)) {
+            // Revert: If it's Tribhagi/Shodashottari/Dwadashottari and we are at Antardasha or deeper, don't allow further
+            if ((isTribhagi || isShodashottari || isDwadashottari) && currentLevel === 0) {
+                setViewingPeriods(dashaTree);
+            } else if (!isTribhagi && !isShodashottari && !isDwadashottari) {
+                setViewingPeriods(dashaTree);
+            }
             // For other systems, just show the root level (processed via standardizeDashaLevels previously)
             // But now we rely on dashaTree being processed.
-            setViewingPeriods(dashaTree);
-            return;
+            // Actually, the original logic for non-vimshottari was just showing root.
+            if (!isVimshottari && !isTribhagi && !isShodashottari && !isDwadashottari) {
+                setViewingPeriods(dashaTree);
+                return;
+            }
         }
 
         let currentNodes = dashaTree;
@@ -188,17 +226,18 @@ export default function VedicDashasPage() {
 
         setViewingPeriods(currentNodes);
 
-    }, [dashaTree, selectedPath, isVimshottari]);
+    }, [dashaTree, selectedPath, allowMathematicalDrillDown, isTribhagi, isShodashottari, isDwadashottari, currentLevel]);
 
 
     // Navigation Methods (Refactored for Processed Tree)
     const handleDrillDown = (period: DashaNode) => {
+        if (isTribhagi || isShodashottari || isDwadashottari) return; // Disable global drill-down for Tribhagi/Shodashottari/Dwadashottari (Accordion only)
         // period is a DashaNode from viewingPeriods
 
         let nextLevelPeriods = period.sublevel || [];
 
         // Hybrid Logic: If API didn't return deeper levels, generate them on fly
-        if ((!nextLevelPeriods || nextLevelPeriods.length === 0) && isVimshottari && currentLevel < 4) {
+        if ((!nextLevelPeriods || nextLevelPeriods.length === 0) && allowMathematicalDrillDown && currentLevel < 4) {
             nextLevelPeriods = generateVimshottariSubperiods(period);
             period.sublevel = nextLevelPeriods; // Cache it
         }
@@ -295,6 +334,46 @@ export default function VedicDashasPage() {
                 </div>
             </div>
 
+            {/* 🔧 DASHA DEBUG PANEL */}
+            <div className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] border border-[#4ECCA3]/30 rounded-2xl overflow-hidden shadow-2xl mb-4">
+                <button
+                    onClick={() => setShowDebugPanel(!showDebugPanel)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <Bug className="w-5 h-5 text-[#4ECCA3]" />
+                        <span className="font-mono text-sm font-bold text-[#4ECCA3] uppercase tracking-widest">
+                            Dasha Debug Panel
+                        </span>
+                        <span className="text-xs text-white/40 font-mono">
+                            Client ID: {clientDetails?.id?.slice(0, 8)}... | System: {selectedDashaType}
+                        </span>
+                    </div>
+                    {showDebugPanel ? <ChevronUp className="w-5 h-5 text-white/40" /> : <ChevronDown className="w-5 h-5 text-white/40" />}
+                </button>
+
+                {showDebugPanel && (
+                    <div className="p-4 border-t border-white/10 space-y-4">
+                        {/* Selected Dasha Status */}
+                        <DashaDebugRow
+                            name={`Active System: ${selectedDashaType}`}
+                            query={isVimshottari ? treeResponse : otherError ? { error: otherError, isError: true } : { data: otherData, isLoading: otherLoading, isError: !!otherError }}
+                            isExpanded={expandedDasha === 'active'}
+                            onToggle={() => setExpandedDasha(expandedDasha === 'active' ? null : 'active')}
+                        />
+
+                        {/* Tribhagi-40 Dasha Status (FORCED CHECK) */}
+                        <DashaDebugRow
+                            name="Tribhagi Dasha 40yr (FORCED CHECK)"
+                            query={tribhagi40Query}
+                            isExpanded={expandedDasha === 'tribhagi-40'}
+                            onToggle={() => setExpandedDasha(expandedDasha === 'tribhagi-40' ? null : 'tribhagi-40')}
+                            highlight
+                        />
+                    </div>
+                )}
+            </div>
+
             {/* ================================================================= */}
             {/* CURRENT PERIOD CARD (EXACT DEMO UI) */}
             {/* ================================================================= */}
@@ -312,7 +391,7 @@ export default function VedicDashasPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     {/* Mahadasha */}
                     <div className="bg-white/10 rounded-xl p-4 border border-white/5">
-                        <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Mahadasha</p>
+                        <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Mahadasha (M)</p>
                         <p className="text-2xl font-black text-yellow-300">{activeLords[0]?.planet || '—'}</p>
                         <p className="text-xs text-white/50 mt-1 font-mono">
                             {activeLords[0] ? `${formatDateShort(activeLords[0].startDate)} - ${formatDateShort(activeLords[0].endDate)}` : 'Loading...'}
@@ -320,20 +399,22 @@ export default function VedicDashasPage() {
                     </div>
                     {/* Antardasha */}
                     <div className="bg-white/10 rounded-xl p-4 border border-white/5">
-                        <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Antardasha</p>
+                        <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Antardasha (A)</p>
                         <p className="text-2xl font-black text-orange-300">{activeLords[1]?.planet || '—'}</p>
                         <p className="text-xs text-white/50 mt-1 font-mono">
                             {activeLords[1] ? `${formatDateShort(activeLords[1].startDate)} - ${formatDateShort(activeLords[1].endDate)}` : '...'}
                         </p>
                     </div>
-                    {/* Pratyantardasha */}
-                    <div className="bg-white/10 rounded-xl p-4 border border-white/5">
-                        <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Pratyantardasha</p>
-                        <p className="text-2xl font-black text-pink-300">{activeLords[2]?.planet || '—'}</p>
-                        <p className="text-xs text-white/50 mt-1 font-mono">
-                            {activeLords[2] ? `${formatDateShort(activeLords[2].startDate)} - ${formatDateShort(activeLords[2].endDate)}` : '...'}
-                        </p>
-                    </div>
+                    {/* Skip Pratyantardasha for Tribhagi/Shodashottari/Dwadashottari */}
+                    {!isTribhagi && !isShodashottari && !isDwadashottari && (
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/5">
+                            <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Pratyantardasha (P)</p>
+                            <p className="text-2xl font-black text-pink-300">{activeLords[2]?.planet || '—'}</p>
+                            <p className="text-xs text-white/50 mt-1 font-mono">
+                                {activeLords[2] ? `${formatDateShort(activeLords[2].startDate)} - ${formatDateShort(activeLords[2].endDate)}` : '...'}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Progress Bar (Demo Style) */}
@@ -388,9 +469,9 @@ export default function VedicDashasPage() {
                             </div>
 
                             {/* Level Tabs (EXACT DEMO STYLE) */}
-                            {isVimshottari && (
+                            {allowMathematicalDrillDown && !isTribhagi && !isShodashottari && !isDwadashottari && (
                                 <div className="flex gap-1 overflow-x-auto">
-                                    {DASHA_LEVELS.map((level, idx) => (
+                                    {DASHA_LEVELS.filter((_, idx) => !isTribhagi || idx <= 1).map((level, idx) => (
                                         <button
                                             key={level.id}
                                             onClick={() => handleBreadcrumbClick(idx - 1)}
@@ -412,37 +493,40 @@ export default function VedicDashasPage() {
                         </div>
 
                         {/* Breadcrumbs */}
-                        <div className="px-4 py-3 bg-[#FAF7F2] border-b border-[#D08C60]/10 flex items-center gap-2 overflow-x-auto">
-                            <button
-                                onClick={() => handleBreadcrumbClick(-1)}
-                                className={cn(
-                                    "text-sm font-bold",
-                                    currentLevel === 0 ? "text-[#D08C60]" : "text-[#8B5A2B] hover:text-[#D08C60]"
+                        {/* Breadcrumbs - Hidden for Tribhagi/Shodashottari/Dwadashottari specialized view */}
+                        {!isTribhagi && !isShodashottari && !isDwadashottari && (
+                            <div className="px-4 py-3 bg-[#FAF7F2] border-b border-[#D08C60]/10 flex items-center gap-2 overflow-x-auto">
+                                <button
+                                    onClick={() => handleBreadcrumbClick(-1)}
+                                    className={cn(
+                                        "text-sm font-bold",
+                                        currentLevel === 0 ? "text-[#D08C60]" : "text-[#8B5A2B] hover:text-[#D08C60]"
+                                    )}
+                                >
+                                    Mahadasha
+                                </button>
+                                {selectedPath.map((period, idx) => (
+                                    <React.Fragment key={idx}>
+                                        <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
+                                        <button
+                                            onClick={() => handleBreadcrumbClick(idx)}
+                                            className={cn(
+                                                "text-sm font-bold px-2 py-0.5 rounded border",
+                                                PLANET_COLORS_DEMO[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
+                                            )}
+                                        >
+                                            {period.planet || period.lord} {DASHA_LEVELS[idx].short}
+                                        </button>
+                                    </React.Fragment>
+                                ))}
+                                {currentLevel > 0 && (
+                                    <>
+                                        <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
+                                        <span className="text-sm font-bold text-[#D08C60]">{DASHA_LEVELS[currentLevel].name}</span>
+                                    </>
                                 )}
-                            >
-                                Mahadasha
-                            </button>
-                            {selectedPath.map((period, idx) => (
-                                <React.Fragment key={idx}>
-                                    <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
-                                    <button
-                                        onClick={() => handleBreadcrumbClick(idx)}
-                                        className={cn(
-                                            "text-sm font-bold px-2 py-0.5 rounded border",
-                                            PLANET_COLORS_DEMO[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
-                                        )}
-                                    >
-                                        {period.planet || period.lord} {DASHA_LEVELS[idx].short}
-                                    </button>
-                                </React.Fragment>
-                            ))}
-                            {currentLevel > 0 && (
-                                <>
-                                    <ChevronRight className="w-4 h-4 text-[#8B5A2B]/40" />
-                                    <span className="text-sm font-bold text-[#D08C60]">{DASHA_LEVELS[currentLevel].name}</span>
-                                </>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Table */}
                         <div className="overflow-x-auto min-h-[400px]">
@@ -452,69 +536,109 @@ export default function VedicDashasPage() {
                                     <p className="font-serif text-sm text-[#8B5A2B] animate-pulse italic">Quantum Calculating Eras...</p>
                                 </div>
                             ) : (
-                                <table className="w-full">
-                                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left">Planet</th>
-                                            <th className="px-6 py-4 text-left">Start Date</th>
-                                            <th className="px-6 py-4 text-left">End Date</th>
-                                            <th className="px-6 py-4 text-left">Duration</th>
-                                            <th className="px-6 py-4 text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#D08C60]/10 font-medium">
-                                        {viewingPeriods.map((period, idx) => (
-                                            <tr
-                                                key={idx}
-                                                className={cn(
-                                                    "hover:bg-[#D08C60]/10 transition-colors group",
-                                                    period.isCurrent && "bg-[#D08C60]/5",
-                                                    (period.canDrillFurther || (isVimshottari && currentLevel < 4)) ? "cursor-pointer" : "cursor-default"
-                                                )}
-                                                onClick={() => (period.canDrillFurther || (isVimshottari && currentLevel < 4)) && handleDrillDown(period)}
-                                            >
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={cn(
-                                                            "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border shadow-sm",
-                                                            PLANET_COLORS_DEMO[period.planet] || "bg-white"
-                                                        )}>
-                                                            {period.planet}
-                                                        </span>
-                                                        {period.isCurrent && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
-                                                                Current Active
-                                                            </span>
+                                <>
+                                    {/* Sub-levels Labels for Tribhagi/Shodashottari/Dwadashottari (Only 2 levels) */}
+                                    {(isTribhagi || isShodashottari || isDwadashottari) && (
+                                        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-orange-100">
+                                            {selectedPath[0] && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-[#8B5A2B]/40 uppercase tracking-widest mb-1">Mahadasha (M)</span>
+                                                    <span className="text-sm font-black text-[#5A3E2B] uppercase">{selectedPath[0].planet}</span>
+                                                </div>
+                                            )}
+                                            {selectedPath[1] && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-[#8B5A2B]/40 uppercase tracking-widest mb-1">Antardasha (A)</span>
+                                                    <span className="text-sm font-black text-[#5A3E2B] uppercase">{selectedPath[1].planet}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {/* Handle Specialized Views */}
+                                    {isTribhagi ? (
+                                        <div className="p-6">
+                                            <TribhagiDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isShodashottari ? (
+                                        <div className="p-6">
+                                            <ShodashottariDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isDwadashottari ? (
+                                        <div className="p-6">
+                                            <DwadashottariDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <table className="w-full">
+                                            <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-left">Planet</th>
+                                                    <th className="px-6 py-4 text-left">Start Date</th>
+                                                    <th className="px-6 py-4 text-left">End Date</th>
+                                                    <th className="px-6 py-4 text-left">Duration</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#D08C60]/10 font-medium">
+                                                {viewingPeriods.map((period, idx) => (
+                                                    <tr
+                                                        key={idx}
+                                                        className={cn(
+                                                            "hover:bg-[#D08C60]/10 transition-colors group",
+                                                            period.isCurrent && "bg-[#D08C60]/5",
+                                                            (period.canDrillFurther || (allowMathematicalDrillDown && currentLevel < 4)) ? "cursor-pointer" : "cursor-default"
                                                         )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="w-3.5 h-3.5 text-[#8B5A2B]/40" />
-                                                        {formatDateShort(period.startDate)}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">{formatDateShort(period.endDate)}</td>
-                                                <td className="px-6 py-4 text-sm text-[#8B5A2B] font-bold">
-                                                    {standardizeDuration(period.raw?.duration_years || 0, period.raw?.duration_days)}
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        {period.isCurrent ? (
-                                                            <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200 shadow-sm animate-pulse">ACTIVE</span>
-                                                        ) : (
-                                                            (period.canDrillFurther || (isVimshottari && currentLevel < 4)) ? (
-                                                                <ChevronRight className="w-4 h-4 text-[#D08C60] transition-transform group-hover:scale-125" />
-                                                            ) : (
-                                                                <span className="text-[#D08C60]/40">—</span>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                        onClick={() => (period.canDrillFurther || (allowMathematicalDrillDown && currentLevel < 4)) && handleDrillDown(period)}
+                                                    >
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={cn(
+                                                                    "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border shadow-sm",
+                                                                    PLANET_COLORS_DEMO[period.planet] || "bg-white"
+                                                                )}>
+                                                                    {period.planet}
+                                                                </span>
+                                                                {period.isCurrent && (
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
+                                                                        Current Active
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">
+                                                            <div className="flex items-center gap-2">
+                                                                <Calendar className="w-3.5 h-3.5 text-[#8B5A2B]/40" />
+                                                                {formatDateShort(period.startDate)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">{formatDateShort(period.endDate)}</td>
+                                                        <td className="px-6 py-4 text-sm text-[#8B5A2B] font-bold">
+                                                            {standardizeDuration(period.raw?.duration_years || 0, period.raw?.duration_days)}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                {period.isCurrent ? (
+                                                                    <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200 shadow-sm animate-pulse">ACTIVE</span>
+                                                                ) : (
+                                                                    (period.canDrillFurther || (allowMathematicalDrillDown && currentLevel < 4)) ? (
+                                                                        <ChevronRight className="w-4 h-4 text-[#D08C60] transition-transform group-hover:scale-125" />
+                                                                    ) : (
+                                                                        <span className="text-[#D08C60]/40">—</span>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -621,6 +745,99 @@ export default function VedicDashasPage() {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+// 🔧 DEBUG COMPONENT - Dasha Status Row
+function DashaDebugRow({
+    name,
+    query,
+    isExpanded,
+    onToggle,
+    highlight = false
+}: {
+    name: string;
+    query: any;
+    isExpanded: boolean;
+    onToggle: () => void;
+    highlight?: boolean;
+}) {
+    const data = query?.data;
+    const isLoading = query?.isLoading;
+    const isError = query?.isError;
+    const error = query?.error;
+    const isFetching = query?.isFetching;
+
+    const getStatusIcon = () => {
+        if (isLoading || isFetching) return <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />;
+        if (isError) return <XCircle className="w-4 h-4 text-red-400" />;
+        if (data) return <CheckCircle className="w-4 h-4 text-green-400" />;
+        return <Database className="w-4 h-4 text-white/40" />;
+    };
+
+    const getStatusText = () => {
+        if (isLoading) return 'Loading...';
+        if (isFetching) return 'Refetching...';
+        if (isError) return `Error: ${(error as Error)?.message || 'Unknown error'}`;
+        if (data) return 'Data received ✓';
+        return 'Not fetched';
+    };
+
+    const getSourceBadge = () => {
+        if (!data) return null;
+        const cached = data?.cached;
+        return (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${cached
+                ? 'bg-blue-500/20 text-blue-400 border border-blue-400/30'
+                : 'bg-green-500/20 text-green-400 border border-green-400/30'
+                }`}>
+                {cached ? '📦 FROM CACHE/DB' : '🔥 FRESH FROM API'}
+            </span>
+        );
+    };
+
+    return (
+        <div className={`rounded-xl border ${highlight ? 'border-[#4ECCA3]/50 bg-[#4ECCA3]/5' : 'border-white/10 bg-white/5'}`}>
+            <button
+                onClick={onToggle}
+                className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
+                type="button"
+            >
+                <div className="flex items-center gap-3">
+                    {getStatusIcon()}
+                    <span className={`font-mono text-sm ${highlight ? 'text-[#4ECCA3] font-bold' : 'text-white/80'}`}>
+                        {name}
+                    </span>
+                    {getSourceBadge()}
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/50 font-mono">{getStatusText()}</span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
+                </div>
+            </button>
+
+            {isExpanded && (
+                <div className="p-3 pt-0 border-t border-white/10">
+                    <div className="bg-black/30 rounded-lg p-3 max-h-60 overflow-auto">
+                        <pre className="text-xs text-white/70 font-mono whitespace-pre-wrap">
+                            {isError
+                                ? JSON.stringify({ error: (error as Error)?.message, stack: (error as Error)?.stack }, null, 2)
+                                : data
+                                    ? JSON.stringify(data, null, 2)
+                                    : 'No data available'
+                            }
+                        </pre>
+                    </div>
+                    {data && (
+                        <div className="mt-2 flex gap-2 text-[10px] text-white/40 font-mono">
+                            <span>📊 Data size: {JSON.stringify(data).length} bytes</span>
+                            <span>|</span>
+                            <span>⏰ Fetched: {new Date().toLocaleTimeString()}</span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
