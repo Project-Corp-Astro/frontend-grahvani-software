@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight, Calendar, Info, Clock, AlertCircle } from 'lucide-react';
-import { DashaNode, formatDateDisplay, standardizeDuration } from '@/lib/dasha-utils';
+import { DashaNode, formatDateDisplay, calculateDuration } from '@/lib/dasha-utils';
 
-interface ShodashottariDashaProps {
+interface ChaturshitisamaDashaProps {
     periods: DashaNode[];
 }
 
-export default function ShodashottariDasha({ periods }: ShodashottariDashaProps) {
+export default function ChaturshitisamaDasha({ periods }: ChaturshitisamaDashaProps) {
     const [expandedMahadasha, setExpandedMahadasha] = useState<string | null>(null);
 
     const PLANET_COLORS: Record<string, string> = {
@@ -17,10 +17,11 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
         'Mars': 'border-red-200 text-red-700 bg-red-50/50',
         'Jupiter': 'border-yellow-200 text-yellow-700 bg-yellow-50/50',
         'Saturn': 'border-indigo-200 text-indigo-700 bg-indigo-50/50',
-        'Ketu': 'border-stone-200 text-stone-700 bg-stone-50/50',
         'Moon': 'border-blue-200 text-blue-700 bg-blue-50/50',
         'Mercury': 'border-emerald-200 text-emerald-700 bg-emerald-50/50',
-        'Venus': 'border-pink-200 text-pink-700 bg-pink-50/50'
+        'Venus': 'border-pink-200 text-pink-700 bg-pink-50/50',
+        'Rahu': 'border-purple-200 text-purple-700 bg-purple-50/50',
+        'Ketu': 'border-stone-200 text-stone-700 bg-stone-50/50'
     };
 
     return (
@@ -28,17 +29,17 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
             {/* Header Info */}
             <div className="bg-[#3E2A1F]/5 rounded-2xl p-4 border border-[#D08C60]/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-orange-600" />
+                    <div className="w-10 h-10 rounded-full bg-[#D08C60]/10 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-[#D08C60]" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-[#3E2A1F] uppercase tracking-wider">Shodashottari Dasha</h3>
-                        <p className="text-[10px] font-bold text-[#8B5A2B]/60 uppercase">116 Year Cycle • 8 Planet System</p>
+                        <h3 className="text-sm font-black text-[#3E2A1F] uppercase tracking-wider">Chaturshitisama Dasha</h3>
+                        <p className="text-[10px] font-bold text-[#8B5A2B]/60 uppercase">Equal 12-Year Mahadashas</p>
                     </div>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[#D08C60]/60 uppercase">
                     <Info className="w-3.5 h-3.5" />
-                    2-Level Detailed Timeline
+                    Strict 2-Level Timeline
                 </div>
             </div>
 
@@ -50,7 +51,7 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
                 {periods.map((mahadasha, mIdx) => {
                     const isExpanded = expandedMahadasha === mahadasha.planet;
                     const antardashas = mahadasha.sublevel || [];
-                    const isBalance = mahadasha.raw?.is_balance === true;
+                    const isBalance = (mahadasha.raw as any)?.dasha_balance_at_birth != null && mIdx === 0;
 
                     return (
                         <div key={mIdx} className="relative pl-12 group">
@@ -62,7 +63,7 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
 
                             <div className={cn(
                                 "bg-white rounded-2xl border border-[#D08C60]/20 overflow-hidden transition-all duration-300",
-                                mahadasha.isCurrent ? "border-green-200 ring-1 ring-green-50 shadow-sm" : "hover:border-[#D08C60]/40",
+                                mahadasha.isCurrent ? "border-green-200 ring-1 ring-green-50/50 shadow-sm" : "hover:border-[#D08C60]/40",
                                 isExpanded ? "shadow-md ring-2 ring-[#D08C60]/5" : ""
                             )}>
                                 {/* Mahadasha Header */}
@@ -101,7 +102,7 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
                                         <div className="hidden sm:block text-right">
                                             <div className="text-[8px] font-black uppercase tracking-widest text-[#8B5A2B]/40 mb-1">Duration</div>
                                             <div className="text-sm font-black text-[#3E2A1F]">
-                                                {standardizeDuration(mahadasha.raw?.duration_years || mahadasha.raw?.years || 0)}
+                                                {calculateDuration(mahadasha.startDate, mahadasha.endDate)}
                                             </div>
                                         </div>
                                         {isExpanded ? <ChevronDown className="w-5 h-5 text-[#D08C60]" /> : <ChevronRight className="w-5 h-5 text-[#D08C60]" />}
@@ -127,9 +128,11 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
                                                         antar.isCurrent ? "border-green-200 bg-green-50/30" : "border-[#D08C60]/10 hover:border-[#D08C60]/20"
                                                     )}>
                                                         <div className="flex items-center gap-3">
-                                                            <span className="text-xs font-black text-[#3E2A1F] uppercase tracking-wide w-16 sm:w-20">
-                                                                {antar.planet}
-                                                            </span>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-black text-[#3E2A1F] uppercase tracking-wide w-16 sm:w-20">
+                                                                    {antar.planet}
+                                                                </span>
+                                                            </div>
                                                             <div className="h-3 w-[1px] bg-[#D08C60]/20 hidden sm:block"></div>
                                                             <div className="text-[10px] font-mono font-bold text-[#8B5A2B] leading-none">
                                                                 {formatDateDisplay(antar.startDate)} <span className="opacity-40 px-1">—</span> {formatDateDisplay(antar.endDate)}
@@ -143,7 +146,7 @@ export default function ShodashottariDasha({ periods }: ShodashottariDashaProps)
                                                                 </div>
                                                             )}
                                                             <span className="text-[10px] font-black text-[#D08C60]">
-                                                                {standardizeDuration(antar.raw?.duration_years || antar.raw?.years || 0, antar.raw?.duration_days)}
+                                                                {calculateDuration(antar.startDate, antar.endDate)}
                                                             </span>
                                                         </div>
                                                     </div>

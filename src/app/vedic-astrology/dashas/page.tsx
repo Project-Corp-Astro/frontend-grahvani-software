@@ -17,6 +17,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import TribhagiDasha from '@/components/astrology/TribhagiDasha';
 import ShodashottariDasha from '@/components/astrology/ShodashottariDasha';
 import DwadashottariDasha from '@/components/astrology/DwadashottariDasha';
+import PanchottariDasha from '@/components/astrology/PanchottariDasha';
+import ChaturshitisamaDasha from '@/components/astrology/ChaturshitisamaDasha';
+import SatabdikaDasha from '@/components/astrology/SatabdikaDasha';
+import DwisaptatiDasha from '@/components/astrology/DwisaptatiDasha';
 import {
     findActiveDashaPath,
     processDashaResponse,
@@ -122,6 +126,10 @@ export default function VedicDashasPage() {
     const isTribhagi = selectedDashaType.includes('tribhagi');
     const isShodashottari = selectedDashaType === 'shodashottari';
     const isDwadashottari = selectedDashaType === 'dwadashottari';
+    const isPanchottari = selectedDashaType.includes('panchottari');
+    const isChaturshitisama = selectedDashaType === 'chaturshitisama';
+    const isSatabdika = selectedDashaType === 'satabdika';
+    const isDwisaptati = selectedDashaType === 'dwisaptati';
 
     // Systems that support deep drill-down (Pratyantar, Sookshma, Prana)
     // For now, only Vimshottari supports full 5-level generation in frontend if missing
@@ -147,8 +155,8 @@ export default function VedicDashasPage() {
         const dashaData = isVimshottari ? treeResponse?.data : otherData?.data;
         if (dashaData) {
             // Use the robust processor from utils
-            // HARD-LOCK: Tribhagi gets maxLevel 1 (Antardasha), Vimshottari gets 4 (Prana)
-            const maxLevel = isVimshottari ? 4 : (isTribhagi || isShodashottari || isDwadashottari ? 1 : 4);
+            // HARD-LOCK: Specialized systems get maxLevel 1 (Antardasha), Vimshottari gets 4 (Prana)
+            const maxLevel = isVimshottari ? 4 : (isTribhagi || isShodashottari || isDwadashottari || isPanchottari || isChaturshitisama || isSatabdika || isDwisaptati ? 1 : 4);
             const processedTree = processDashaResponse(dashaData, maxLevel);
 
             if (processedTree.length > 0) {
@@ -167,7 +175,7 @@ export default function VedicDashasPage() {
                 }
             }
         }
-    }, [treeResponse, otherData, isVimshottari, isTribhagi, isShodashottari, isDwadashottari]);
+    }, [treeResponse, otherData, isVimshottari, isTribhagi, isShodashottari, isDwadashottari, isPanchottari, isChaturshitisama, isSatabdika, isDwisaptati]);
 
     // Computed Summary for Timeline
     const all_mahadashas_summary = useMemo(() => {
@@ -187,17 +195,17 @@ export default function VedicDashasPage() {
             setSelectedPath([]);
         }
 
-        if (!allowMathematicalDrillDown || (isTribhagi && currentLevel >= 1) || (isShodashottari && currentLevel >= 1) || (isDwadashottari && currentLevel >= 1)) {
-            // Revert: If it's Tribhagi/Shodashottari/Dwadashottari and we are at Antardasha or deeper, don't allow further
-            if ((isTribhagi || isShodashottari || isDwadashottari) && currentLevel === 0) {
+        if (!allowMathematicalDrillDown || (isTribhagi && currentLevel >= 1) || (isShodashottari && currentLevel >= 1) || (isDwadashottari && currentLevel >= 1) || (isPanchottari && currentLevel >= 1) || (isChaturshitisama && currentLevel >= 1) || (isSatabdika && currentLevel >= 1) || (isDwisaptati && currentLevel >= 1)) {
+            // Revert: If it's specialized and we are at Antardasha or deeper, don't allow further
+            if ((isTribhagi || isShodashottari || isDwadashottari || isPanchottari || isChaturshitisama || isSatabdika || isDwisaptati) && currentLevel === 0) {
                 setViewingPeriods(dashaTree);
-            } else if (!isTribhagi && !isShodashottari && !isDwadashottari) {
+            } else if (!isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati) {
                 setViewingPeriods(dashaTree);
             }
             // For other systems, just show the root level (processed via standardizeDashaLevels previously)
             // But now we rely on dashaTree being processed.
             // Actually, the original logic for non-vimshottari was just showing root.
-            if (!isVimshottari && !isTribhagi && !isShodashottari && !isDwadashottari) {
+            if (!isVimshottari && !isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati) {
                 setViewingPeriods(dashaTree);
                 return;
             }
@@ -226,12 +234,12 @@ export default function VedicDashasPage() {
 
         setViewingPeriods(currentNodes);
 
-    }, [dashaTree, selectedPath, allowMathematicalDrillDown, isTribhagi, isShodashottari, isDwadashottari, currentLevel]);
+    }, [dashaTree, selectedPath, allowMathematicalDrillDown, isTribhagi, isShodashottari, isDwadashottari, isPanchottari, isChaturshitisama, isSatabdika, isDwisaptati, currentLevel]);
 
 
     // Navigation Methods (Refactored for Processed Tree)
     const handleDrillDown = (period: DashaNode) => {
-        if (isTribhagi || isShodashottari || isDwadashottari) return; // Disable global drill-down for Tribhagi/Shodashottari/Dwadashottari (Accordion only)
+        if (isTribhagi || isShodashottari || isDwadashottari || isPanchottari || isChaturshitisama || isSatabdika || isDwisaptati) return; // Disable global drill-down for specialized views
         // period is a DashaNode from viewingPeriods
 
         let nextLevelPeriods = period.sublevel || [];
@@ -405,8 +413,8 @@ export default function VedicDashasPage() {
                             {activeLords[1] ? `${formatDateShort(activeLords[1].startDate)} - ${formatDateShort(activeLords[1].endDate)}` : '...'}
                         </p>
                     </div>
-                    {/* Skip Pratyantardasha for Tribhagi/Shodashottari/Dwadashottari */}
-                    {!isTribhagi && !isShodashottari && !isDwadashottari && (
+                    {/* Skip Pratyantardasha for Specialized Views */}
+                    {!isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati && (
                         <div className="bg-white/10 rounded-xl p-4 border border-white/5">
                             <p className="text-xs text-white/60 mb-1 uppercase tracking-wider font-bold">Pratyantardasha (P)</p>
                             <p className="text-2xl font-black text-pink-300">{activeLords[2]?.planet || '—'}</p>
@@ -469,7 +477,7 @@ export default function VedicDashasPage() {
                             </div>
 
                             {/* Level Tabs (EXACT DEMO STYLE) */}
-                            {allowMathematicalDrillDown && !isTribhagi && !isShodashottari && !isDwadashottari && (
+                            {allowMathematicalDrillDown && !isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati && (
                                 <div className="flex gap-1 overflow-x-auto">
                                     {DASHA_LEVELS.filter((_, idx) => !isTribhagi || idx <= 1).map((level, idx) => (
                                         <button
@@ -493,8 +501,8 @@ export default function VedicDashasPage() {
                         </div>
 
                         {/* Breadcrumbs */}
-                        {/* Breadcrumbs - Hidden for Tribhagi/Shodashottari/Dwadashottari specialized view */}
-                        {!isTribhagi && !isShodashottari && !isDwadashottari && (
+                        {/* Breadcrumbs - Hidden for Specialized Views */}
+                        {!isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati && (
                             <div className="px-4 py-3 bg-[#FAF7F2] border-b border-[#D08C60]/10 flex items-center gap-2 overflow-x-auto">
                                 <button
                                     onClick={() => handleBreadcrumbClick(-1)}
@@ -537,8 +545,8 @@ export default function VedicDashasPage() {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Sub-levels Labels for Tribhagi/Shodashottari/Dwadashottari (Only 2 levels) */}
-                                    {(isTribhagi || isShodashottari || isDwadashottari) && (
+                                    {/* Sub-levels Labels for Specialized Views (Only 2 levels) */}
+                                    {(isTribhagi || isShodashottari || isDwadashottari || isPanchottari || isChaturshitisama || isSatabdika || isDwisaptati) && (
                                         <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-orange-100">
                                             {selectedPath[0] && (
                                                 <div className="flex flex-col">
@@ -571,6 +579,31 @@ export default function VedicDashasPage() {
                                         <div className="p-6">
                                             <DwadashottariDasha
                                                 periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isPanchottari ? (
+                                        <div className="p-6">
+                                            <PanchottariDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isChaturshitisama ? (
+                                        <div className="p-6">
+                                            <ChaturshitisamaDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isSatabdika ? (
+                                        <div className="p-6">
+                                            <SatabdikaDasha
+                                                periods={viewingPeriods}
+                                            />
+                                        </div>
+                                    ) : isDwisaptati ? (
+                                        <div className="p-6">
+                                            <DwisaptatiDasha
+                                                periods={viewingPeriods}
+                                                isApplicable={(otherData?.data?.mahadashas as any)?.meta?.is_applicable !== false}
                                             />
                                         </div>
                                     ) : (

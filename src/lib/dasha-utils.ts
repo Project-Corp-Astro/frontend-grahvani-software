@@ -63,10 +63,67 @@ export function extractPeriodsArray(data: any): any[] {
             }));
         }
 
+        // Panchottari Support
+        if (data.panchottari_dasha && data.panchottari_dasha.mahadashas) {
+            return data.panchottari_dasha.mahadashas;
+        }
+
+        // Dwisaptati Support (Normalization) - 144 Year Double Cycle
+        // MUST BE BEFORE Chaturshitisama as both use dasha_table
+        // Path: data.mahadashas.data.meta.system_years
+        if (data.mahadashas && data.mahadashas.data && data.mahadashas.data.dasha_table && (data.mahadashas.data.meta?.system_years === 144 || data.mahadashas.meta?.system_years === 144)) {
+            return data.mahadashas.data.dasha_table.map((m: any, idx: number) => ({
+                planet: m.mahadasha,
+                startDate: m.start,
+                endDate: m.end,
+                raw: { ...m, cycle: idx < 8 ? 1 : 2 },
+                sublevels: (m.antardashas || []).map((a: any) => ({
+                    planet: a.antar_lord,
+                    startDate: a.start,
+                    endDate: a.end,
+                    raw: a
+                }))
+            }));
+        }
+
+        // Chaturshitisama Support (Normalization) - 84 Year System
+        if (data.mahadashas && data.mahadashas.data && data.mahadashas.data.dasha_table && (data.mahadashas.data.meta?.system_years === 84 || data.mahadashas.meta?.system_years === 84)) {
+            return data.mahadashas.data.dasha_table.map((m: any) => ({
+                planet: m.mahadasha_lord,
+                startDate: m.mahadasha_beginning,
+                endDate: m.mahadasha_ending,
+                duration: m.duration,
+                raw: m,
+                sublevels: (m.antardashas || []).map((a: any) => ({
+                    planet: a.antardasha_lord,
+                    startDate: a.beginning,
+                    endDate: a.ending,
+                    raw: a
+                }))
+            }));
+        }
+
+        // Satabdika Support (Normalization) - 100 Year System
+        if (data.mahadashas && data.mahadashas.data && data.mahadashas.data.satabdika_dasha) {
+            return data.mahadashas.data.satabdika_dasha.map((m: any) => ({
+                planet: m.lord,
+                startDate: m.start_date,
+                endDate: m.end_date,
+                raw: m,
+                sublevels: (m.antardashas || []).map((a: any) => ({
+                    planet: a.lord,
+                    startDate: a.start_date,
+                    endDate: a.end_date,
+                    raw: a
+                }))
+            }));
+        }
+
         const keysToTry = [
             'mahadashas',
             'periods',
             'tribhagi_dashas_janma',
+            'panchottari_dasha', // Add to keys to try as well
             'yoginis',
             'chara_dashas',
             'data', // Check nested data objects
@@ -169,6 +226,16 @@ export function findActiveDashaPath(rawResponse: any): ActiveDashaPath {
 }
 
 /**
+ * Calculate duration between two date strings and return formatted string.
+ */
+export function calculateDuration(startStr: string, endStr: string): string {
+    if (!startStr || !endStr) return "—";
+    const start = parseApiDate(startStr).getTime();
+    const end = parseApiDate(endStr).getTime();
+    return formatDurationMs(end - start);
+}
+
+/**
  * Standardize durations like 2.5 years -> "2y 6m", or sub-day units for deep dashas.
  */
 export function standardizeDuration(years: number, days?: number): string {
@@ -179,6 +246,13 @@ export function standardizeDuration(years: number, days?: number): string {
     const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
     const totalMs = (years > 0 ? years * msPerYear : 0) + (days && days > 0 ? days * 24 * 60 * 60 * 1000 : 0);
 
+    return formatDurationMs(totalMs);
+}
+
+/**
+ * Core formatter for duration in milliseconds
+ */
+export function formatDurationMs(totalMs: number): string {
     if (totalMs <= 0) return "0d";
 
     const MS_PER_MINUTE = 60 * 1000;
@@ -321,8 +395,9 @@ function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: s
         startDate: sDate,
         endDate: eDate,
         isCurrent,
+        // STRICT LOCK: Never allow drilling beyond maxLevel even if children exist
         canDrillFurther: level < maxLevel && hasChildren,
-        sublevel: mappedChildren,
+        sublevel: level < maxLevel ? mappedChildren : [],
         raw: node
     };
 }
