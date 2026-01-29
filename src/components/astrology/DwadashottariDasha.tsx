@@ -73,9 +73,9 @@ export default function DwadashottariDasha({ periods }: DwadashottariDashaProps)
                                     <div className="flex items-center gap-4 sm:gap-6">
                                         <div className={cn(
                                             "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border flex items-center justify-center text-base sm:text-lg font-black shadow-inner",
-                                            PLANET_COLORS[mahadasha.planet] || "bg-white"
+                                            PLANET_COLORS[mahadasha.planet || ""] || "bg-white"
                                         )}>
-                                            {mahadasha.planet[0]}
+                                            {mahadasha.planet?.[0] || '?'}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
