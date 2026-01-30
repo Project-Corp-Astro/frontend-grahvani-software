@@ -66,8 +66,9 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
     // Form State - All fields for comprehensive client registration
     const [formData, setFormData] = useState({
         // Personal Identity
-        firstName: initialData?.firstName || '',
-        lastName: initialData?.lastName || '',
+        fullName: initialData?.firstName && initialData?.lastName
+            ? `${initialData.firstName} ${initialData.lastName}`
+            : (initialData?.fullName || ''),
         gender: initialData?.gender || 'female',
 
         // Contact Information
@@ -172,12 +173,9 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
         setError(null);
 
         try {
-            // Combine first and last name for backend
-            const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
-
             // Prepare payload matching backend schema
             const payload: CreateClientPayload = {
-                fullName,
+                fullName: formData.fullName.trim(),
                 email: formData.email || undefined,
                 phonePrimary: formData.phonePrimary || undefined,
                 phoneSecondary: formData.phoneSecondary || undefined,
@@ -258,41 +256,30 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
             )}
 
             {/* 1. Personal Identity Section */}
-            <div className="mb-10">
-                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-[#DCC9A6]">
-                    <User className="w-5 h-5 text-[#9C7A2F]" />
-                    <h2 className="font-serif text-xl font-bold text-[#3E2A1F]">Personal Identity</h2>
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#DCC9A6]">
+                    <User className="w-5 h-5 text-[#8B6914]" />
+                    <h2 className="font-serif text-lg font-bold text-[#2A1810]">Personal Identity</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
                     <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                            First Name <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
+                            Full Name <span className="text-red-600">*</span>
                         </label>
                         <ParchmentInput
-                            placeholder="First Name"
+                            placeholder="Full Name"
                             required
-                            value={formData.firstName}
-                            onChange={(e) => handleChange('firstName', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                            Last Name <span className="text-red-500">*</span>
-                        </label>
-                        <ParchmentInput
-                            placeholder="Last Name"
-                            required
-                            value={formData.lastName}
-                            onChange={(e) => handleChange('lastName', e.target.value)}
+                            value={formData.fullName}
+                            onChange={(e) => handleChange('fullName', e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                            Gender <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
+                            Gender <span className="text-red-600">*</span>
                         </label>
                         <ParchmentSelect
                             label=""
@@ -306,7 +293,7 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                        <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
                             Marital Status
                         </label>
                         <ParchmentSelect
@@ -326,13 +313,13 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
             </div>
 
             {/* 2. Contact Information Section */}
-            <div className="mb-10">
-                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-[#DCC9A6]">
-                    <Phone className="w-5 h-5 text-[#9C7A2F]" />
-                    <h2 className="font-serif text-xl font-bold text-[#3E2A1F]">Contact Information</h2>
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#DCC9A6]">
+                    <Phone className="w-5 h-5 text-[#8B6914]" />
+                    <h2 className="font-serif text-lg font-bold text-[#2A1810]">Contact Information</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
                     <ParchmentInput
                         placeholder="Email Address"
                         type="email"
@@ -349,7 +336,7 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <ParchmentInput
                         placeholder="Secondary Phone (Optional)"
                         type="tel"
@@ -367,16 +354,16 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
             </div>
 
             {/* 3. Birth Data Section - Critical for Astrology */}
-            <div className="mb-12">
-                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-[#DCC9A6]">
-                    <Calendar className="w-5 h-5 text-[#9C7A2F]" />
-                    <h2 className="font-serif text-xl font-bold text-[#3E2A1F]">Cosmic Snapshot (Birth Data)</h2>
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#DCC9A6]">
+                    <Calendar className="w-5 h-5 text-[#8B6914]" />
+                    <h2 className="font-serif text-lg font-bold text-[#2A1810]">Cosmic Snapshot (Birth Data)</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
                     <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                            Date of Birth <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
+                            Date of Birth <span className="text-red-600">*</span>
                         </label>
                         <ParchmentDatePicker
                             label=""
@@ -386,8 +373,8 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                            Time of Birth <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
+                            Time of Birth <span className="text-red-600">*</span>
                         </label>
                         <ParchmentTimePicker
                             label=""
@@ -398,32 +385,14 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                     </div>
                 </div>
 
-                {/* Birth Time Accuracy */}
-                <div className="mb-8">
-                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                        Birth Time Accuracy
-                    </label>
-                    <ParchmentSelect
-                        label=""
-                        value={formData.birthTimeAccuracy}
-                        onChange={(e) => handleChange('birthTimeAccuracy', e.target.value)}
-                        options={[
-                            { value: 'exact', label: 'Exact (From birth certificate)' },
-                            { value: 'approximate', label: 'Approximate (Within ±30 mins)' },
-                            { value: 'rectified', label: 'Rectified (Astrologically corrected)' },
-                            { value: 'unknown', label: 'Unknown' }
-                        ]}
-                    />
-                </div>
-
                 {/* Birth Place with Autocomplete */}
-                <div className="mb-8">
-                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
-                        Place of Birth <span className="text-red-500">*</span>
+                <div className="mb-4">
+                    <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
+                        Place of Birth <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
                         <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9C7A2F]" />
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B6914]" />
                             <input
                                 type="text"
                                 placeholder="Search city or town..."
@@ -433,11 +402,11 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                                     setShowSuggestions(true);
                                 }}
                                 onFocus={() => setShowSuggestions(true)}
-                                className="w-full bg-[#FEFAEA] border border-[#DCC9A6] rounded-lg py-3 pl-12 pr-10 text-[#3E2A1F] font-serif placeholder:text-[#9C7A2F]/50 focus:outline-none focus:border-[#9C7A2F] transition-colors"
+                                className="w-full bg-transparent border-b border-[#C9A24D]/50 py-2 pl-10 pr-10 text-[#2A1810] font-serif placeholder:text-[#8B6914] placeholder:opacity-80 focus:outline-none focus:border-[#9C7A2F] transition-colors"
                                 required
                             />
                             {loadingSuggestions && (
-                                <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9C7A2F] animate-spin" />
+                                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B6914] animate-spin" />
                             )}
                         </div>
 
@@ -529,21 +498,21 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
             </div>
 
             {/* 4. Notes & Observations */}
-            <div className="mb-10">
-                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-[#DCC9A6]">
-                    <FileText className="w-5 h-5 text-[#9C7A2F]" />
-                    <h2 className="font-serif text-xl font-bold text-[#3E2A1F]">Notes & Observations</h2>
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#DCC9A6]">
+                    <FileText className="w-5 h-5 text-[#8B6914]" />
+                    <h2 className="font-serif text-lg font-bold text-[#2A1810]">Notes & Observations</h2>
                 </div>
 
-                <div className="space-y-4">
-                    <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest mb-1">
+                <div className="space-y-2">
+                    <label className="block text-[11px] font-bold font-serif text-[#3E2A1F] uppercase tracking-widest mb-1">
                         Client Notes
                     </label>
                     <textarea
                         value={formData.notes}
                         onChange={(e) => handleChange('notes', e.target.value)}
                         placeholder="Add any initial observations, specific questions, or important context about the client here..."
-                        className="w-full bg-[#FEFAEA] border border-[#DCC9A6] rounded-lg p-4 min-h-[120px] text-[#3E2A1F] font-serif placeholder:text-[#9C7A2F]/50 focus:outline-none focus:border-[#9C7A2F] transition-colors resize-y"
+                        className="w-full bg-transparent border border-[#C9A24D]/50 rounded-lg p-3 min-h-[100px] text-[#2A1810] font-serif placeholder:text-[#8B6914] placeholder:opacity-80 focus:outline-none focus:border-[#9C7A2F] transition-colors resize-y"
                     />
                 </div>
             </div>

@@ -30,21 +30,20 @@ function Calendar({
                 dropdown_icon: "hidden", // Hide default check icon/chevron inside select if any (usually native select don't have this, but RDPC might add custom UI)
                 nav: "space-x-1 flex items-center",
                 nav_button: cn(
-                    "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100 transition-all text-[#763A1F] hover:bg-[#D08C60]/10 rounded-full border border-transparent hover:border-[#D08C60]/30 flex items-center justify-center"
+                    "h-8 w-8 bg-transparent p-0 opacity-60 hover:opacity-100 transition-all duration-200 text-[#763A1F] hover:bg-[#D08C60]/15 hover:scale-110 active:scale-95 rounded-full border border-transparent hover:border-[#D08C60]/30 flex items-center justify-center"
                 ),
                 button_previous: "absolute left-2 top-0", // Adjusted for v9
                 button_next: "absolute right-2 top-0", // Adjusted for v9
                 table: "w-full border-collapse space-y-1",
-                head_row: "flex mb-2",
-                head_cell:
-                    "text-[#763A1F]/70 rounded-md w-9 font-serif font-medium text-[0.8rem] uppercase tracking-wider",
-                row: "flex w-full mt-2 justify-between", // Better justification
-                cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-[#D08C60]/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                day: cn(
-                    "h-9 w-9 p-0 font-sans font-medium aria-selected:opacity-100 hover:bg-[#D08C60]/20 rounded-full transition-all text-[#2A1810]"
+                weekdays: "flex w-full mb-2 justify-between",
+                weekday: "text-[#763A1F]/70 w-9 font-serif font-medium text-[0.8rem] uppercase tracking-wider text-center",
+                week: "flex w-full mt-2 justify-between",
+                day: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                day_button: cn(
+                    "h-9 w-9 p-0 font-sans font-medium aria-selected:opacity-100 hover:bg-[#D08C60]/20 rounded-full transition-all text-[#2A1810] inline-flex items-center justify-center"
                 ),
                 day_selected:
-                    "!bg-[#D08C60] !text-white hover:!bg-[#98522F] font-bold shadow-md", // Force override
+                    "bg-[#D08C60] text-white hover:bg-[#98522F] font-bold shadow-md rounded-full",
                 day_today: "bg-[#FFF5E6] text-[#D08C60] border border-[#D08C60] font-bold",
                 day_outside: "text-[#D08C60]/30 opacity-50",
                 day_disabled: "text-[#D08C60]/30 opacity-50",

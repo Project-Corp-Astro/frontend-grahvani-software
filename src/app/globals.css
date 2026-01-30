@@ -395,3 +395,44 @@ body::before {
 .text-shadow-glow {
   text-shadow: 0 0 10px rgba(255, 210, 125, 0.5);
 }
+
+/* ============================================ */
+/* PICKER UTILITIES                             */
+/* ============================================ */
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth scroll with snap for wheel pickers */
+.wheel-scroll {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
+.wheel-scroll>* {
+  scroll-snap-align: center;
+}
+
+/* Gradient fade edges for wheel picker */
+.wheel-fade-top {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+}
+
+/* Hide scrollbar in calendar dropdowns (year/month select) */
+select::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+select {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

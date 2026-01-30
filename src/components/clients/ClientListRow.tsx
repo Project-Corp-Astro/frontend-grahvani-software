@@ -23,7 +23,7 @@ export default function ClientListRow({ client, onSelect, onEdit, onDelete }: Cl
         // Default legacy behavior (Vedic flow)
         setClientDetails({
             id: client.id,
-            name: `${client.firstName || ''} ${client.lastName || client.fullName || ''}`.trim(),
+            name: client.fullName || `${client.firstName || ''} ${client.lastName || ''}`.trim(),
             gender: client.gender || "male", // Fallback for mock
             dateOfBirth: client.dateOfBirth || client.birthDate || '',
             timeOfBirth: client.timeOfBirth || client.birthTime || "12:00",
@@ -70,7 +70,7 @@ export default function ClientListRow({ client, onSelect, onEdit, onDelete }: Cl
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-serif text-2xl font-bold text-[#2B1510] group-hover:text-gold-dark transition-colors tracking-tight">
-                                {client.firstName || ''} {client.lastName || client.fullName || ''}
+                                {client.fullName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown'}
                             </h3>
                             <div className="flex items-center flex-wrap gap-4 xl:gap-6 mt-2">
                                 <div className="flex items-center text-[#2B1510] text-xs font-sans uppercase tracking-widest font-bold">

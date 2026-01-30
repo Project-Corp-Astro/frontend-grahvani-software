@@ -325,7 +325,7 @@ export default function ClientProfilePage() {
     return (
         <div className="fixed inset-0 pt-[64px] flex animate-in fade-in duration-500 bg-parchment">
             {/* Sidebar */}
-            <ClientsNavigationSidebar activeClientName={`${client.firstName || ''} ${client.lastName || client.fullName || ''}`.trim()} />
+            <ClientsNavigationSidebar activeClientName={client.fullName || `${client.firstName || ''} ${client.lastName || ''}`.trim()} />
 
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto">
@@ -354,7 +354,7 @@ export default function ClientProfilePage() {
                                 </div>
                                 <div>
                                     <h1 className="text-2xl font-serif text-ink font-bold">
-                                        {client.firstName || client.fullName || 'Client'} {client.lastName || ''}
+                                        {client.fullName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Client'}
                                     </h1>
                                     <p className="text-muted text-xs mt-0.5 flex items-center gap-2">
                                         <span className="text-gold-dark">#{client.id.slice(0, 8)}...</span>
@@ -435,16 +435,10 @@ export default function ClientProfilePage() {
                                 </h3>
                                 <div className="space-y-3">
                                     <DetailItem
-                                        label="First Name"
-                                        value={(isEditing ? editData.firstName : client.firstName) || ''}
+                                        label="Full Name"
+                                        value={isEditing ? (editData.fullName || `${editData.firstName || ''} ${editData.lastName || ''}`.trim()) : (client.fullName || `${client.firstName || ''} ${client.lastName || ''}`.trim())}
                                         isEditing={isEditing}
-                                        onChange={(val) => setEditData(prev => ({ ...prev, firstName: val }))}
-                                    />
-                                    <DetailItem
-                                        label="Last Name"
-                                        value={(isEditing ? editData.lastName : client.lastName) || ''}
-                                        isEditing={isEditing}
-                                        onChange={(val) => setEditData(prev => ({ ...prev, lastName: val }))}
+                                        onChange={(val) => setEditData(prev => ({ ...prev, fullName: val, firstName: val.split(' ')[0] || '', lastName: val.split(' ').slice(1).join(' ') || '' }))}
                                     />
                                     <DetailItem
                                         label="Gender"

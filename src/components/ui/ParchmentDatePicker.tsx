@@ -41,9 +41,9 @@ export default function ParchmentDatePicker({
     };
 
     return (
-        <div className={cn("flex flex-col gap-2", className)}>
+        <div className={cn("flex flex-col gap-1", className)}>
             {label && (
-                <label className="block text-[10px] font-bold font-serif text-[#9C7A2F] uppercase tracking-widest pl-1">
+                <label className="block text-[11px] font-bold font-serif text-[#6B4F1D] uppercase tracking-widest pl-1">
                     {label}
                 </label>
             )}
@@ -52,12 +52,12 @@ export default function ParchmentDatePicker({
                     <button
                         type="button"
                         className={cn(
-                            "w-full bg-transparent border-b border-[#DCC9A6] px-3 py-2.5 font-serif text-[#3E2A1F] placeholder-[#DCC9A6] focus:outline-none focus:border-[#9C7A2F] transition-colors flex items-center justify-between group hover:bg-[#FEFAEA]/50 text-left",
-                            !date && "text-[#DCC9A6]"
+                            "w-full bg-transparent border-b border-[#C9A24D]/50 px-2 py-2 font-serif text-[#2A1810] focus:outline-none focus:border-[#9C7A2F] transition-colors flex items-center justify-between group hover:border-[#9C7A2F] text-left",
+                            !date && "text-[#8B6914]"
                         )}
                     >
-                        {selectedDate ? format(selectedDate, "PPP") : <span>{placeholder}</span>}
-                        <CalendarIcon className="w-4 h-4 text-[#DCC9A6] group-hover:text-[#9C7A2F] transition-colors" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span className="opacity-80">{placeholder}</span>}
+                        <CalendarIcon className="w-4 h-4 text-[#9C7A2F] group-hover:text-[#8B6914] transition-colors" />
                     </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
