@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight, Info, Clock, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Info, Milestone, AlertCircle } from 'lucide-react';
 import { DashaNode, formatDateDisplay, calculateDuration } from '@/lib/dasha-utils';
 
 interface DwisaptatiDashaProps {
@@ -25,32 +25,47 @@ export default function DwisaptatiDasha({ periods, isApplicable = true }: Dwisap
         'Ketu': 'border-stone-200 text-stone-700 bg-stone-50/50'
     };
 
-    // Group periods by cycle
-    const cycles = periods.reduce((acc: Record<number, DashaNode[]>, period) => {
-        const cycleNum = period.raw?.cycle || 1;
-        if (!acc[cycleNum]) acc[cycleNum] = [];
-        acc[cycleNum].push(period);
-        return acc;
-    }, {});
+    // Group periods by cycle dynamically (Tribhagi pattern - 8 planets per cycle)
+    const cycles = useMemo(() => {
+        const grouped: Record<number, DashaNode[]> = {};
+        periods.forEach((p, idx) => {
+            // Try to get cycle from raw data, fallback to auto-assign (8 per cycle for Dwisaptati)
+            const rawCycle = p.raw?.cycle || p.raw?.cycle_number;
+            const cNum = rawCycle ? (typeof rawCycle === 'string' ? parseInt(rawCycle, 10) : rawCycle) : Math.floor(idx / 8) + 1;
+            if (!grouped[cNum]) grouped[cNum] = [];
+            grouped[cNum].push(p);
+        });
+        return grouped;
+    }, [periods]);
 
-    const cycleKeys = Object.keys(cycles).sort((a, b) => Number(a) - Number(b));
+    const availableCycles = useMemo(() => {
+        return Object.keys(cycles).map(Number).sort((a, b) => a - b);
+    }, [cycles]);
 
-    // State for active cycle tab
-    const [activeCycle, setActiveCycle] = useState<number>(() => {
-        // Auto-detect current active cycle
-        const current = Object.entries(cycles).find(([_, periods]) =>
-            (periods as DashaNode[]).some(p => p.isCurrent)
-        );
-        return current ? Number(current[0]) : 1;
-    });
+    // Find the cycle containing the currently active Mahadasha
+    const activeCycleNum = useMemo(() => {
+        for (const cNum of availableCycles) {
+            if (cycles[cNum].some(p => p.isCurrent)) return cNum;
+        }
+        return availableCycles.length > 0 ? availableCycles[0] : 1;
+    }, [cycles, availableCycles]);
+
+    const [selectedCycle, setSelectedCycle] = useState<number>(1);
+
+    React.useEffect(() => {
+        if (activeCycleNum) setSelectedCycle(activeCycleNum);
+    }, [activeCycleNum]);
+
+    if (availableCycles.length === 0) return null;
+
+    // Get the periods for the currently selected cycle
+    const finalPeriods = cycles[selectedCycle] || [];
 
     const getCycleYearRange = (cNum: number) => {
         const cyclePeriods = cycles[cNum] || [];
         if (cyclePeriods.length === 0) return '';
-        const start = cyclePeriods[0].startDate;
-        const end = cyclePeriods[cyclePeriods.length - 1].endDate;
-        const startYear = start.split('-')[2];
-        const endYear = end.split('-')[2];
+        const startYear = formatDateDisplay(cyclePeriods[0].startDate).split(' ').pop();
+        const endYear = formatDateDisplay(cyclePeriods[cyclePeriods.length - 1].endDate).split(' ').pop();
         return `${startYear} — ${endYear}`;
     };
 
@@ -71,7 +86,7 @@ export default function DwisaptatiDasha({ periods, isApplicable = true }: Dwisap
             <div className="bg-[#3E2A1F]/5 rounded-2xl p-4 border border-[#D08C60]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#D08C60]/10 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-[#D08C60]" />
+                        <Milestone className="w-5 h-5 text-[#D08C60]" />
                     </div>
                     <div>
                         <h3 className="text-sm font-black text-[#3E2A1F] uppercase tracking-wider">Dwisaptati Sama Dasha</h3>
@@ -89,45 +104,32 @@ export default function DwisaptatiDasha({ periods, isApplicable = true }: Dwisap
                 </div>
             </div>
 
-            {/* Cycle Tabs - Dark Pill Style */}
-            <div className="flex p-1.5 bg-[#FAF7F2] border border-[#D08C60]/20 rounded-2xl shadow-inner-sm">
-                {cycleKeys.map((key) => {
-                    const k = Number(key);
-                    const isActive = activeCycle === k;
-                    const hasCurrent = cycles[k].some(p => p.isCurrent);
+            {/* Cycle Tabs - Dark Pill Style (Tribhagi Pattern) */}
+            {availableCycles.length > 1 && (
+                <div className="flex bg-[#F5E6D3]/30 rounded-3xl p-1 gap-2 border border-[#D08C60]/10 backdrop-blur-sm shadow-inner overflow-x-auto scrollbar-hide">
+                    {availableCycles.map((c) => {
+                        const isActive = selectedCycle === c;
+                        const hasCurrent = cycles[c].some(p => p.isCurrent);
 
-                    return (
-                        <button
-                            key={key}
-                            onClick={() => setActiveCycle(k)}
-                            className={cn(
-                                "flex-1 py-4 px-6 rounded-xl transition-all duration-300 relative",
-                                isActive
-                                    ? "bg-[#3E2A1F] text-[#D08C60] shadow-lg shadow-black/10"
-                                    : "text-[#8B5A2B]/40 hover:text-[#8B5A2B]/60"
-                            )}
-                        >
-                            <div className="flex flex-col items-center gap-1">
-                                <span className={cn(
-                                    "text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]",
-                                    isActive ? "text-[#D08C60]" : "text-[#8B5A2B]/60"
-                                )}>
-                                    Cycle {k}
-                                </span>
-                                <span className={cn(
-                                    "text-[9px] sm:text-[10px] font-bold tracking-widest",
-                                    isActive ? "text-[#D08C60]/80" : "text-[#8B5A2B]/30"
-                                )}>
-                                    {getCycleYearRange(k)}
-                                </span>
-                            </div>
-                            {hasCurrent && (
-                                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-500 ring-2 ring-[#FAF7F2]"></div>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
+                        return (
+                            <button
+                                key={c}
+                                onClick={() => setSelectedCycle(c)}
+                                className={cn(
+                                    "flex-1 min-w-[150px] flex flex-col items-center justify-center py-2.5 px-4 rounded-2xl transition-all duration-300 relative",
+                                    isActive ? "bg-[#3E2A1F] text-[#FFD27D] shadow-lg" : "bg-transparent text-[#3E2A1F]/40 hover:text-[#3E2A1F]/70"
+                                )}
+                            >
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Cycle {c}</span>
+                                <span className="text-[11px] font-mono font-bold">{getCycleYearRange(c)}</span>
+                                {hasCurrent && (
+                                    <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500"></div>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Active Cycle Content */}
             <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-500">
@@ -135,13 +137,13 @@ export default function DwisaptatiDasha({ periods, isApplicable = true }: Dwisap
                     {/* Vertical Connector Line */}
                     <div className="absolute left-[23px] top-6 bottom-6 w-[1px] bg-[#D08C60]/20"></div>
 
-                    {cycles[activeCycle]?.map((mahadasha, mIdx) => {
-                        const uniqueId = `cycle-${activeCycle}-${mahadasha.planet}-${mIdx}`;
+                    {finalPeriods.map((mahadasha, mIdx) => {
+                        const uniqueId = `cycle-${selectedCycle}-${mahadasha.planet}-${mIdx}`;
                         const isExpanded = expandedMahadasha === uniqueId;
                         const antardashas = mahadasha.sublevel || [];
 
                         // Professional Balance Logic
-                        const isBalance = activeCycle === 1 && mIdx === 0;
+                        const isBalance = selectedCycle === 1 && mIdx === 0;
 
                         return (
                             <div key={uniqueId} className="relative pl-12 group">
