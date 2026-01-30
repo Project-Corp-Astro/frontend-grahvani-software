@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { useVedicClient } from "@/context/VedicClientContext";
+import { useAstrologerStore } from "@/store/useAstrologerStore";
 import { SidebarItem } from "@/components/layout/SectionSidebar";
 import {
     LayoutDashboard,
@@ -23,13 +24,15 @@ import {
     ChevronLeft,
     ChevronRight,
     Shield,
-    Layers
+    Layers,
+    Sparkles
 } from "lucide-react";
 
 // Unified Professional Navigation for the Consultation Workspace
 const VEDIC_NAV_ITEMS: SidebarItem[] = [
     { name: "Overview", path: "/overview", icon: LayoutTemplate },
     { name: "Analytical Workbench", path: "/workbench", icon: LayoutDashboard },
+    { name: "KP System", path: "/kp", icon: Sparkles },
     { name: "Planetary Details", path: "/planets", icon: Compass },
     { name: "Divisional Charts", path: "/divisional", icon: Map },
     { name: "Ashtakavarga", path: "/ashtakavarga", icon: Shield },
@@ -43,8 +46,16 @@ const VEDIC_NAV_ITEMS: SidebarItem[] = [
 ];
 
 // Initial Layout Component separated for cleaner logic
-function CollapsibleSidebar({ isClientSet, clientDetails, setClientDetails, pathname, router }: any) {
+function CollapsibleSidebar({ isClientSet, clientDetails, setClientDetails, pathname, router, ayanamsa }: any) {
     const [isCollapsed, setIsCollapsed] = React.useState(false);
+
+    // Filter nav items based on ayanamsa - only show KP System when KP is selected
+    const filteredNavItems = VEDIC_NAV_ITEMS.filter(item => {
+        if (item.path === '/kp') {
+            return ayanamsa === 'KP';
+        }
+        return true;
+    });
 
     return (
         <aside
@@ -121,7 +132,7 @@ function CollapsibleSidebar({ isClientSet, clientDetails, setClientDetails, path
                 )}
 
                 <nav className="space-y-1 flex-1 relative z-10 min-h-0 pb-4">
-                    {VEDIC_NAV_ITEMS.map((item) => {
+                    {filteredNavItems.map((item) => {
                         const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
                         const isActive = pathname === href;
 
@@ -159,6 +170,7 @@ function CollapsibleSidebar({ isClientSet, clientDetails, setClientDetails, path
 
 export default function VedicLayout({ children }: { children: React.ReactNode }) {
     const { isClientSet, clientDetails, setClientDetails } = useVedicClient();
+    const { ayanamsa } = useAstrologerStore();
     const pathname = usePathname();
     const router = useRouter();
 
@@ -194,6 +206,7 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
                     setClientDetails={setClientDetails}
                     pathname={pathname}
                     router={router}
+                    ayanamsa={ayanamsa}
                 />
             )}
 

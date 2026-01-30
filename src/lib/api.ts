@@ -618,3 +618,62 @@ export const ramanApi = {
             method: 'POST'
         }),
 };
+
+// ============ KP (KRISHNAMURTI PADDHATI) API ============
+// KP System endpoints for stellar astrology
+import type {
+    KpPlanetsCuspsResponse,
+    KpRulingPlanetsResponse,
+    KpBhavaDetailsResponse,
+    KpSignificationsResponse,
+    KpHoraryResponse,
+} from '@/types/kp.types';
+
+export const kpApi = {
+    /**
+     * Get KP Planets and Cusps with sub-lords
+     * Core chart data for KP system
+     */
+    getPlanetsCusps: (clientId: string): Promise<KpPlanetsCuspsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/planets-cusps`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get current Ruling Planets
+     * Time-sensitive - for timing analysis
+     */
+    getRulingPlanets: (clientId: string): Promise<KpRulingPlanetsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/ruling-planets`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Bhava (House) Details
+     */
+    getBhavaDetails: (clientId: string): Promise<KpBhavaDetailsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/bhava-details`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Significations
+     * Which planets signify which houses (key for KP predictions)
+     */
+    getSignifications: (clientId: string): Promise<KpSignificationsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/significations`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get KP Horary (Prashna) Analysis
+     * @param clientId - Client ID for birth details
+     * @param horaryNumber - Number between 1-249
+     * @param question - The question being asked
+     */
+    getHorary: (clientId: string, horaryNumber: number, question: string): Promise<KpHoraryResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/horary`, {
+            method: 'POST',
+            body: JSON.stringify({ horaryNumber, question }),
+        }),
+};
