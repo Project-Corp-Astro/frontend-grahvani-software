@@ -41,6 +41,7 @@ export function getSublevels(node: any): any[] | null {
         node.prandashas ||
         node.pran_dashas ||
         node.sublevel ||
+        node.timeline ||
         node.periods; // Added common fallback
     return Array.isArray(sublevels) ? sublevels : null;
 }
@@ -117,6 +118,42 @@ export function extractPeriodsArray(data: any): any[] {
                     raw: a
                 }))
             }));
+        }
+
+        // Specialized Systems Support (Normalization for Shattrimshatsama, Shasthihayani, Dwisaptati, etc.)
+        // Robust check for nested dasha data structures
+        const dashaContainer = data.mahadashas?.data || data.mahadashas || data;
+        const targetList = dashaContainer.timeline || dashaContainer.dasha_system || dashaContainer.dasha_table || dashaContainer.dasha_list;
+
+        if (Array.isArray(targetList)) {
+            return targetList.map((m: any) => {
+                const startDate = m.startDate || m.start_date || m.start || m.mahadasha_beginning || m.beginning;
+                const endDate = m.endDate || m.end_date || m.end || m.mahadasha_ending || m.ending;
+                const isCurrent = isDateRangeCurrent(startDate, endDate);
+
+                return {
+                    planet: m.planet || m.mahadasha || m.mahadasha_lord || m.lord || m.lord_name || m.sign,
+                    startDate,
+                    endDate,
+                    isCurrent,
+                    type: m.type,
+                    isBalance: m.type === "Balance" || m.is_balance === true || m.balance_at_birth === true,
+                    duration: m.duration ? (typeof m.duration === 'number' ? `${m.duration}y` : m.duration) : undefined,
+                    raw: m,
+                    sublevel: (m.antardashas || m.sublevels || m.sublevel || []).map((a: any) => {
+                        const aStart = a.startDate || a.start_date || a.start || a.beginning;
+                        const aEnd = a.endDate || a.end_date || a.end || a.ending;
+                        return {
+                            planet: a.planet || a.antardasha_lord || a.antar_lord || a.lord || a.lord_name,
+                            startDate: aStart,
+                            endDate: aEnd,
+                            isCurrent: isDateRangeCurrent(aStart, aEnd),
+                            duration: a.duration_months ? `${a.duration_months}m` : undefined,
+                            raw: a
+                        };
+                    })
+                };
+            });
         }
 
         const keysToTry = [
@@ -350,52 +387,38 @@ export function isDateRangeCurrent(start: string, end: string): boolean {
  * Handles date inheritance (waterfall logic) and standardizes the structure.
  */
 function mapDashaLevelRecursive(node: any, level: number, inheritedStartDate?: string, maxLevel: number = 4): DashaNode {
-    // 1. Identify children key for this level
-    let childrenKey = '';
-    if (level === 0) childrenKey = 'antardashas'; // Parent is Mahadasha (L0) -> Child is Antar (L1)
-    if (level === 1) childrenKey = 'pratyantardashas';
-    if (level === 2) childrenKey = 'sookshma_dashas';
-    if (level === 3) childrenKey = 'pran_dashas';
-    // Fallback for generic structure
-    if (!childrenKey && node.sublevels) childrenKey = 'sublevels';
-
-    // 2. Map children recursively (Waterfall Logic)
-    const rawChildren = node[childrenKey] || node.sublevels;
+    // Determine children using robust helper
+    const rawChildren = getSublevels(node);
     let mappedChildren: DashaNode[] = [];
 
     // START DATE RESOLUTION
-    // Priority: 1. Explicit start_date 2. Inherited from previous sibling (passed in iterator) 3. Inherited from parent (passed in args)
-    // START DATE RESOLUTION
-    // Priority: 1. Explicit start_date 2. Inherited from previous sibling (passed in iterator) 3. Inherited from parent (passed in args)
-    let myStartDateRaw = node.start_date || node.startDate || node.start;
+    let myStartDateRaw = node.start_date || node.startDate || node.start || node.mahadasha_beginning || node.beginning;
     if (!myStartDateRaw && inheritedStartDate) {
         myStartDateRaw = inheritedStartDate;
     }
 
     if (Array.isArray(rawChildren)) {
-        let runningStart = myStartDateRaw; // First child starts when parent starts
-
+        let runningStart = myStartDateRaw;
         mappedChildren = rawChildren.map((child: any) => {
             const mappedChild = mapDashaLevelRecursive(child, level + 1, runningStart, maxLevel);
-            // The next child starts when this child ends
-            if (child.end_date || child.endDate || child.end) {
-                runningStart = child.end_date || child.endDate || child.end;
+            if (child.end_date || child.endDate || child.end || child.ending || child.mahadasha_ending) {
+                runningStart = child.end_date || child.endDate || child.end || child.ending || child.mahadasha_ending;
             }
             return mappedChild;
         });
     }
 
     const sDate = myStartDateRaw;
-    const eDate = node.end_date || node.endDate || node.end;
+    const eDate = node.end_date || node.endDate || node.end || node.ending || node.mahadasha_ending;
     const isCurrent = isDateRangeCurrent(sDate, eDate);
     const hasChildren = mappedChildren.length > 0;
 
     return {
-        planet: node.planet || node.lord || node.sign,
+        // Robust planet name fallbacks for specialized systems
+        planet: node.planet || node.lord || node.mahadasha || node.mahadasha_lord || node.antardasha_lord || node.antar_lord || node.lord_name || node.sign || 'Unknown',
         startDate: sDate,
         endDate: eDate,
         isCurrent,
-        // STRICT LOCK: Never allow drilling beyond maxLevel even if children exist
         canDrillFurther: level < maxLevel && hasChildren,
         sublevel: level < maxLevel ? mappedChildren : [],
         raw: node

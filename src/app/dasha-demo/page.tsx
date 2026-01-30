@@ -281,7 +281,7 @@ const VIMSHOTTARI_DATA = {
 // All 11 Dasha Systems metadata
 const DASHA_SYSTEMS = [
     { id: 'vimshottari', name: 'Vimshottari', years: 120, category: 'primary', applicable: true, desc: 'Universal Moon-nakshatra based' },
-    { id: 'tribhagi', name: 'Tribhagi', years: 40, category: 'conditional', applicable: true, desc: 'One-third of Vimshottari' },
+    { id: 'tribhagi', name: 'Tribhagi', years: 80, category: 'conditional', applicable: true, desc: 'One-third of Vimshottari' },
     { id: 'shodashottari', name: 'Shodashottari', years: 116, category: 'conditional', applicable: true, desc: 'Venus in 9th + Lagna hora' },
     { id: 'dwadashottari', name: 'Dwadashottari', years: 112, category: 'conditional', applicable: true, desc: 'Venus in Lagna' },
     { id: 'panchottari', name: 'Panchottari', years: 105, category: 'conditional', applicable: true, desc: 'Cancer Lagna + Dhanishtha' },
