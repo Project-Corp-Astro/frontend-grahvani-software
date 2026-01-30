@@ -30,103 +30,90 @@ function WheelColumn({
     label: string;
 }) {
     const scrollRef = React.useRef<HTMLDivElement>(null);
-    const isScrolling = React.useRef(false);
 
-    // Scroll to selected value on mount and when selected changes externally
+    // Initial positioning and external updates
     React.useEffect(() => {
-        if (scrollRef.current && !isScrolling.current) {
+        if (scrollRef.current) {
             const targetScroll = selectedValue * ITEM_HEIGHT;
+            // Immediate scroll on mount, smooth on updates
             scrollRef.current.scrollTo({
                 top: targetScroll,
-                behavior: "smooth",
+                behavior: scrollRef.current.scrollTop === 0 ? "auto" : "smooth",
             });
         }
     }, [selectedValue]);
 
-    // Handle scroll end to snap to nearest value
-    const handleScroll = React.useCallback(() => {
-        if (!scrollRef.current) return;
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.currentTarget;
+        // Logic to update state when scrolling stops naturally (native snap)
+        // We use a debounce to detect the final resting position
+        const timer = (target as any)._scrollTimer;
+        if (timer) clearTimeout(timer);
 
-        isScrolling.current = true;
-
-        // Debounce the snap
-        const timer = setTimeout(() => {
-            if (!scrollRef.current) return;
-            const scrollTop = scrollRef.current.scrollTop;
-            const nearestIndex = Math.round(scrollTop / ITEM_HEIGHT);
-            const clampedIndex = Math.max(0, Math.min(values.length - 1, nearestIndex));
+        (target as any)._scrollTimer = setTimeout(() => {
+            const scrollTop = target.scrollTop;
+            const index = Math.round(scrollTop / ITEM_HEIGHT);
+            const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
 
             if (clampedIndex !== selectedValue) {
                 onSelect(clampedIndex);
             }
-
-            // Snap to exact position
-            scrollRef.current.scrollTo({
-                top: clampedIndex * ITEM_HEIGHT,
-                behavior: "smooth",
-            });
-
-            isScrolling.current = false;
-        }, 100);
-
-        return () => clearTimeout(timer);
-    }, [values.length, selectedValue, onSelect]);
+        }, 150);
+    };
 
     return (
-        <div className="flex flex-col items-center">
-            <span className="text-[10px] text-[#6B4F1D] font-bold uppercase mb-2 tracking-wider">
+        <div className="flex flex-col items-center select-none">
+            <span className="text-[10px] text-[#6B4F1D] font-black uppercase mb-3 tracking-[0.2em] opacity-80 font-serif">
                 {label}
             </span>
-            <div className="relative h-[180px] w-14 overflow-hidden">
-                {/* Selection highlight bar */}
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-9 bg-gradient-to-r from-[#D08C60]/20 via-[#D08C60]/30 to-[#D08C60]/20 border-y border-[#D08C60]/40 pointer-events-none z-10 rounded-sm" />
+            <div className="relative h-[216px] w-14 group">
+                {/* Selection highlight bar - Enhanced with glow */}
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 bg-gradient-to-r from-[#D08C60]/10 via-[#D08C60]/25 to-[#D08C60]/10 border-y border-[#D08C60]/30 pointer-events-none z-10 rounded-sm shadow-[0_0_15px_rgba(208,140,96,0.1)]" />
 
-                {/* Fade gradients */}
-                <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#FAF5E6] to-transparent pointer-events-none z-20" />
-                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#FAF5E6] to-transparent pointer-events-none z-20" />
+                {/* Depth/Curvature Goggles */}
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#FAF5E6] via-[#FAF5E6]/90 to-transparent pointer-events-none z-20" />
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#FAF5E6] via-[#FAF5E6]/90 to-transparent pointer-events-none z-20" />
+
+                {/* Outer shadow for "rolling inward" effect */}
+                <div className="absolute inset-0 border-x border-[#D08C60]/5 pointer-events-none z-30" />
 
                 {/* Scrollable wheel */}
                 <div
                     ref={scrollRef}
-                    className="h-full overflow-y-auto no-scrollbar wheel-scroll"
+                    className="h-full overflow-y-auto no-scrollbar scroll-smooth"
                     onScroll={handleScroll}
-                    style={{ scrollSnapType: "y mandatory" }}
+                    style={{
+                        scrollSnapType: "y mandatory",
+                        overscrollBehavior: "contain"
+                    }}
                 >
-                    {/* Top padding to allow first item to center */}
-                    <div style={{ height: ITEM_HEIGHT * 2 }} />
+                    {/* Padding for centering first/last items */}
+                    <div style={{ height: ITEM_HEIGHT * 2.5 }} />
 
                     {values.map((val, idx) => {
                         const isSelected = idx === selectedValue;
                         return (
-                            <motion.button
+                            <button
                                 key={val}
                                 type="button"
-                                onClick={() => {
-                                    onSelect(idx);
-                                    scrollRef.current?.scrollTo({
-                                        top: idx * ITEM_HEIGHT,
-                                        behavior: "smooth",
-                                    });
-                                }}
+                                onClick={() => onSelect(idx)}
                                 className={cn(
-                                    "w-full flex items-center justify-center font-serif transition-all duration-150",
+                                    "w-full flex items-center justify-center font-serif transition-colors duration-200",
                                     isSelected
-                                        ? "text-[#3E2A1F] font-bold text-lg"
-                                        : "text-[#9C7A2F]/60 text-base"
+                                        ? "text-[#3E2A1F] font-black text-xl scale-110"
+                                        : "text-[#9C7A2F]/40 text-base hover:text-[#9C7A2F]/70"
                                 )}
                                 style={{
                                     height: ITEM_HEIGHT,
                                     scrollSnapAlign: "center",
                                 }}
-                                whileTap={{ scale: 0.95 }}
                             >
                                 {val.toString().padStart(2, "0")}
-                            </motion.button>
+                            </button>
                         );
                     })}
 
-                    {/* Bottom padding to allow last item to center */}
-                    <div style={{ height: ITEM_HEIGHT * 2 }} />
+                    <div style={{ height: ITEM_HEIGHT * 2.5 }} />
                 </div>
             </div>
         </div>

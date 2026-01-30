@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight, Info, Clock, AlertCircle, Zap, Milestone } from 'lucide-react';
+import { ChevronDown, ChevronUp, Calendar, Info, Milestone, AlertCircle } from 'lucide-react';
 import { DashaNode, formatDateDisplay, calculateDuration } from '@/lib/dasha-utils';
 
 interface ShattrimshatsamaDashaProps {
@@ -10,34 +10,35 @@ interface ShattrimshatsamaDashaProps {
     isApplicable?: boolean;
 }
 
+// Vimshottari-style planet colors
+const PLANET_COLORS: Record<string, string> = {
+    Sun: 'bg-orange-100 text-orange-800 border-orange-300',
+    Moon: 'bg-slate-100 text-slate-700 border-slate-300',
+    Mars: 'bg-red-100 text-red-800 border-red-300',
+    Mercury: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    Jupiter: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    Venus: 'bg-pink-100 text-pink-800 border-pink-300',
+    Saturn: 'bg-gray-200 text-gray-800 border-gray-400',
+    Rahu: 'bg-purple-100 text-purple-800 border-purple-300',
+    Ketu: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+};
+
+const FIXED_DURATIONS: Record<string, number> = {
+    'Saturn': 6,
+    'Venus': 7,
+    'Rahu': 8,
+    'Moon': 1,
+    'Sun': 2,
+    'Jupiter': 3,
+    'Mars': 4,
+    'Mercury': 5
+};
+
 export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: ShattrimshatsamaDashaProps) {
     const [selectedCycle, setSelectedCycle] = useState<number>(1);
     const [expandedMahadasha, setExpandedMahadasha] = useState<string | null>(null);
 
-    const PLANET_COLORS: Record<string, string> = {
-        'Sun': 'border-orange-200 text-orange-700 bg-orange-50/50',
-        'Mars': 'border-red-200 text-red-700 bg-red-50/50',
-        'Jupiter': 'border-yellow-200 text-yellow-700 bg-yellow-50/50',
-        'Saturn': 'border-indigo-200 text-indigo-700 bg-indigo-50/50',
-        'Moon': 'border-blue-200 text-blue-700 bg-blue-50/50',
-        'Mercury': 'border-emerald-200 text-emerald-700 bg-emerald-50/50',
-        'Venus': 'border-pink-200 text-pink-700 bg-pink-50/50',
-        'Rahu': 'border-purple-200 text-purple-700 bg-purple-50/50',
-        'Ketu': 'border-stone-200 text-stone-700 bg-stone-50/50'
-    };
-
-    const FIXED_DURATIONS: Record<string, number> = {
-        'Saturn': 6,
-        'Venus': 7,
-        'Rahu': 8,
-        'Moon': 1,
-        'Sun': 2,
-        'Jupiter': 3,
-        'Mars': 4,
-        'Mercury': 5
-    };
-
-    // Group periods by cycle dynamically (like Tribhagi)
+    // Group periods by cycle dynamically
     const cycles = useMemo(() => {
         const grouped: Record<number, DashaNode[]> = {};
         periods.forEach((p, idx) => {
@@ -53,7 +54,6 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
         return Object.keys(cycles).map(Number).sort((a, b) => a - b);
     }, [cycles]);
 
-    // Find the cycle containing the currently active Mahadasha
     const activeCycleNum = useMemo(() => {
         for (const cNum of availableCycles) {
             if (cycles[cNum].some(p => p.isCurrent)) return cNum;
@@ -67,7 +67,6 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
 
     if (availableCycles.length === 0) return null;
 
-    // Get the periods for the currently selected cycle (max 8)
     const finalPeriods = (cycles[selectedCycle] || []).slice(0, 8);
 
     return (
@@ -83,7 +82,7 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                 </div>
             )}
 
-            {/* Cycle Toggle Navigation (Tribhagi Style) */}
+            {/* Cycle Toggle Navigation */}
             {availableCycles.length > 1 && (
                 <div className="flex bg-[#F5E6D3]/30 rounded-3xl p-1 gap-2 border border-[#D08C60]/10 backdrop-blur-sm shadow-inner overflow-x-auto scrollbar-hide">
                     {availableCycles.map((c) => {
@@ -110,7 +109,7 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
             )}
 
             {/* Header Info */}
-            <div className="bg-[#3E2A1F]/5 rounded-2xl p-4 border border-[#D08C60]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-[#3E2A1F]/5 rounded-2xl p-4 border border-[#D08C60]/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#D08C60]/10 flex items-center justify-center">
                         <Milestone className="w-5 h-5 text-[#D08C60]" />
@@ -122,168 +121,142 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-[#D08C60]/5 border border-[#D08C60]/10 rounded-full text-[9px] font-black text-[#D08C60] uppercase tracking-wider">
-                        <Zap className="w-3 h-3" />
-                        8 Planet Sequence
-                    </div>
-                    <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[#D08C60]/60 uppercase">
-                        Strict 1-Cycle Timeline
-                    </div>
+                <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[#D08C60]/60 uppercase">
+                    <Info className="w-3.5 h-3.5" />
+                    Click row to expand sub-periods
                 </div>
             </div>
 
-            {/* Timeline Content */}
-            <div className="space-y-4 relative">
-                {/* Vertical Connector Line */}
-                <div className="absolute left-[-12px] top-6 bottom-6 w-[1px] bg-[#D08C60]/10 hidden"></div>
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
+                        <tr>
+                            <th className="px-6 py-4 text-left">Planet</th>
+                            <th className="px-6 py-4 text-left">Start Date</th>
+                            <th className="px-6 py-4 text-left">End Date</th>
+                            <th className="px-6 py-4 text-left">Duration</th>
+                            <th className="px-6 py-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D08C60]/10 font-medium">
+                        {finalPeriods.map((mahadasha, mIdx) => {
+                            const uniqueId = `shattrim-${mahadasha.planet}-${mIdx}`;
+                            const isExpanded = expandedMahadasha === uniqueId;
+                            const antardashas = mahadasha.sublevel || [];
+                            const isBalance = mIdx === 0;
+                            const fixedYears = FIXED_DURATIONS[mahadasha.planet || ""];
 
-                {finalPeriods.map((mahadasha, mIdx) => {
-                    const uniqueId = `shattrim-${mahadasha.planet}-${mIdx}`;
-                    const isExpanded = expandedMahadasha === uniqueId;
-                    const antardashas = mahadasha.sublevel || [];
-                    const isBalance = mIdx === 0;
-                    const durationStr = calculateDuration(mahadasha.startDate, mahadasha.endDate)
-                        .replace(/(\d+)\s*years?/gi, '$1Y')
-                        .replace(/(\d+)\s*months?/gi, '$1M')
-                        .replace(/(\d+)\s*days?/gi, '$1D');
-
-                    return (
-                        <div key={uniqueId} className="relative group">
-                            {/* Dot Indicator on Connector for Active Period */}
-                            {mahadasha.isCurrent && (
-                                <div className="absolute left-[-20px] top-10 w-4 h-4 rounded-full bg-green-500 border-4 border-white shadow-sm z-20 animate-pulse"></div>
-                            )}
-
-                            <div className={cn(
-                                "bg-white rounded-[24px] border border-gray-100 overflow-hidden transition-all duration-300 relative",
-                                mahadasha.isCurrent ? "border-green-200 shadow-[0_0_20px_rgba(34,197,94,0.1)]" : "hover:border-[#D08C60]/20 shadow-sm",
-                                isExpanded ? "shadow-lg border-[#D08C60]/10" : "shadow-sm"
-                            )}>
-                                {/* Active Side Accent */}
-                                {mahadasha.isCurrent && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-500"></div>
-                                )}
-
-                                {/* Mahadasha Header */}
-                                <button
-                                    onClick={() => setExpandedMahadasha(isExpanded ? null : uniqueId)}
-                                    className="w-full flex items-center justify-between p-5 sm:p-6 text-left"
-                                >
-                                    <div className="flex items-center gap-4 sm:gap-7 pl-1">
-                                        <div className={cn(
-                                            "w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl border flex items-center justify-center text-lg sm:text-xl font-black shadow-inner transition-colors font-serif",
-                                            PLANET_COLORS[mahadasha.planet || ""] || "bg-white border-stone-100"
-                                        )}>
-                                            {mahadasha.planet?.[0]}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2.5 mb-1.5">
-                                                <span className="text-[10px] font-black text-[#D08C60]/60 uppercase tracking-widest leading-none">Mahadasha</span>
+                            return (
+                                <React.Fragment key={uniqueId}>
+                                    <tr
+                                        className={cn(
+                                            "hover:bg-[#D08C60]/10 transition-colors group cursor-pointer",
+                                            mahadasha.isCurrent && "bg-[#D08C60]/5"
+                                        )}
+                                        onClick={() => setExpandedMahadasha(isExpanded ? null : uniqueId)}
+                                    >
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className={cn(
+                                                    "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border shadow-sm",
+                                                    PLANET_COLORS[mahadasha.planet || ''] || "bg-white"
+                                                )}>
+                                                    {mahadasha.planet}
+                                                </span>
                                                 {mahadasha.isCurrent && (
-                                                    <span className="px-3 py-1 rounded-full text-[9px] font-black bg-green-600 text-white uppercase tracking-widest shadow-sm">
-                                                        Active
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
+                                                        Current Active
                                                     </span>
                                                 )}
                                                 {isBalance && (
-                                                    <span className="px-3 py-1 rounded-full text-[9px] font-black bg-[#4386F4] text-white uppercase tracking-widest shadow-sm flex items-center gap-1.5">
-                                                        <AlertCircle className="w-3 h-3" />
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                                                        <AlertCircle className="w-2.5 h-2.5" />
                                                         Balance at Birth
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="text-xl sm:text-2xl font-black text-[#3E2A1F] uppercase tracking-tight leading-none font-serif">
-                                                {mahadasha.planet}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-3.5 h-3.5 text-[#8B5A2B]/40" />
+                                                {formatDateDisplay(mahadasha.startDate)}
                                             </div>
-                                            <div className="mt-2 text-[11px] font-mono font-bold text-[#8B5A2B]/40">
-                                                {formatDateDisplay(mahadasha.startDate)} — {formatDateDisplay(mahadasha.endDate)}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">{formatDateDisplay(mahadasha.endDate)}</td>
+                                        <td className="px-6 py-4 text-sm text-[#8B5A2B] font-bold">
+                                            <div className="flex flex-col">
+                                                <span>{calculateDuration(mahadasha.startDate, mahadasha.endDate)}</span>
+                                                {fixedYears && (
+                                                    <span className="text-[9px] text-[#D08C60] leading-none mt-0.5">{fixedYears} Years Fixed</span>
+                                                )}
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 sm:gap-12">
-                                        <div className="text-right">
-                                            <div className="text-[9px] font-black uppercase tracking-widest text-[#8B5A2B]/40 mb-1">Shastra Duration</div>
-                                            <div className="text-lg font-black text-[#3E2A1F]">
-                                                {durationStr}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                {mahadasha.isCurrent ? (
+                                                    <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200 shadow-sm animate-pulse">ACTIVE</span>
+                                                ) : antardashas.length > 0 ? (
+                                                    isExpanded ? <ChevronUp className="w-4 h-4 text-[#D08C60]" /> : <ChevronDown className="w-4 h-4 text-[#D08C60]" />
+                                                ) : (
+                                                    <span className="text-[#D08C60]/40">—</span>
+                                                )}
                                             </div>
-                                            <div className="text-[9px] font-bold text-[#D08C60]/70 uppercase tracking-tighter">
-                                                {FIXED_DURATIONS[mahadasha.planet || ""] || "0"} Years Fixed
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#D08C60]/30 group-hover:text-[#D08C60] transition-colors">
-                                            {isExpanded ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
-                                        </div>
-                                    </div>
-                                </button>
+                                        </td>
+                                    </tr>
 
-                                {/* Antardasha Expansion */}
-                                {isExpanded && (
-                                    <div className="border-t border-gray-50 bg-gray-50/20 p-4 sm:p-6 animate-in slide-in-from-top-2 duration-300">
-                                        <div className="space-y-3 relative ml-2">
-                                            <div className="absolute left-[6.5px] top-2 bottom-2 w-[1px] bg-[#D08C60]/30 border-l border-dashed border-[#D08C60]/20"></div>
-
-                                            {antardashas.map((antar, aIdx) => {
-                                                const antarDurationStr = calculateDuration(antar.startDate, antar.endDate)
-                                                    .replace(/(\d+)\s*years?/gi, '$1Y')
-                                                    .replace(/(\d+)\s*months?/gi, '$1M')
-                                                    .replace(/(\d+)\s*days?/gi, '$1D');
-                                                return (
-                                                    <div key={aIdx} className="relative pl-6">
-                                                        <div className={cn(
-                                                            "absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm z-10",
-                                                            antar.isCurrent ? "bg-green-500 scale-110" : "bg-[#D08C60]/40"
-                                                        )}></div>
-
-                                                        <div className={cn(
-                                                            "flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border bg-white/60 transition-colors",
-                                                            antar.isCurrent ? "border-green-200 bg-green-50/20" : "border-[#D08C60]/10 hover:border-[#D08C60]/20"
-                                                        )}>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-xs font-black text-[#3E2A1F] uppercase tracking-wide w-16 sm:w-20">
-                                                                    {antar.planet}
-                                                                </span>
-                                                                <div className="h-3 w-[1px] bg-[#D08C60]/20 hidden sm:block"></div>
-                                                                <div className="text-[10px] font-mono font-bold text-[#8B5A2B]">
-                                                                    {formatDateDisplay(antar.startDate)} <span className="opacity-40 px-1">—</span> {formatDateDisplay(antar.endDate)}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center justify-between sm:justify-end gap-3">
-                                                                {antar.isCurrent && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                                                        <span className="text-[8px] font-black text-green-600 uppercase">Current</span>
-                                                                    </div>
-                                                                )}
-                                                                <span className="text-[10px] font-black text-[#D08C60] uppercase tracking-tight">
-                                                                    {antarDurationStr}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {antardashas.length === 0 && (
-                                                <div className="pl-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                                    No Antardasha data available
+                                    {/* Expanded Antardasha Row */}
+                                    {isExpanded && antardashas.length > 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="bg-[#FAF7F2]/60 px-6 py-4">
+                                                <div className="text-[9px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-3">
+                                                    Antardasha Sub-Periods
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+                                                <table className="w-full">
+                                                    <tbody className="divide-y divide-[#D08C60]/10">
+                                                        {antardashas.map((antar, aIdx) => (
+                                                            <tr key={aIdx} className={cn(
+                                                                "hover:bg-white/50 transition-colors",
+                                                                antar.isCurrent && "bg-green-50/50"
+                                                            )}>
+                                                                <td className="px-4 py-2.5">
+                                                                    <span className={cn(
+                                                                        "inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border",
+                                                                        PLANET_COLORS[antar.planet || ''] || "bg-white"
+                                                                    )}>
+                                                                        {antar.planet}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.startDate)}</td>
+                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.endDate)}</td>
+                                                                <td className="px-4 py-2.5 text-xs text-[#8B5A2B] font-bold">
+                                                                    {calculateDuration(antar.startDate, antar.endDate)}
+                                                                </td>
+                                                                <td className="px-4 py-2.5 text-center">
+                                                                    {antar.isCurrent && (
+                                                                        <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200 animate-pulse">ACTIVE</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
 
-                {/* Termination Footer */}
-                <div className="pt-4 text-center">
-                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <Info className="w-3 h-3" />
-                        Shastra Timeline End (36 Years)
-                    </p>
-                </div>
+            {/* Shastra Timeline Footer */}
+            <div className="text-center pt-2">
+                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                    <Info className="w-3 h-3" />
+                    Shastra Timeline End (36 Years)
+                </p>
             </div>
         </div>
     );

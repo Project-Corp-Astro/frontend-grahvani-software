@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Loader2, ChevronRight, ChevronLeft,
-    Calendar, Star, Info, ChevronDown, ChevronUp, Clock,
+    Calendar, ChevronDown, ChevronUp, Clock,
     Bug, CheckCircle, XCircle, Database, Zap, Search,
     User, MapPin, TrendingUp
 } from 'lucide-react';
@@ -29,7 +29,6 @@ import {
     standardizeDashaLevels,
     ActiveDashaPath,
     DashaNode,
-    PLANET_INTEL,
     standardizeDuration,
     generateVimshottariSubperiods
 } from '@/lib/dasha-utils';
@@ -91,7 +90,6 @@ const DASHA_SYSTEMS = [
     { id: 'dwisaptati', name: 'Dwisaptati Sama', years: 72, category: 'conditional', applicable: true, desc: 'Lagna lord in 7th' },
     { id: 'shastihayani', name: 'Shastihayani', years: 60, category: 'conditional', applicable: false, desc: 'Sun in Lagna' },
     { id: 'shattrimshatsama', name: 'Shattrimshatsama', years: 36, category: 'conditional', applicable: false, desc: 'Daytime + Moon in Lagna' },
-    { id: 'chara', name: 'Chara (Jaimini)', years: 0, category: 'jaimini', applicable: true, desc: 'Sign-based system' },
 ];
 
 // =============================================================================
@@ -183,15 +181,7 @@ export default function VedicDashasPage() {
         }
     }, [treeResponse, otherData, isVimshottari, isTribhagi, isShodashottari, isDwadashottari, isPanchottari, isChaturshitisama, isSatabdika, isDwisaptati, isShasthihayani, isShattrimshatsama]);
 
-    // Computed Summary for Timeline
-    const all_mahadashas_summary = useMemo(() => {
-        return dashaTree.map(m => ({
-            planet: m.planet,
-            start_date: m.startDate,
-            end_date: m.endDate,
-            duration_years: m.raw?.duration_years || 0
-        }));
-    }, [dashaTree]);
+
 
     // Derived Viewing Periods based on drill-down
     // This allows traversing the full 5-level tree
@@ -458,9 +448,8 @@ export default function VedicDashasPage() {
             {/* ================================================================= */}
             {/* MAIN CONTENT Area (Demo Parity) */}
             {/* ================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                <div className="lg:col-span-2 space-y-4">
+            <div className="space-y-4">
+                <div className="space-y-4">
                     <div className="bg-white rounded-2xl border border-[#D08C60]/20 overflow-hidden shadow-sm">
                         {/* Selector Tray */}
                         <div className="p-4 border-b border-[#D08C60]/10 flex flex-wrap items-center justify-between gap-4">
@@ -696,106 +685,8 @@ export default function VedicDashasPage() {
                         </div>
                     </div>
 
-                    {/* Timeline visualization (Using Computed Summary) */}
-                    <div className="bg-white rounded-2xl border border-[#D08C60]/20 p-4 shadow-sm">
-                        <h3 className="text-xs font-bold text-[#3E2A1F] uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-[#D08C60]" />
-                            Life Timeline (Mahadasha)
-                        </h3>
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-                            {all_mahadashas_summary.map((p, i) => {
-                                const isCur = activeLords[0]?.planet === p.planet;
-                                return (
-                                    <React.Fragment key={i}>
-                                        <div
-                                            className={cn(
-                                                "px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-tighter shrink-0 transition-all shadow-sm",
-                                                isCur ? "bg-[#3E2A1F] text-white border-[#3E2A1F] ring-2 ring-[#D08C60]/30" :
-                                                    PLANET_COLORS_DEMO[p.planet] || "bg-white border-gray-100"
-                                            )}
-                                        >
-                                            {p.planet}
-                                            <span className="block text-[8px] font-normal opacity-60 mt-0.5">{Math.floor(p.duration_years || 0)} years</span>
-                                        </div>
-                                        {i < all_mahadashas_summary.length - 1 && <div className="w-4 h-[1px] bg-[#D08C60]/20 shrink-0" />}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
 
-                {/* RIGHT SIDEBAR (DEMO PARITY) */}
-                <div className="space-y-4">
-                    <div className="bg-white rounded-2xl border border-[#D08C60]/20 overflow-hidden shadow-sm">
-                        <div className={cn(
-                            "p-5 border-b border-[#D08C60]/10",
-                            PLANET_COLORS_DEMO[selectedIntelPlanet || 'Jupiter'] || "bg-yellow-50"
-                        )}>
-                            <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-serif font-bold text-xl text-[#3E2A1F]">{selectedIntelPlanet} Dasha Intel</h3>
-                                <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
-                            </div>
-                            <p className="text-xs font-bold text-[#8B5A2B] uppercase tracking-wider opacity-70">
-                                {PLANET_INTEL[selectedIntelPlanet || '']?.nature || 'Universal Influence'}
-                            </p>
-                        </div>
 
-                        <div className="p-5 space-y-6">
-                            <section>
-                                <h4 className="text-xs font-bold text-[#3E2A1F] uppercase tracking-wider mb-2 flex items-center gap-2">
-                                    <Star className="w-3.5 h-3.5 text-yellow-500" /> Key Keywords
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {(PLANET_INTEL[selectedIntelPlanet || '']?.themes || ['Growth', 'Karma']).map((t: string) => (
-                                        <span key={t} className="px-2 py-1 bg-[#FAF7F2] text-[#3E2A1F] text-[10px] font-bold rounded-lg border border-[#D08C60]/20">
-                                            {t}
-                                        </span>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <section className="bg-amber-50/50 rounded-xl p-4 border border-amber-200/50">
-                                <h4 className="text-xs font-bold text-[#3E2A1F] uppercase tracking-wider mb-2 flex items-center gap-2">
-                                    <Info className="w-3.5 h-3.5 text-amber-600" /> General Effects
-                                </h4>
-                                <p className="text-xs text-[#5A3E2B] leading-relaxed font-medium italic">
-                                    "{PLANET_INTEL[selectedIntelPlanet || '']?.advice || 'This period marks a significant cycle of transformation.'}"
-                                </p>
-                            </section>
-
-                            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
-                                <p className="text-[10px] uppercase tracking-wider text-amber-800 mb-1 font-bold flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> Astrologer's Tip
-                                </p>
-                                <p className="text-xs text-amber-900 font-bold antialiased">
-                                    {PLANET_INTEL[selectedIntelPlanet || '']?.tip || 'Individual placement must be analyzed for precise remedial measures.'}
-                                </p>
-                            </div>
-
-                            <button className="w-full py-3 bg-[#D08C60] text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-[#D08C60]/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                Generate Expert Analysis
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* All 11 Systems Panel */}
-                    <div className="bg-white rounded-2xl border border-[#D08C60]/20 p-4 shadow-sm">
-                        <h3 className="font-serif font-bold text-[#3E2A1F] mb-3 text-sm">All 11 Dasha Systems</h3>
-                        <div className="space-y-1 text-xs">
-                            {DASHA_SYSTEMS.map((sys, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-[#FAF7F2] transition-colors">
-                                    <span className="font-medium text-[#3E2A1F]">{idx + 1}. {sys.name}</span>
-                                    <span className={cn(
-                                        "px-2 py-0.5 rounded-full text-[10px] font-bold",
-                                        sys.applicable ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                                    )}>
-                                        {sys.applicable ? '✓' : '✗'}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
