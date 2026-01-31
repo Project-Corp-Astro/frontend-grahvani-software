@@ -111,10 +111,30 @@ export interface KpBhava {
 /**
  * Response from /api/kp/bhava-details
  */
+
+/**
+ * Raw Bhava Detail from API (JSON structure)
+ */
+export interface KpBhavaRaw {
+    NL: string;
+    RL: string;
+    SL: string;
+    SS: string;
+    longitude_decimal: number;
+    longitude_dms: string;
+    nakshatra: string;
+    pada: number;
+    sign: string;
+}
+
+/**
+ * Response from /api/kp/bhava-details
+ */
 export interface KpBhavaDetailsResponse {
     success: boolean;
     data: {
-        bhavas: KpBhava[];
+        bhava_details: Record<string, KpBhavaRaw>;
+        user_name?: string;
     };
     cached: boolean;
     calculatedAt: string;

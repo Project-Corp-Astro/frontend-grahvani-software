@@ -16,6 +16,7 @@ import {
     SignificationMatrix,
     RulingPlanetsWidget,
     HoraryPanel,
+    BhavaDetailsTable,
 } from '@/components/kp';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
 import { parseChartData } from '@/lib/chart-helpers';
@@ -171,57 +172,17 @@ export default function KpDashboardPage() {
         return [];
     }, [planetsCuspsQuery.data, processedCharts]);
 
-    // KP Bhava Data - fallback to D1_kp houses
-    const bhavaData = React.useMemo(() => {
-        if (bhavaDetailsQuery.data?.data?.bhavas) {
-            return bhavaDetailsQuery.data.data.bhavas;
+    // KP Bhava Data
+    // We now use the raw API response directly for the table
+    const bhavaDetails = React.useMemo(() => {
+        console.log('Bhava Query Status:', bhavaDetailsQuery.status);
+        console.log('Bhava Query Data:', bhavaDetailsQuery.data);
+        console.log('Bhava Query Error:', bhavaDetailsQuery.error);
+        if (bhavaDetailsQuery.data?.data?.bhava_details) {
+            return bhavaDetailsQuery.data.data.bhava_details;
         }
-
-        const d1Kp = processedCharts['D1_kp'];
-        if (d1Kp?.chartData) {
-            const data = d1Kp.chartData.data || d1Kp.chartData;
-            const houses = data.houses || [];
-
-            if (Array.isArray(houses) && houses.length > 0) {
-                return houses.map((h: any) => ({
-                    house: h.house || h.house_number,
-                    sign: h.sign || h.sign_name,
-                    signLord: h.sign_lord || '-',
-                    starLord: h.nakshatra_lord || '-', // Approx map
-                    subLord: h.sub_lord || '-',
-                    significators: [],
-                    planetsInHouse: [] // Could calculate this but keeping simple for now
-                }));
-            }
-
-            // Fallback: Generate Equal/Whole Sign houses if explicit list missing
-            const asc = data.ascendant || data.natal_ascendant;
-            if (asc) {
-                const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-                let ascSignId = 1;
-                if (typeof asc.sign === 'number') ascSignId = asc.sign;
-                else if (typeof asc.signId === 'number') ascSignId = asc.signId;
-                else if (typeof asc.sign_id === 'number') ascSignId = asc.sign_id;
-
-                const generated = [];
-                for (let i = 0; i < 12; i++) {
-                    const houseNum = i + 1;
-                    const currentSignId = ((ascSignId - 1 + i) % 12) + 1;
-                    generated.push({
-                        house: houseNum,
-                        sign: signs[currentSignId - 1],
-                        signLord: '-',
-                        starLord: '-',
-                        subLord: '-',
-                        significators: [],
-                        planetsInHouse: []
-                    });
-                }
-                return generated;
-            }
-        }
-        return [];
-    }, [bhavaDetailsQuery.data, processedCharts]);
+        return {};
+    }, [bhavaDetailsQuery.data, bhavaDetailsQuery.status, bhavaDetailsQuery.error]);
     if (ayanamsa !== 'KP') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -354,50 +315,13 @@ export default function KpDashboardPage() {
 
                 {/* Bhava Details */}
                 {activeTab === 'bhava-details' && (
-                    <div className="bg-white border border-antique rounded-2xl p-6">
-                        <h3 className="font-serif font-bold text-lg text-ink mb-6">Bhava (House) Details</h3>
-                        {bhavaDetailsQuery.isLoading && !bhavaData.length ? (
+                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                        {bhavaDetailsQuery.isLoading ? (
                             <div className="flex items-center justify-center py-12">
                                 <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
                             </div>
-                        ) : bhavaData.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {bhavaData.map((bhava) => (
-                                    <div key={bhava.house} className="p-4 bg-parchment border border-antique rounded-xl">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-primary to-gold-dark text-white flex items-center justify-center font-bold text-sm">
-                                                {bhava.house}
-                                            </span>
-                                            <div>
-                                                <p className="font-serif font-bold text-ink">{bhava.sign}</p>
-                                                <p className="text-[10px] text-muted">House {bhava.house}</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2 text-xs">
-                                            <div className="flex justify-between">
-                                                <span className="text-muted">Sign Lord:</span>
-                                                <span className="font-medium text-ink">{bhava.signLord}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-muted">Star Lord:</span>
-                                                <span className="px-2 py-0.5 bg-gold-primary/10 text-gold-dark rounded font-medium">{bhava.starLord}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-muted">Sub Lord:</span>
-                                                <span className="px-2 py-0.5 bg-copper-100 text-copper-700 rounded font-medium">{bhava.subLord}</span>
-                                            </div>
-                                            {bhava.planetsInHouse && bhava.planetsInHouse.length > 0 && (
-                                                <div className="pt-2 border-t border-antique/50">
-                                                    <span className="text-muted">Planets: </span>
-                                                    <span className="font-medium text-ink">{bhava.planetsInHouse.join(', ')}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         ) : (
-                            <p className="text-muted text-center py-8">No bhava data available</p>
+                            <BhavaDetailsTable bhavaDetails={bhavaDetails} className="w-full" />
                         )}
                     </div>
                 )}
