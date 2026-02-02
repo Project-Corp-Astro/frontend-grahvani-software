@@ -37,8 +37,9 @@ export function useClientCharts(clientId?: string) {
 
             const lookup: ChartLookup = {};
             data.forEach((c: any) => {
-                const system = (c.system || c.chartConfig?.system || 'lahiri').toLowerCase();
-                const key = `${c.chartType}_${system}`;
+                // Prioritize ayanamsa field, fallback to system for backward compatibility with DB records
+                const ayanamsa = (c.ayanamsa || c.chartConfig?.ayanamsa || c.system || c.chartConfig?.system || 'lahiri').toLowerCase();
+                const key = `${c.chartType}_${ayanamsa}`;
                 lookup[key] = c;
             });
             return lookup;

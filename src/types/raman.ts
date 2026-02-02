@@ -47,5 +47,5 @@ export interface RamanApiResponse<T> {
     cached: boolean;
     calculatedAt: string;
     error?: string;
-    system: 'raman';
+    ayanamsa: 'raman';  // Standardized field name
 }
