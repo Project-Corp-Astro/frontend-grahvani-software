@@ -348,11 +348,13 @@ export const clientApi = {
     generateOtherDasha: (
         clientId: string,
         type: string,
-        ayanamsa: string = 'lahiri'
+        ayanamsa: string = 'lahiri',
+        level: string = 'mahadasha',
+        context: { mahaLord?: string; antarLord?: string; pratyantarLord?: string } = {}
     ): Promise<DashaResponse> =>
         apiFetch(`${CLIENT_URL}/clients/${clientId}/dasha/${type}`, {
             method: 'POST',
-            body: JSON.stringify({ ayanamsa, level: 'mahadasha', save: false }),
+            body: JSON.stringify({ ayanamsa, level, save: false, ...context }),
         }).then((response: any) => {
             // Normalize response format to match frontend expectations
             const normalizedData: DashaResponse = {
