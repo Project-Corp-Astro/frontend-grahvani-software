@@ -666,6 +666,22 @@ export const kpApi = {
         }),
 
     /**
+     * Get House Significations (Table 1)
+     */
+    getHouseSignifications: (clientId: string): Promise<KpSignificationsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/house-significations`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get Planet Significators (Table 2 - Matrix)
+     */
+    getPlanetSignificators: (clientId: string): Promise<KpSignificationsResponse> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/planets-significators`, {
+            method: 'POST'
+        }),
+
+    /**
      * Get KP Horary (Prashna) Analysis
      * @param clientId - Client ID for birth details
      * @param horaryNumber - Number between 1-249

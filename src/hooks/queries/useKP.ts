@@ -20,6 +20,8 @@ export const kpKeys = {
     rulingPlanets: (clientId: string) => [...kpKeys.all, 'ruling-planets', clientId] as const,
     bhavaDetails: (clientId: string) => [...kpKeys.all, 'bhava-details', clientId] as const,
     significations: (clientId: string) => [...kpKeys.all, 'significations', clientId] as const,
+    houseSignifications: (clientId: string) => [...kpKeys.all, 'house-significations', clientId] as const,
+    planetSignificators: (clientId: string) => [...kpKeys.all, 'planet-significators', clientId] as const,
     horary: (clientId: string, horaryNumber: number) => [...kpKeys.all, 'horary', clientId, horaryNumber] as const,
 };
 
@@ -88,6 +90,40 @@ export function useKpSignifications(
     return useQuery<KpSignificationsResponse, Error>({
         queryKey: kpKeys.significations(clientId),
         queryFn: () => kpApi.getSignifications(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        retry: 1,
+        ...options,
+    });
+}
+
+/**
+ * Hook for fetching House Significations (Table 1)
+ */
+export function useKpHouseSignifications(
+    clientId: string,
+    options?: Omit<UseQueryOptions<KpSignificationsResponse, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<KpSignificationsResponse, Error>({
+        queryKey: kpKeys.houseSignifications(clientId),
+        queryFn: () => kpApi.getHouseSignifications(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        retry: 1,
+        ...options,
+    });
+}
+
+/**
+ * Hook for fetching Planet Significators (Table 2 - Matrix)
+ */
+export function useKpPlanetSignificators(
+    clientId: string,
+    options?: Omit<UseQueryOptions<KpSignificationsResponse, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<KpSignificationsResponse, Error>({
+        queryKey: kpKeys.planetSignificators(clientId),
+        queryFn: () => kpApi.getPlanetSignificators(clientId),
         enabled: !!clientId,
         staleTime: 10 * 60 * 1000,
         retry: 1,

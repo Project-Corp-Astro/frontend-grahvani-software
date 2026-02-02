@@ -63,6 +63,22 @@ export interface KpPlanetRaw {
 }
 
 /**
+ * Raw KP Ruling Planet from API
+ * Use number for longitude
+ */
+export interface KpRulingPlanetRaw {
+    formatted_longitude: string;
+    is_retrograde: boolean;
+    longitude: number; // number!
+    nakshatra: string;
+    nakshatra_lord: string;
+    nakshatra_pada: number;
+    sign: string;
+    sign_lord: string;
+    sub_lord: string;
+}
+
+/**
  * Raw KP Cusp from API
  */
 export interface KpCuspRaw {
@@ -118,23 +134,29 @@ export interface KpRulingPlanetsResponse {
             strength_order_explanation: Record<string, string>;
             unique_planets_by_strength: string[];
         };
+        ayanamsa: {
+            type: string;
+            value: number;
+        };
         lagna: {
             formatted_longitude: string;
+            longitude: number;
             sign: string;
             sign_lord: string;
             nakshatra_lord: string;
             sub_lord: string;
-            // ... other fields if needed
         };
         moon: {
             formatted_longitude: string;
+            longitude: number;
+            is_retrograde?: boolean;
             sign: string;
             sign_lord: string;
             nakshatra_lord: string;
             sub_lord: string;
         };
-        all_planets: Record<string, KpPlanetRaw>;
-        dayLord?: string; // Optional: derived or extra
+        all_planets: Record<string, KpRulingPlanetRaw>;
+        dayLord?: string;
         user_name?: string;
     };
     cached: boolean;
@@ -192,8 +214,23 @@ export interface KpBhavaDetailsResponse {
 export interface KpSignification {
     planet: string;
     houses: number[];
+    levelA?: number[];
+    levelB?: number[];
+    levelC?: number[];
+    levelD?: number[];
     strong?: boolean;
     details?: string;
+}
+
+/**
+ * House signification view (House -> Levels)
+ */
+export interface KpHouseSignification {
+    house: number;
+    levelA: string[]; // Planets in nak of occupants
+    levelB: string[]; // Occupants
+    levelC: string[]; // Planets in nak of cusp sign lord
+    levelD: string[]; // Cusp sign lord
 }
 
 /**

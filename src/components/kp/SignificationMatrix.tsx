@@ -1,167 +1,77 @@
 "use client";
 
-import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
 import type { KpSignification } from '@/types/kp.types';
-import { Info } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SignificationMatrixProps {
     significations: KpSignification[];
     className?: string;
 }
 
-const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
-const houses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-const planetColors: Record<string, string> = {
-    'Sun': 'bg-orange-100 text-orange-700 border-orange-200',
-    'Moon': 'bg-blue-50 text-blue-600 border-blue-200',
-    'Mars': 'bg-red-100 text-red-700 border-red-200',
-    'Mercury': 'bg-green-100 text-green-700 border-green-200',
-    'Jupiter': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    'Venus': 'bg-pink-100 text-pink-700 border-pink-200',
-    'Saturn': 'bg-gray-200 text-gray-700 border-gray-300',
-    'Rahu': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Ketu': 'bg-indigo-100 text-indigo-700 border-indigo-200',
-};
-
-/**
- * KP Signification Matrix
- * Interactive 9x12 grid showing which planets signify which houses
- * This is the KEY component for KP predictions
- */
 export default function SignificationMatrix({ significations, className }: SignificationMatrixProps) {
-    const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
-    const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
-
-    // Convert to matrix format
-    const matrix: Record<string, number[]> = {};
-    significations.forEach(sig => {
-        matrix[sig.planet] = sig.houses || [];
-    });
-
-    const isSignified = (planet: string, house: number): boolean => {
-        return matrix[planet]?.includes(house) || false;
-    };
-
-    const isStrong = (planet: string): boolean => {
-        return significations.find(s => s.planet === planet)?.strong || false;
+    // Helper to format house list
+    const formatHouses = (houses: number[] | undefined) => {
+        if (!houses || houses.length === 0) return '';
+        return houses.join('  ');
     };
 
     return (
-        <div className={cn("space-y-4", className)}>
-            {/* Legend */}
-            <div className="flex items-center gap-4 text-xs text-muted mb-4">
-                <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 rounded bg-gold-primary/60" />
-                    <span>Signified House</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 rounded bg-copper-200" />
-                    <span>Highlighted Row/Column</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    <span>Hover to highlight connections</span>
-                </div>
+        <div className={cn("w-full overflow-hidden bg-white/50 dark:bg-neutral-900/50 rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm", className)}>
+            <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 border-b border-stone-200 dark:border-stone-800">
+                <h3 className="text-lg font-serif font-bold text-center text-stone-800 dark:text-stone-200">
+                    Houses Signified by Planets
+                </h3>
             </div>
 
-            {/* Matrix */}
             <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
+                <table className="w-full text-sm text-left">
+                    <thead className="text-xs uppercase bg-amber-100/50 dark:bg-amber-900/20 text-stone-600 dark:text-stone-400">
                         <tr>
-                            <th className="py-3 px-3 bg-copper-900 text-white text-left font-serif font-bold text-sm rounded-tl-lg">
+                            <th scope="col" className="px-6 py-3 font-bold border-b border-stone-200 dark:border-stone-700">
                                 Planet
                             </th>
-                            {houses.map(house => (
-                                <th
-                                    key={house}
-                                    className={cn(
-                                        "py-3 px-2 text-center font-serif font-bold text-sm transition-colors cursor-pointer",
-                                        hoveredHouse === house
-                                            ? "bg-gold-primary text-white"
-                                            : "bg-copper-800 text-white",
-                                        house === 12 && "rounded-tr-lg"
-                                    )}
-                                    onMouseEnter={() => setHoveredHouse(house)}
-                                    onMouseLeave={() => setHoveredHouse(null)}
-                                >
-                                    {house}
-                                </th>
-                            ))}
+                            <th scope="col" className="px-6 py-3 border-b border-stone-200 dark:border-stone-700 text-center">
+                                <span className="block font-bold text-stone-800 dark:text-stone-200">Very strong</span>
+                                <span className="text-[10px] font-normal lowercase opacity-75">significator</span>
+                            </th>
+                            <th scope="col" className="px-6 py-3 border-b border-stone-200 dark:border-stone-700 text-center">
+                                <span className="block font-bold text-stone-800 dark:text-stone-200">Strong</span>
+                                <span className="text-[10px] font-normal lowercase opacity-75">significator</span>
+                            </th>
+                            <th scope="col" className="px-6 py-3 border-b border-stone-200 dark:border-stone-700 text-center">
+                                <span className="block font-bold text-stone-800 dark:text-stone-200">Normal</span>
+                                <span className="text-[10px] font-normal lowercase opacity-75">significator</span>
+                            </th>
+                            <th scope="col" className="px-6 py-3 border-b border-stone-200 dark:border-stone-700 text-center">
+                                <span className="block font-bold text-stone-800 dark:text-stone-200">Weak</span>
+                                <span className="text-[10px] font-normal lowercase opacity-75">significator</span>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {planets.map((planet, pIdx) => (
-                            <tr
-                                key={planet}
-                                className={cn(
-                                    "transition-colors",
-                                    hoveredPlanet === planet && "bg-gold-primary/10"
-                                )}
-                                onMouseEnter={() => setHoveredPlanet(planet)}
-                                onMouseLeave={() => setHoveredPlanet(null)}
-                            >
-                                <td
-                                    className={cn(
-                                        "py-2 px-3 border-b border-antique font-semibold text-sm cursor-pointer",
-                                        planetColors[planet] || 'bg-gray-50',
-                                        pIdx === planets.length - 1 && "rounded-bl-lg"
-                                    )}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        {planet}
-                                        {isStrong(planet) && (
-                                            <span className="w-2 h-2 rounded-full bg-green-500" title="Strong Significator" />
-                                        )}
-                                    </span>
+                    <tbody className="divide-y divide-stone-200 dark:divide-stone-700">
+                        {significations.map((row) => (
+                            <tr key={row.planet} className="hover:bg-amber-50/30 dark:hover:bg-amber-900/10 transition-colors">
+                                <th scope="row" className="px-6 py-4 font-medium text-stone-900 dark:text-stone-100 whitespace-nowrap">
+                                    {row.planet}
+                                </th>
+                                <td className="px-6 py-4 text-center font-medium text-stone-700 dark:text-stone-300">
+                                    {formatHouses(row.levelA)}
                                 </td>
-                                {houses.map((house, hIdx) => {
-                                    const signified = isSignified(planet, house);
-                                    const highlighted = hoveredPlanet === planet || hoveredHouse === house;
-
-                                    return (
-                                        <td
-                                            key={house}
-                                            className={cn(
-                                                "py-2 px-2 text-center border-b border-antique/50 transition-all",
-                                                signified
-                                                    ? "bg-gold-primary/60"
-                                                    : highlighted
-                                                        ? "bg-copper-100"
-                                                        : pIdx % 2 === 0
-                                                            ? "bg-white"
-                                                            : "bg-softwhite",
-                                                pIdx === planets.length - 1 && hIdx === houses.length - 1 && "rounded-br-lg"
-                                            )}
-                                        >
-                                            {signified && (
-                                                <span className="inline-block w-3 h-3 rounded-full bg-gold-dark" />
-                                            )}
-                                        </td>
-                                    );
-                                })}
+                                <td className="px-6 py-4 text-center text-stone-600 dark:text-stone-400">
+                                    {formatHouses(row.levelB)}
+                                </td>
+                                <td className="px-6 py-4 text-center text-stone-600 dark:text-stone-400">
+                                    {formatHouses(row.levelC)}
+                                </td>
+                                <td className="px-6 py-4 text-center text-stone-500 dark:text-stone-500 italic">
+                                    {formatHouses(row.levelD)}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-
-            {/* Summary */}
-            {hoveredPlanet && matrix[hoveredPlanet] && (
-                <div className="p-4 bg-parchment border border-antique rounded-xl animate-in fade-in duration-200">
-                    <p className="text-sm">
-                        <span className="font-serif font-bold text-ink">{hoveredPlanet}</span>
-                        <span className="text-muted"> signifies houses: </span>
-                        <span className="font-semibold text-gold-dark">
-                            {matrix[hoveredPlanet].length > 0
-                                ? matrix[hoveredPlanet].join(', ')
-                                : 'None'}
-                        </span>
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

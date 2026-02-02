@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { KpRulingPlanetsResponse } from '@/types/kp.types';
-import { RefreshCw, Clock, Sun, Moon, Star, Compass } from 'lucide-react';
+import { RefreshCw, Clock } from 'lucide-react';
 
 interface RulingPlanetsWidgetProps {
     data: KpRulingPlanetsResponse['data'] | null;
@@ -13,11 +13,6 @@ interface RulingPlanetsWidgetProps {
     className?: string;
 }
 
-/**
- * Ruling Planets Widget
- * Displays current ruling planets for timing analysis
- * Time-sensitive data with refresh capability
- */
 export default function RulingPlanetsWidget({
     data,
     isLoading,
@@ -25,51 +20,67 @@ export default function RulingPlanetsWidget({
     calculatedAt,
     className,
 }: RulingPlanetsWidgetProps) {
-    const formatTime = (isoString?: string) => {
-        if (!isoString) return '';
-        try {
-            return new Date(isoString).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        } catch {
-            return '';
-        }
+
+    // Helper: Convert Decimal Degrees to DMS String (Sign DD:MM:SS)
+    const toDMS = (decimal: number) => {
+        const signNames = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aq", "Pis"];
+        let lon = decimal;
+        if (lon < 0) lon += 360;
+        lon = lon % 360;
+
+        const signIdx = Math.floor(lon / 30);
+        const sign = signNames[signIdx];
+        const deg = Math.floor(lon % 30);
+        const min = Math.floor((lon % 1) * 60);
+        const sec = Math.round(((lon % 1) * 60 % 1) * 60);
+
+        return `${sign} ${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
     };
 
+    // Helper: Convert Decimal to DMS (Angle only, for Ayanamsa)
+    const toAngleDMS = (val: number) => {
+        const isNeg = val < 0;
+        const absVal = Math.abs(val);
+        const deg = Math.floor(absVal);
+        const min = Math.floor((absVal % 1) * 60);
+        const sec = Math.round(((absVal % 1) * 60 % 1) * 60);
+        return `${isNeg ? '-' : ''}${deg}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    };
+
+    // Calculate Fortuna (Asc + Moon - Sun)
+    const calculateFortuna = () => {
+        if (!data || !data.lagna?.longitude || !data.moon?.longitude || !data.all_planets?.Sun?.longitude) return null;
+        // Formula: Asc + Moon - Sun
+        const asc = Number(data.lagna.longitude); // Ensure number
+        const moon = Number(data.moon.longitude);
+        const sun = Number(data.all_planets.Sun.longitude);
+
+        let fortuna = asc + moon - sun;
+        if (fortuna < 0) fortuna += 360;
+        if (fortuna >= 360) fortuna -= 360;
+
+        return toDMS(fortuna);
+    };
+
+    const fortunaStr = calculateFortuna();
+
     if (!data && !isLoading) {
-        return (
-            <div className="text-center py-8 text-muted text-sm">
-                No ruling planets data available
-            </div>
-        );
+        return null;
     }
 
     return (
-        <div className={cn("bg-gradient-to-br from-copper-900 to-copper-800 rounded-2xl p-6 text-white", className)}>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h3 className="font-serif font-bold text-xl text-amber-100">Ruling Planets</h3>
-                    <p className="text-[10px] text-copper-300 uppercase tracking-widest mt-1">
-                        Current Timing Analysis
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    {calculatedAt && (
-                        <span className="flex items-center gap-1 text-[10px] text-copper-300">
-                            <Clock className="w-3 h-3" />
-                            {formatTime(calculatedAt)}
-                        </span>
-                    )}
+        <div className={cn("w-full bg-white dark:bg-neutral-900 rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm p-6", className)}>
+            {/* Header / Toolbar */}
+            <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-serif font-bold text-red-800 dark:text-red-400 border-b border-red-800/30 pb-1 mb-2 inline-block">
+                    Ruling Planets
+                </h3>
+                <div className="flex items-center gap-2">
                     {onRefresh && (
                         <button
                             onClick={onRefresh}
                             disabled={isLoading}
-                            className={cn(
-                                "p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors",
-                                isLoading && "animate-spin"
-                            )}
+                            className={cn("p-1.5 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500", isLoading && "animate-spin")}
                         >
                             <RefreshCw className="w-4 h-4" />
                         </button>
@@ -78,103 +89,66 @@ export default function RulingPlanetsWidget({
             </div>
 
             {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                    <RefreshCw className="w-6 h-6 animate-spin text-gold-primary" />
-                </div>
+                <div className="py-8 flex justify-center text-gold-primary animate-pulse">Loading...</div>
             ) : data && data.ruling_planets ? (
-                <div className="space-y-4">
-                    {/* Day Lord */}
-                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                        <div className="p-2 bg-orange-500/20 rounded-lg">
-                            <Sun className="w-5 h-5 text-orange-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-serif text-sm">
+                    {/* Left Column: Lords */}
+                    <div className="space-y-1">
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Day lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["1_day_lord"]}</span>
                         </div>
-                        <div className="flex-1">
-                            <p className="text-[10px] text-copper-300 uppercase tracking-wider">Day Lord</p>
-                            <p className="font-serif font-bold text-lg text-amber-100">
-                                {data.ruling_planets.components["1_day_lord"]}
-                            </p>
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Lagna lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["2_lagna_sign_lord"]}</span>
                         </div>
-                    </div>
-
-                    {/* Moon Rulers */}
-                    <div className="p-4 bg-white/5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Moon className="w-4 h-4 text-blue-300" />
-                            <span className="text-xs text-copper-300 uppercase tracking-wider">Moon Position</span>
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Lagna Nak Lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["3_lagna_star_lord"]}</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Sign Lord</p>
-                                <p className="font-serif font-bold text-amber-200">
-                                    {data.ruling_planets.components["5_moon_sign_lord"]}
-                                </p>
-                            </div>
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Star Lord</p>
-                                <p className="font-serif font-bold text-gold-primary">
-                                    {data.ruling_planets.components["6_moon_star_lord"]}
-                                </p>
-                            </div>
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Sub Lord</p>
-                                <p className="font-serif font-bold text-amber-300">
-                                    {data.ruling_planets.components["7_moon_sub_lord"]}
-                                </p>
-                            </div>
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Lagna Sub Lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["4_lagna_sub_lord"]}</span>
+                        </div>
+                        <div className="grid grid-cols-[140px_1fr] mt-2 pt-2">
+                            <span className="text-stone-800 dark:text-stone-300">Moon Rashi lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["5_moon_sign_lord"]}</span>
+                        </div>
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Moon Nak. lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["6_moon_star_lord"]}</span>
+                        </div>
+                        <div className="grid grid-cols-[140px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Moon Sub lord</span>
+                            <span className="font-medium text-stone-900 dark:text-white">: {data.ruling_planets.components["7_moon_sub_lord"]}</span>
                         </div>
                     </div>
 
-                    {/* Lagna Rulers */}
-                    <div className="p-4 bg-white/5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Compass className="w-4 h-4 text-green-300" />
-                            <span className="text-xs text-copper-300 uppercase tracking-wider">Lagna Position</span>
+                    {/* Right Column: Calculations */}
+                    <div className="space-y-1 border-t md:border-t-0 border-stone-200 dark:border-stone-800 pt-4 md:pt-0">
+                        {fortunaStr && (
+                            <div className="grid grid-cols-[120px_1fr]">
+                                <span className="text-stone-800 dark:text-stone-300">Fortuna</span>
+                                <span className="font-medium text-stone-900 dark:text-white">: {fortunaStr}</span>
+                            </div>
+                        )}
+                        <div className="grid grid-cols-[120px_1fr]">
+                            <span className="text-stone-800 dark:text-stone-300">Bal. of dasha</span>
+                            {/* Placeholder or TODO if data unavailable */}
+                            <span className="font-medium text-stone-900 dark:text-white">: -</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Sign Lord</p>
-                                <p className="font-serif font-bold text-amber-200">
-                                    {data.ruling_planets.components["2_lagna_sign_lord"]}
-                                </p>
+                        {data.ayanamsa && (
+                            <div className="grid grid-cols-[120px_1fr]">
+                                <span className="text-stone-800 dark:text-stone-300">KP Ayanamsa</span>
+                                <span className="font-medium text-stone-900 dark:text-white">: {toAngleDMS(data.ayanamsa.value)}</span>
                             </div>
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Star Lord</p>
-                                <p className="font-serif font-bold text-gold-primary">
-                                    {data.ruling_planets.components["3_lagna_star_lord"]}
-                                </p>
-                            </div>
-                            <div className="text-center p-2 bg-white/5 rounded-lg">
-                                <p className="text-[9px] text-copper-400 uppercase">Sub Lord</p>
-                                <p className="font-serif font-bold text-amber-300">
-                                    {data.ruling_planets.components["4_lagna_sub_lord"]}
-                                </p>
-                            </div>
-                        </div>
+                        )}
                     </div>
-
-                    {/* Unique Strong Planets */}
-                    {data.ruling_planets.unique_planets_by_strength && data.ruling_planets.unique_planets_by_strength.length > 0 && (
-                        <div className="p-4 bg-gold-primary/10 rounded-xl border border-gold-primary/30">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Star className="w-4 h-4 text-gold-primary" />
-                                <span className="text-xs text-gold-primary uppercase tracking-wider font-semibold">
-                                    Strong Rulers (By Strength)
-                                </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {data.ruling_planets.unique_planets_by_strength.map((planet, idx) => (
-                                    <span
-                                        key={idx}
-                                        className="px-3 py-1 bg-gold-primary/20 text-gold-primary rounded-full text-sm font-semibold"
-                                    >
-                                        {planet}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             ) : null}
+
+            {/* Border Bottom for separation if needed */}
+            <div className="mt-4 border-b border-stone-800/20 dark:border-stone-100/20 w-1/3"></div>
         </div>
     );
 }
