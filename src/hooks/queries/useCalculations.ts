@@ -20,12 +20,18 @@ export function useDasha(
     });
 }
 
-export function useOtherDasha(clientId: string, type: string, ayanamsa: string) {
+export function useOtherDasha(
+    clientId: string,
+    type: string,
+    ayanamsa: string,
+    level: string = 'mahadasha',
+    context: any = {}
+) {
     return useQuery({
-        queryKey: ['dasha', 'other', clientId, type, ayanamsa],
+        queryKey: ['dasha', 'other', clientId, type, ayanamsa, level, context],
         queryFn: async () => {
             if (!clientId) throw new Error("Client ID required");
-            return await clientApi.generateOtherDasha(clientId, type, ayanamsa);
+            return await clientApi.generateOtherDasha(clientId, type, ayanamsa, level, context);
         },
         enabled: !!clientId && type !== 'vimshottari',
         staleTime: 1000 * 60 * 60, // 1 hour

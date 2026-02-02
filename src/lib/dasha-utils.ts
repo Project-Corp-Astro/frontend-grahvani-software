@@ -36,6 +36,7 @@ export function getSublevels(node: any): any[] | null {
     const sublevels = node.sublevels ||
         node.antardashas ||
         node.pratyantardashas ||
+        node.pratyantara_dashas ||
         node.sookshma_dashas ||
         node.sookshmadashas ||
         node.prandashas ||
@@ -161,8 +162,12 @@ export function extractPeriodsArray(data: any): any[] {
             'periods',
             'tribhagi_dashas_janma',
             'panchottari_dasha', // Add to keys to try as well
-            'yoginis',
-            'chara_dashas',
+            'ashtottari_dasha',
+            'ashtottari_antar',
+            'ashtottari_pratyantardasha',
+            'pratyantardashas',
+            'pratyantara_dashas',
+            'sookshma_dashas',
             'data', // Check nested data objects
             'dasha_list'
         ];
@@ -490,7 +495,7 @@ export function standardizeDashaLevels(periods: any[], parentStartDate?: string)
         if (eDate) currentChainStart = eDate;
 
         // Check if this period has nested sub-levels for drill-down
-        const sublevels = p.antardashas || p.pratyantardashas || p.sookshma_dashas || p.pran_dashas || p.sublevels;
+        const sublevels = p.antardashas || p.pratyantardashas || p.pratyantara_dashas || p.sookshma_dashas || p.pran_dashas || p.sublevels;
         const canDrillFurther = Array.isArray(sublevels) && sublevels.length > 0;
 
         // Standardize Duration Display (if engine provides duration_years)
