@@ -19,7 +19,7 @@ import {
     BhavaDetailsTable,
 } from '@/components/kp';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
-import { parseChartData } from '@/lib/chart-helpers';
+import { parseChartData, signNameToId } from '@/lib/chart-helpers';
 import { cn } from '@/lib/utils';
 import {
     Loader2,
@@ -56,30 +56,96 @@ export default function KpDashboardPage() {
 
     // Queries - planetsCusps is always needed for the chart
     const planetsCuspsQuery = useKpPlanetsCusps(clientId);
-    const significationsQuery = useKpSignifications(clientId, { enabled: activeTab === 'significations' });
+    const significationsQuery = useKpSignifications(clientId, { enabled: activeTab === 'significations' && !planetsCuspsQuery.data?.data?.significators });
     const bhavaDetailsQuery = useKpBhavaDetails(clientId, { enabled: activeTab === 'bhava-details' });
     const rulingPlanetsQuery = useKpRulingPlanets(clientId, { enabled: activeTab === 'ruling-planets' });
     const horaryMutation = useKpHoraryMutation();
 
-    // D1 Data from processedCharts (fallback/main source)
+    // D1 Data for Visual Chart - Prioritize live KP data
     const d1Data = React.useMemo(() => {
+        // 1. Try Live KP Data
+        if (planetsCuspsQuery.data?.data) {
+            const { ascendant, planets } = planetsCuspsQuery.data.data;
+            let ascSignId = 1;
+
+            // Parse Ascendant
+            if (ascendant) {
+                const signName = ascendant.sign;
+                // Normalize sign name (e.g. "Aries" -> "Aries")
+                const normalized = signName.charAt(0).toUpperCase() + signName.slice(1).toLowerCase();
+                ascSignId = signNameToId[normalized] || 1;
+            }
+
+            // Parse Planets
+            const visualPlanets: any[] = [];
+            // Handle Record<string, Planet>
+            if (planets && !Array.isArray(planets)) {
+                Object.entries(planets).forEach(([name, p]) => {
+                    if (['Uranus', 'Neptune', 'Pluto'].includes(name)) return; // Exclude outer
+
+                    const signName = p.sign;
+                    const normalizedSign = signName.charAt(0).toUpperCase() + signName.slice(1).toLowerCase();
+
+                    visualPlanets.push({
+                        name: name.substring(0, 2), // Chart expects short names like 'Su', 'Mo'
+                        signId: signNameToId[normalizedSign] || 1,
+                        degree: p.longitude?.split('°')[0] + '°' || "0°", // Visual chart expects string
+                        isRetro: p.is_retro || false,
+                        house: p.house
+                    });
+                });
+            }
+
+            // Add Ascendant as a planet point 'As'
+            visualPlanets.push({
+                name: 'As',
+                signId: ascSignId,
+                degree: ascendant?.longitude?.split('°')[0] + '°' || "0°",
+                isRetro: false,
+                house: 1
+            });
+
+            return { planets: visualPlanets, ascendant: ascSignId };
+        }
+
+        // 2. Fallback to processedCharts
         const d1Kp = processedCharts['D1_kp'];
         if (d1Kp?.chartData) {
             const parsed = parseChartData(d1Kp.chartData);
-            // Filter out outer planets (Uranus, Neptune, Pluto)
             parsed.planets = parsed.planets.filter(p =>
                 !['Uranus', 'Neptune', 'Pluto', 'Ur', 'Ne', 'Pl'].some(n => p.name.includes(n))
             );
             return parsed;
         }
         return { planets: [], ascendant: 1 };
-    }, [processedCharts]);
+    }, [planetsCuspsQuery.data, processedCharts]);
 
     // KP Cusp Data - fallback to D1_kp houses if API fails
+    // Helper to parse "268° 5' 50\"" to decimal
+    const parseDms = (dms: string): number => {
+        if (!dms) return 0;
+        const match = dms.match(/(\d+)[°\s]+(\d+)['\s]+(\d+)/);
+        if (match) {
+            return parseFloat(match[1]) + parseFloat(match[2]) / 60 + parseFloat(match[3]) / 3600;
+        }
+        return parseFloat(dms) || 0;
+    };
+
+    // KP Cusp Data - Transform API object to Array
     const cuspData = React.useMemo(() => {
-        // Try real-time API data first
-        if (planetsCuspsQuery.data?.data?.cusps) {
-            return planetsCuspsQuery.data.data.cusps;
+        const rawCusps = planetsCuspsQuery.data?.data?.house_cusps;
+        if (rawCusps) {
+            return Object.entries(rawCusps).map(([key, c]) => ({
+                cusp: parseInt(key),
+                sign: c.sign,
+                signId: signNameToId[c.sign] || 1,
+                degree: parseDms(c.longitude),
+                degreeFormatted: c.longitude, // Use the provided DMS string
+                nakshatra: c.nakshatra,
+                nakshatraLord: c.star_lord, // Map JSON star_lord -> nakshatraLord
+                subLord: c.sub_lord,      // Map JSON sub_lord -> subLord
+                subSubLord: c.sub_sub_lord || '-'
+            })).sort((a, b) => a.cusp - b.cusp);
         }
 
         // Fallback to D1_kp houses
@@ -87,13 +153,13 @@ export default function KpDashboardPage() {
         if (d1Kp?.chartData) {
             console.log('[KP Cusps] Using D1_kp fallback');
             const data = d1Kp.chartData.data || d1Kp.chartData;
-            const houses = data.houses || data.observations || []; // Handle different formats
+            const houses = data.houses || data.observations || [];
 
             if (Array.isArray(houses) && houses.length > 0) {
                 return houses.map((h: any) => ({
                     cusp: h.house || h.house_number,
                     sign: h.sign || h.sign_name,
-                    signId: h.sign_id || 1, // Add signId to satisfy interface
+                    signId: h.sign_id || 1,
                     degree: h.degree || h.longitude,
                     degreeFormatted: h.degreeFormatted,
                     nakshatra: h.nakshatra || '-',
@@ -102,55 +168,39 @@ export default function KpDashboardPage() {
                     subSubLord: h.sub_sub_lord || '-'
                 }));
             }
-
-            // If explicit houses missing but we have Ascendant, generate Equal Houses (better than nothing)
-            const asc = data.ascendant || data.natal_ascendant;
-            if (asc) {
-                const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-                let ascSignId = 1;
-
-                if (typeof asc.sign === 'number') ascSignId = asc.sign;
-                else if (typeof asc.signId === 'number') ascSignId = asc.signId;
-                else if (typeof asc.sign_id === 'number') ascSignId = asc.sign_id;
-
-                const ascDeg = typeof asc.degree === 'number' ? asc.degree : parseFloat(asc.degree) || 0;
-
-                const generated = [];
-                for (let i = 0; i < 12; i++) {
-                    const houseNum = i + 1;
-                    const currentSignId = ((ascSignId - 1 + i) % 12) + 1;
-
-                    generated.push({
-                        cusp: houseNum,
-                        sign: signs[currentSignId - 1],
-                        signId: currentSignId,
-                        degree: ascDeg,
-                        degreeFormatted: `${ascDeg.toFixed(2)}°`,
-                        nakshatra: '-',
-                        nakshatraLord: '-',
-                        subLord: '-',
-                        subSubLord: '-'
-                    });
-                }
-                return generated;
-            }
         }
-
         return [];
     }, [planetsCuspsQuery.data, processedCharts]);
 
-    // KP Planetary Data - fallback to D1_kp planets if API fails
+    // KP Planetary Data - Transform API object to Array
     const planetaryData = React.useMemo(() => {
-        if (planetsCuspsQuery.data?.data?.planets) {
-            return planetsCuspsQuery.data.data.planets;
+        const rawPlanets = planetsCuspsQuery.data?.data?.planets;
+        // Check if it's the new Record format (check if keys are strings like "Sun")
+        if (rawPlanets && !Array.isArray(rawPlanets)) {
+            return Object.entries(rawPlanets).map(([name, p]) => ({
+                name: name,
+                fullName: name,
+                sign: p.sign,
+                signId: signNameToId[p.sign] || 1,
+                degree: parseDms(p.longitude),
+                degreeFormatted: p.longitude, // Use provided DMS
+                house: p.house,
+                nakshatra: p.nakshatra,
+                nakshatraLord: p.star_lord, // Map JSON star_lord -> nakshatraLord
+                subLord: p.sub_lord,      // Map JSON sub_lord -> subLord
+                subSubLord: p.sub_sub_lord || '-',
+                isRetrograde: p.is_retro || false
+            }));
+        }
+
+        // Handle Array format (legacy or fallback)
+        if (Array.isArray(rawPlanets)) {
+            return rawPlanets;
         }
 
         const d1Kp = processedCharts['D1_kp'];
         if (d1Kp?.chartData) {
             const data = d1Kp.chartData.data || d1Kp.chartData;
-            // Re-use parseChartData or similar logic to map to KpPlanet
-            // Using parseKpChartData logic but mapping to KpPlanet interface
-            // This is a quick map, detailed KP fields like subLord will be empty
             const planetsList = data.planets || data.planetary_positions || [];
             if (Array.isArray(planetsList)) {
                 return planetsList.map((p: any) => ({
@@ -172,17 +222,58 @@ export default function KpDashboardPage() {
         return [];
     }, [planetsCuspsQuery.data, processedCharts]);
 
+    // KP Signification Data - Transform API object (House-view) to Component Array (Planet-view)
+    const significationData = React.useMemo(() => {
+        const rawSignificators = planetsCuspsQuery.data?.data?.significators;
+        if (rawSignificators) {
+            const planetMap: Record<string, Set<number>> = {};
+            const planetStrong: Record<string, boolean> = {};
+
+            // Initialize planets
+            ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].forEach(p => {
+                planetMap[p] = new Set();
+            });
+
+            // Iterate houses (keys "1", "2"...)
+            Object.entries(rawSignificators).forEach(([houseKey, levels]: [string, any]) => {
+                const houseNum = parseInt(houseKey);
+                if (isNaN(houseNum)) return;
+
+                // Levels A, B, C, D
+                Object.entries(levels).forEach(([level, planets]: [string, any]) => {
+                    if (Array.isArray(planets)) {
+                        planets.forEach((planetName: string) => {
+                            // Handle basic name matching
+                            // The API returns "Sun", "Moon" etc. matching our keys
+                            if (planetMap[planetName]) {
+                                planetMap[planetName].add(houseNum);
+                                // A and B are considered strong significators
+                                if (level === 'A' || level === 'B') {
+                                    planetStrong[planetName] = true;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            return Object.entries(planetMap).map(([planet, housesSet]) => ({
+                planet,
+                houses: Array.from(housesSet).sort((a, b) => a - b),
+                strong: planetStrong[planet] || false
+            }));
+        }
+        return [];
+    }, [planetsCuspsQuery.data]);
+
     // KP Bhava Data
     // We now use the raw API response directly for the table
     const bhavaDetails = React.useMemo(() => {
-        console.log('Bhava Query Status:', bhavaDetailsQuery.status);
-        console.log('Bhava Query Data:', bhavaDetailsQuery.data);
-        console.log('Bhava Query Error:', bhavaDetailsQuery.error);
         if (bhavaDetailsQuery.data?.data?.bhava_details) {
             return bhavaDetailsQuery.data.data.bhava_details;
         }
         return {};
-    }, [bhavaDetailsQuery.data, bhavaDetailsQuery.status, bhavaDetailsQuery.error]);
+    }, [bhavaDetailsQuery.data]);
     if (ayanamsa !== 'KP') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -301,12 +392,13 @@ export default function KpDashboardPage() {
                             <h3 className="font-serif font-bold text-lg text-ink">Signification Matrix</h3>
                             <p className="text-sm text-muted mt-1">Which planets signify which houses - the core of KP prediction</p>
                         </div>
-                        {significationsQuery.isLoading ? (
+                        {/* Show loading ONLY if we don't have cached data from planets-cusps AND query is loading */}
+                        {(significationsQuery.isLoading && !significationData.length) ? (
                             <div className="flex items-center justify-center py-12">
                                 <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
                             </div>
-                        ) : significationsQuery.data?.data?.significations ? (
-                            <SignificationMatrix significations={significationsQuery.data.data.significations} />
+                        ) : (significationsQuery.data?.data?.significations || significationData.length > 0) ? (
+                            <SignificationMatrix significations={significationsQuery.data?.data?.significations || significationData} />
                         ) : (
                             <p className="text-muted text-center py-8">No signification data available</p>
                         )}

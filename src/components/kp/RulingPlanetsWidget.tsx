@@ -81,7 +81,7 @@ export default function RulingPlanetsWidget({
                 <div className="flex items-center justify-center py-8">
                     <RefreshCw className="w-6 h-6 animate-spin text-gold-primary" />
                 </div>
-            ) : data && (
+            ) : data && data.ruling_planets ? (
                 <div className="space-y-4">
                     {/* Day Lord */}
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
@@ -90,7 +90,9 @@ export default function RulingPlanetsWidget({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] text-copper-300 uppercase tracking-wider">Day Lord</p>
-                            <p className="font-serif font-bold text-lg text-amber-100">{data.dayLord}</p>
+                            <p className="font-serif font-bold text-lg text-amber-100">
+                                {data.ruling_planets.components["1_day_lord"]}
+                            </p>
                         </div>
                     </div>
 
@@ -103,15 +105,21 @@ export default function RulingPlanetsWidget({
                         <div className="grid grid-cols-3 gap-3">
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Sign Lord</p>
-                                <p className="font-serif font-bold text-amber-200">{data.moonSignLord}</p>
+                                <p className="font-serif font-bold text-amber-200">
+                                    {data.ruling_planets.components["5_moon_sign_lord"]}
+                                </p>
                             </div>
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Star Lord</p>
-                                <p className="font-serif font-bold text-gold-primary">{data.moonStarLord}</p>
+                                <p className="font-serif font-bold text-gold-primary">
+                                    {data.ruling_planets.components["6_moon_star_lord"]}
+                                </p>
                             </div>
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Sub Lord</p>
-                                <p className="font-serif font-bold text-amber-300">{data.moonSubLord}</p>
+                                <p className="font-serif font-bold text-amber-300">
+                                    {data.ruling_planets.components["7_moon_sub_lord"]}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -125,42 +133,48 @@ export default function RulingPlanetsWidget({
                         <div className="grid grid-cols-3 gap-3">
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Sign Lord</p>
-                                <p className="font-serif font-bold text-amber-200">{data.lagnaSignLord}</p>
+                                <p className="font-serif font-bold text-amber-200">
+                                    {data.ruling_planets.components["2_lagna_sign_lord"]}
+                                </p>
                             </div>
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Star Lord</p>
-                                <p className="font-serif font-bold text-gold-primary">{data.lagnaStarLord}</p>
+                                <p className="font-serif font-bold text-gold-primary">
+                                    {data.ruling_planets.components["3_lagna_star_lord"]}
+                                </p>
                             </div>
                             <div className="text-center p-2 bg-white/5 rounded-lg">
                                 <p className="text-[9px] text-copper-400 uppercase">Sub Lord</p>
-                                <p className="font-serif font-bold text-amber-300">{data.lagnaSubLord}</p>
+                                <p className="font-serif font-bold text-amber-300">
+                                    {data.ruling_planets.components["4_lagna_sub_lord"]}
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Common Ruling Planets */}
-                    {data.rulingPlanets && data.rulingPlanets.length > 0 && (
+                    {/* Unique Strong Planets */}
+                    {data.ruling_planets.unique_planets_by_strength && data.ruling_planets.unique_planets_by_strength.length > 0 && (
                         <div className="p-4 bg-gold-primary/10 rounded-xl border border-gold-primary/30">
                             <div className="flex items-center gap-2 mb-3">
                                 <Star className="w-4 h-4 text-gold-primary" />
                                 <span className="text-xs text-gold-primary uppercase tracking-wider font-semibold">
-                                    Common Rulers (For Timing)
+                                    Strong Rulers (By Strength)
                                 </span>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {data.rulingPlanets.map((rp, idx) => (
+                                {data.ruling_planets.unique_planets_by_strength.map((planet, idx) => (
                                     <span
                                         key={idx}
                                         className="px-3 py-1 bg-gold-primary/20 text-gold-primary rounded-full text-sm font-semibold"
                                     >
-                                        {rp.planet}
+                                        {planet}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     )}
                 </div>
-            )}
+            ) : null}
         </div>
     );
 }

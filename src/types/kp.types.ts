@@ -48,32 +48,63 @@ export interface KpCusp {
 /**
  * Response from /api/kp/planets-cusps
  */
+/**
+ * Raw KP Planet from API
+ */
+export interface KpPlanetRaw {
+    house: number;
+    longitude: string;
+    nakshatra: string;
+    sign: string;
+    star_lord: string;
+    sub_lord: string;
+    sub_sub_lord?: string; // Optional
+    is_retro?: boolean;
+}
+
+/**
+ * Raw KP Cusp from API
+ */
+export interface KpCuspRaw {
+    longitude: string;
+    nakshatra: string;
+    sign: string;
+    star_lord: string;
+    sub_lord: string;
+    sub_sub_lord?: string; // Optional
+}
+
+/**
+ * Response from /api/kp/planets-cusps
+ */
 export interface KpPlanetsCuspsResponse {
     success: boolean;
     data: {
         ascendant: {
+            longitude: string;
             sign: string;
-            signId: number;
-            degree: number;
-            nakshatra: string;
-            nakshatraLord: string;
-            subLord: string;
         };
-        planets: KpPlanet[];
-        cusps: KpCusp[];
+        house_cusps: Record<string, KpCuspRaw>;
+        planets: Record<string, KpPlanetRaw>;
+        significators?: Record<string, any>;
+        metadata?: any;
+        user_name?: string;
     };
     cached: boolean;
     calculatedAt: string;
 }
 
 /**
- * Ruling Planet details
+ * KP Ruling Planets Components
  */
-export interface RulingPlanet {
-    type: string;
-    planet: string;
-    sign?: string;
-    nakshatra?: string;
+export interface RulingPlanetsComponents {
+    "1_day_lord": string;
+    "2_lagna_sign_lord": string;
+    "3_lagna_star_lord": string;
+    "4_lagna_sub_lord": string;
+    "5_moon_sign_lord": string;
+    "6_moon_star_lord": string;
+    "7_moon_sub_lord": string;
 }
 
 /**
@@ -82,14 +113,29 @@ export interface RulingPlanet {
 export interface KpRulingPlanetsResponse {
     success: boolean;
     data: {
-        dayLord: string;
-        moonSignLord: string;
-        moonStarLord: string;
-        moonSubLord: string;
-        lagnaSignLord: string;
-        lagnaStarLord: string;
-        lagnaSubLord: string;
-        rulingPlanets: RulingPlanet[];
+        ruling_planets: {
+            components: RulingPlanetsComponents;
+            strength_order_explanation: Record<string, string>;
+            unique_planets_by_strength: string[];
+        };
+        lagna: {
+            formatted_longitude: string;
+            sign: string;
+            sign_lord: string;
+            nakshatra_lord: string;
+            sub_lord: string;
+            // ... other fields if needed
+        };
+        moon: {
+            formatted_longitude: string;
+            sign: string;
+            sign_lord: string;
+            nakshatra_lord: string;
+            sub_lord: string;
+        };
+        all_planets: Record<string, KpPlanetRaw>;
+        dayLord?: string; // Optional: derived or extra
+        user_name?: string;
     };
     cached: boolean;
     calculatedAt: string;
