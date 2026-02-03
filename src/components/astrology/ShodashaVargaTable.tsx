@@ -49,7 +49,24 @@ const getAbbr = (sign: string) => SIGN_ABBR[sign] || sign;
 export default function ShodashaVargaTable({ data, className }: ShodashaVargaTableProps) {
     if (!data) return null;
 
-    const summary = data.shodasha_varga_summary || data;
+    // Handle standard Lahiri format (shodasha_varga_summary) AND Raman/KP format (shodasha_varga_signs)
+    const summary = data.shodasha_varga_summary || data.shodasha_varga_signs || data;
+
+    // Helper to safely extract sign name from string or object { D1: { sign: "Aries" } }
+    const getSignName = (planetData: any, vargaKey: string): string => {
+        if (!planetData) return '-';
+
+        const value = planetData[vargaKey];
+        if (!value) return '-';
+
+        // Check if value is object with 'sign' property (Raman/KP format)
+        if (typeof value === 'object' && value.sign) {
+            return value.sign;
+        }
+
+        // Assume string (Lahiri format)
+        return String(value);
+    };
 
     return (
         <div className={cn("mx-auto max-w-6xl overflow-x-auto rounded-[1.5rem] border border-antique bg-white shadow-xl", className)}>
@@ -84,13 +101,13 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
                                 {varga.name}
                             </td>
                             {PLANET_ORDER.map(p => {
-                                const sign = summary[p]?.[varga.key] || '-';
+                                const signName = getSignName(summary[p], varga.key);
                                 return (
                                     <td
                                         key={p}
                                         className="p-1 text-center text-xs font-medium text-copper-950 border-r border-antique/20 last:border-r-0"
                                     >
-                                        {getAbbr(sign)}
+                                        {getAbbr(signName)}
                                     </td>
                                 );
                             })}
