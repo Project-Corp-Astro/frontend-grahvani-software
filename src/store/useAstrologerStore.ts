@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type Ayanamsa = "Lahiri" | "Raman" | "KP" | "Tropical";
+export type Ayanamsa = "Lahiri" | "Raman" | "KP" | "Tropical" | "Yukteswar";
 export type ChartStyle = "North Indian" | "South Indian";
 
 interface AstrologerSettings {

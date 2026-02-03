@@ -158,6 +158,16 @@ export default function VedicDashasPage() {
 
     const allowMathematicalDrillDown = isVimshottari && !isTribhagi && !isShodashottari && !isDwadashottari && !isPanchottari && !isChaturshitisama && !isSatabdika && !isDwisaptati && !isShasthihayani && !isShattrimshatsama && !isAshtottari;
 
+    // Effect: Reset to Vimshottari if Raman/KP is selected
+    useEffect(() => {
+        if ((settings.ayanamsa === 'Raman' || settings.ayanamsa === 'KP') && selectedDashaType !== 'vimshottari') {
+            setSelectedDashaType('vimshottari');
+            setCurrentLevel(0);
+            setSelectedPath([]);
+            setDashaTree([]);
+        }
+    }, [settings.ayanamsa, selectedDashaType]);
+
     // Effect: Initialize and Analyze Tree
     useEffect(() => {
         const dashaData = isVimshottari ? treeResponse?.data : otherData?.data;
@@ -498,7 +508,12 @@ export default function VedicDashasPage() {
                                         onChange={(e) => handleSystemChange(e.target.value)}
                                         className="appearance-none bg-[#FAF7F2] border border-[#D08C60]/30 rounded-xl px-4 py-2 pr-10 text-[#3E2A1F] font-medium focus:outline-none focus:ring-2 focus:ring-[#D08C60]/40 cursor-pointer min-w-[200px]"
                                     >
-                                        {DASHA_SYSTEMS.map((sys, idx) => (
+                                        {DASHA_SYSTEMS.filter(sys => {
+                                            if (settings.ayanamsa === 'Raman' || settings.ayanamsa === 'KP') {
+                                                return sys.id === 'vimshottari';
+                                            }
+                                            return true;
+                                        }).map((sys, idx) => (
                                             <option key={sys.id} value={sys.id}>
                                                 {idx + 1}. {sys.name} {sys.years > 0 ? `(${sys.years} yrs)` : ''}
                                             </option>

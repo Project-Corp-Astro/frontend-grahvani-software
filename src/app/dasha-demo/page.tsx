@@ -237,7 +237,7 @@ const isCurrentPeriod = (start: string, end: string) => {
 const VIMSHOTTARI_DATA = {
     mahadashas: (() => {
         // Safe access to raw data
-        const rawData = (rawDashaData as VimshottariDataType);
+        const rawData = (rawDashaData as unknown as VimshottariDataType);
         if (!rawData || !Array.isArray(rawData.mahadashas)) return [];
 
         let currentStart = '';

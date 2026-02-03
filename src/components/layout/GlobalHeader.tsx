@@ -243,6 +243,7 @@ function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         { id: 'Lahiri', label: 'Lahiri (Chitra Paksha)', desc: 'Most widely used in Vedic Astrology' },
         { id: 'KP', label: 'KP (Krishnamurti)', desc: 'Preferred for Stellar/Nakshatra precision' },
         { id: 'Raman', label: 'Raman', desc: 'BV Raman traditional ayanamsa' },
+        { id: 'Yukteswar', label: 'Sri Yukteswar', desc: 'Galactic Center based precision' },
         { id: 'Tropical', label: 'Tropical (Sayana)', desc: 'Western Zodiac aligned' },
     ];
 

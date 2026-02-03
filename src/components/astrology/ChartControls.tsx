@@ -65,6 +65,7 @@ export default function ChartControls() {
                             { value: 'Lahiri', label: 'Lahiri (Chitrapaksha)' },
                             { value: 'Raman', label: 'Raman' },
                             { value: 'KP', label: 'KP' },
+                            { value: 'Yukteswar', label: 'Sri Yukteswar' },
                         ]}
                     />
                     <p className="text-[9px] text-[#9C7A2F]/60 mt-2 italic">* This updates your global astrologer preferences.</p>

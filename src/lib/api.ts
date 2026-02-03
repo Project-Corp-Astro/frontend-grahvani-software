@@ -482,6 +482,24 @@ export const clientApi = {
                 hasCompatibility: false,
                 hasHorary: true,
             },
+            yukteswar: {
+                charts: {
+                    divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
+                    special: ['moon_chart', 'sun_chart', 'equal_chart', 'sripathi_bhava', 'kp_bhava', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'karkamsha_d1', 'karkamsha_d9'],
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                },
+                features: {
+                    dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana', 'tribhagi', 'yogini'],
+                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    compatibility: [],
+                    numerology: []
+                },
+                hasDivisional: true,
+                hasAshtakavarga: true,
+                hasNumerology: false,
+                hasCompatibility: false,
+                hasHorary: false,
+            },
         };
         return CAPABILITIES[system.toLowerCase()] || CAPABILITIES.lahiri;
     },
