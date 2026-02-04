@@ -75,11 +75,12 @@ export default function AshtakavargaPage() {
         const sarvaKey = `ashtakavarga_sarva_${activeSystem}`;
         const bhinnaKey = `ashtakavarga_bhinna_${activeSystem}`;
         const shodashaKey = `ashtakavarga_shodasha_${activeSystem}`;
+        const shodashaKpKey = `shodasha_varga_signs_${activeSystem}`;
         const d1Key = `D1_${activeSystem}`;
 
         const sarvaRaw = processedCharts[sarvaKey]?.chartData;
         const bhinnaRaw = processedCharts[bhinnaKey]?.chartData;
-        const shodashaRaw = processedCharts[shodashaKey]?.chartData;
+        const shodashaRaw = processedCharts[shodashaKey]?.chartData || processedCharts[shodashaKpKey]?.chartData;
         const d1Raw = processedCharts[d1Key]?.chartData;
 
         // Still loading if context is empty and client is active

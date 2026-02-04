@@ -23,7 +23,6 @@ import SatabdikaDasha from '@/components/astrology/SatabdikaDasha';
 import DwisaptatiDasha from '@/components/astrology/DwisaptatiDasha';
 import ShasthihayaniDasha from '@/components/astrology/ShasthihayaniDasha';
 import ShattrimshatsamaDasha from '../../../components/astrology/ShattrimshatsamaDasha';
-import KpVimshottariDasha from '@/components/astrology/KpVimshottariDasha';
 import {
     findActiveDashaPath,
     processDashaResponse,
@@ -676,10 +675,6 @@ export default function VedicDashasPage() {
                                             />
                                         </div>
 
-                                    ) : (isVimshottari && settings.ayanamsa.toLowerCase() === 'kp') ? (
-                                        <div className="p-1">
-                                            <KpVimshottariDasha initialPeriods={dashaTree} />
-                                        </div>
                                     ) : (
                                         <table className="w-full">
 
