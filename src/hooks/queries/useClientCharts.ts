@@ -13,25 +13,26 @@ export function useClientCharts(clientId?: string) {
             return await clientApi.getCharts(clientId);
         },
         enabled: !!clientId,
-        staleTime: 5000,
+        staleTime: 60000, // Keep cache for 1 min
+        refetchInterval: false, // DISABLED for performance audit (Phase 1 Fix)
+        /*
         refetchInterval: (query) => {
             const data = query.state.data as any;
-            // If no data, poll fast (3s)
-            if (!data || Object.keys(data).length === 0) return 3000;
 
-            // If we have some data, check if we have the "complete" set.
-            // A full profile typically has 15+ charts (D1-D60 + special).
-            // If we have fewer than 5, we are definitely still generating.
-            if (Object.keys(data).length < 5) return 3000;
+            // Optimization: Stop polling if we have > 20 charts (likely complete)
+            if (data && Object.keys(data).length > 20) return false;
 
-            // Explicitly check for Transit chart (D1 is usually first)
-            // If D1 exists but Transit is missing, keep polling (slower, 5s)
-            // We check for any transit key to be safe
+            // Optimization: If deep dasha or complex charts are missing, poll slower (15s)
+            // If very few charts (fresh profile), poll 5s.
+            if (!data || Object.keys(data).length < 5) return 5000;
+
+            // Check for Transit chart (usually last to generate)
             const hasTransit = Object.keys(data).some(k => k.includes('transit'));
-            if (!hasTransit) return 5000;
+            if (!hasTransit) return 10000; // Poll every 10s instead of 5s
 
             return false;
         },
+        */
         select: (data) => {
             if (!Array.isArray(data)) return {};
 

@@ -10,8 +10,9 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
                 defaultOptions: {
                     queries: {
                         staleTime: 60 * 1000 * 60, // 1 hour default stale time as per architecture
-                        retry: 1,
-                        refetchOnWindowFocus: false,
+                        retry: 3, // Retry failed queries 3 times
+                        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+                        refetchOnWindowFocus: false, // Prevent aggressive refetching on tab switch
                     },
                 },
             })

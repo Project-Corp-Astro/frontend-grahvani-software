@@ -175,32 +175,61 @@ async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promis
         ...((options.headers as any) || {}),
     };
 
-    const response = await fetch(url, { ...options, headers });
+    // Retry logic with exponential backoff
+    const maxRetries = 3;
+    let attempt = 0;
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(url, { ...options, headers });
 
-        // Handle Session Expiration (401)
-        if (response.status === 401 && typeof window !== 'undefined') {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            // Redirect to login if not already there
-            if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login?expired=true';
+            if (!response.ok) {
+                // Should retry on 5xx server errors or 429 too many requests
+                if (response.status >= 500 || response.status === 429) {
+                    if (attempt < maxRetries - 1) {
+                        const delay = Math.pow(2, attempt) * 1000;
+                        await new Promise(r => setTimeout(r, delay));
+                        attempt++;
+                        continue;
+                    }
+                }
+
+                const errorData = await response.json().catch(() => ({}));
+
+                // Handle Session Expiration (401)
+                if (response.status === 401 && typeof window !== 'undefined') {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    // Redirect to login if not already there
+                    if (!window.location.pathname.includes('/login')) {
+                        window.location.href = '/login?expired=true';
+                    }
+                }
+
+                const errorMessage = errorData.error?.message || errorData.message || `API Error: ${response.status}`;
+                const errorDetails = errorData.error?.details ? ` - ${JSON.stringify(errorData.error.details)}` : '';
+                throw new Error(`${errorMessage}${errorDetails}`);
             }
+
+            // Handle 204 No Content
+            if (response.status === 204) {
+                return {} as T;
+            }
+
+            return response.json();
+        } catch (error: any) {
+            // Network errors (fetch throws) should be retried
+            const isNetworkError = error.message === 'Failed to fetch' || error.message.includes('Network request failed');
+            if (isNetworkError && attempt < maxRetries - 1) {
+                const delay = Math.pow(2, attempt) * 1000;
+                await new Promise(r => setTimeout(r, delay));
+                attempt++;
+                continue;
+            }
+            throw error;
         }
-
-        const errorMessage = errorData.error?.message || errorData.message || `API Error: ${response.status}`;
-        const errorDetails = errorData.error?.details ? ` - ${JSON.stringify(errorData.error.details)}` : '';
-        throw new Error(`${errorMessage}${errorDetails}`);
     }
-
-    // Handle 204 No Content
-    if (response.status === 204) {
-        return {} as T;
-    }
-
-    return response.json();
+    throw new Error('Max retries exceeded'); // Should not reach here
 }
 
 // ============ AUTH API ============

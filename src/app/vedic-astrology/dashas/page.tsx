@@ -23,6 +23,7 @@ import SatabdikaDasha from '@/components/astrology/SatabdikaDasha';
 import DwisaptatiDasha from '@/components/astrology/DwisaptatiDasha';
 import ShasthihayaniDasha from '@/components/astrology/ShasthihayaniDasha';
 import ShattrimshatsamaDasha from '../../../components/astrology/ShattrimshatsamaDasha';
+import KpVimshottariDasha from '@/components/astrology/KpVimshottariDasha';
 import {
     findActiveDashaPath,
     processDashaResponse,
@@ -674,8 +675,14 @@ export default function VedicDashasPage() {
                                                 isApplicable={(otherData?.data?.mahadashas as any)?.meta?.is_applicable !== false}
                                             />
                                         </div>
+
+                                    ) : (isVimshottari && settings.ayanamsa.toLowerCase() === 'kp') ? (
+                                        <div className="p-1">
+                                            <KpVimshottariDasha initialPeriods={dashaTree} />
+                                        </div>
                                     ) : (
                                         <table className="w-full">
+
                                             <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
                                                 <tr>
                                                     <th className="px-6 py-4 text-left">Planet</th>
