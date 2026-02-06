@@ -30,7 +30,7 @@ export default function SectionSidebar({ title, basePath, items }: SectionSideba
         >
 
             <div className="mb-6 px-2">
-                <h3 className="text-xs font-bold text-[#D08C60] uppercase tracking-widest font-serif">
+                <h3 className="text-xs font-bold text-[#D08C60] tracking-widest font-serif">
                     {title}
                 </h3>
             </div>
@@ -51,8 +51,8 @@ export default function SectionSidebar({ title, basePath, items }: SectionSideba
                             className={cn(
                                 "flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group",
                                 isActive
-                                    ? "bg-[#FEFAEA]/10 text-white font-bold shadow-sm border border-[#D08C60]/50"
-                                    : "text-[#FEFAEA]/70 hover:bg-[#FEFAEA]/5 hover:text-white"
+                                    ? "bg-[#FEFAEA]/10 text-[#FFD27D] font-bold shadow-sm border border-[#D08C60]/50"
+                                    : "text-white hover:bg-[#FEFAEA]/5 hover:text-[#FFD27D]"
                             )}
                         >
                             <div className="flex items-center gap-3">

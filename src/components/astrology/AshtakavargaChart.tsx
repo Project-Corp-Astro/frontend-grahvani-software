@@ -96,7 +96,7 @@ export default function AshtakavargaChart({
                             fontFamily="serif"
                             fontWeight="bold"
                             fill="#3D2618"
-                            fillOpacity="0.7"
+                            fillOpacity="1.0"
                             textAnchor="middle"
                             dominantBaseline="central"
                             className="select-none"

@@ -57,7 +57,7 @@ export default function PlanetComparisonTable({
                                     {pA ? (
                                         <span className="flex items-center gap-2">
                                             <span>{ZODIAC_SIGNS[pA.signId - 1]}</span>
-                                            <span className="opacity-70 text-xs">({pA.degree})</span>
+                                            <span className="text-xs">({pA.degree})</span>
                                             {pA.isRetro && <span className="text-xs text-red-600 font-bold">(R)</span>}
                                         </span>
                                     ) : "-"}
@@ -66,7 +66,7 @@ export default function PlanetComparisonTable({
                                     {pB ? (
                                         <span className="flex items-center gap-2">
                                             <span>{ZODIAC_SIGNS[pB.signId - 1]}</span>
-                                            <span className="opacity-70 text-xs">({pB.degree})</span>
+                                            <span className="text-xs">({pB.degree})</span>
                                             {pB.isRetro && <span className="text-xs text-red-600 font-bold">(R)</span>}
                                         </span>
                                     ) : "-"}

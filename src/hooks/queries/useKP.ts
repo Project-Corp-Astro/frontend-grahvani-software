@@ -132,6 +132,70 @@ export function useKpPlanetSignificators(
 }
 
 /**
+ * Hook for fetching KP Cuspal Interlinks
+ */
+export function useKpInterlinks(
+    clientId: string,
+    options?: Omit<UseQueryOptions<any, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<any, Error>({
+        queryKey: [...kpKeys.all, 'interlinks', clientId],
+        queryFn: () => kpApi.getInterlinks(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        ...options,
+    });
+}
+
+/**
+ * Hook for fetching KP Advanced Interlinks (SSL)
+ */
+export function useKpAdvancedInterlinks(
+    clientId: string,
+    options?: Omit<UseQueryOptions<any, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<any, Error>({
+        queryKey: [...kpKeys.all, 'interlinks-advanced', clientId],
+        queryFn: () => kpApi.getAdvancedInterlinks(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        ...options,
+    });
+}
+
+/**
+ * Hook for fetching KP Nakshatra Nadi
+ */
+export function useKpNakshatraNadi(
+    clientId: string,
+    options?: Omit<UseQueryOptions<any, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<any, Error>({
+        queryKey: [...kpKeys.all, 'nakshatra-nadi', clientId],
+        queryFn: () => kpApi.getNakshatraNadi(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        ...options,
+    });
+}
+
+/**
+ * Hook for fetching KP Pars Fortuna
+ */
+export function useKpFortuna(
+    clientId: string,
+    options?: Omit<UseQueryOptions<any, Error>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<any, Error>({
+        queryKey: [...kpKeys.all, 'fortuna', clientId],
+        queryFn: () => kpApi.getFortuna(clientId),
+        enabled: !!clientId,
+        staleTime: 10 * 60 * 1000,
+        ...options,
+    });
+}
+
+/**
  * Mutation hook for KP Horary (Prashna)
  * Used as mutation since it requires user input each time
  */

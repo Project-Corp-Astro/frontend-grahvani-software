@@ -158,12 +158,9 @@ export default function KpCuspalChart({
                                                 )}
                                             >
                                                 {displayName}
-                                                {/* Degree is hidden if 'without number' refers to degrees, 
-                                                    but kept small if 'without number' meant table row numbers.
-                                                    Prompt said "without number ALL DATA OF CUPS TRANSFER".
-                                                    I will hide degrees for now to match 'without number' literal interpretation,
-                                                    but keep the name. 
-                                                    Actually, let's keep it minimal. */}
+                                                <tspan fontSize="9" fontWeight="500" fill="#3D2618" dx="2">
+                                                    {p.degree}
+                                                </tspan>
                                             </text>
                                         </g>
                                     );

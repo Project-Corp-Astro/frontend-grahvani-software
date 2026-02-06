@@ -85,8 +85,8 @@ export default function SouthIndianChart({ planets, ascendantSign, className }: 
                             x={startX + 5}
                             y={startY + 95}
                             fontSize="8"
-                            fill="#9C7A2F"
-                            opacity="0.5"
+                            fill="#6B5420"
+                            opacity="0.8"
                             fontFamily="serif"
                         >
                             {SIGNS[grid.signId - 1]}

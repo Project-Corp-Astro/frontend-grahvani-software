@@ -144,7 +144,7 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "" 
                                             <div className="flex items-center gap-2">
                                                 <span className="font-serif font-bold text-ink">{p.name} {p.isRetro && '(R)'}</span>
                                             </div>
-                                            <span className="font-mono text-xs text-gold-dark font-medium bg-gold-primary/10 px-1.5 py-0.5 rounded">
+                                            <span className="font-mono text-xs text-ink font-medium bg-gold-primary/10 px-1.5 py-0.5 rounded">
                                                 {p.degree}
                                             </span>
                                         </div>

@@ -290,3 +290,67 @@ export interface KpHoraryResponse {
     cached: boolean;
     calculatedAt: string;
 }
+
+/**
+ * KP Promise (Interlink) Structure
+ */
+export interface KpPromise {
+    houseNumber: number;
+    topic: string;
+    chain: {
+        signLord: { planet: string; isRetro?: boolean };
+        starLord: { planet: string; isRetro?: boolean };
+        subLord: { planet: string; isRetro?: boolean };
+        subSubLord: { planet: string; isRetro?: boolean };
+    };
+    positiveHouses: number[];
+    negativeHouses: number[];
+    strength: string;
+    verdict: string;
+}
+
+/**
+ * Fortuna Calculation Data
+ */
+export interface KpFortunaResponse {
+    fortunaData: {
+        calculation: {
+            component: string;
+            dms: string;
+            longitude: number;
+            sign: string;
+            house: number;
+        }[];
+        fortunaHouse: {
+            sign: string;
+            houseNumber: number;
+            cuspLongitude: string;
+        };
+    };
+}
+
+/**
+ * Nakshatra Nadi Data
+ */
+export interface KpNakshatraNadiResponse {
+    nadiData: {
+        planets: {
+            name: string;
+            isRetro: boolean;
+            longitude: string;
+            sign: string;
+            nakshatraLord: string;
+            nakshatraName: string;
+            subLord: string;
+        }[];
+        cusps: {
+            label: string;
+            longitude: string;
+            sign: string;
+            nakshatraLord: string;
+            nakshatraName: string;
+            subLord: string;
+        }[];
+    };
+}
+

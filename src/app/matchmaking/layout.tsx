@@ -16,8 +16,8 @@ export default function MatchmakingLayout({ children }: { children: React.ReactN
                         backgroundBlendMode: 'multiply'
                     }}
                 />
-                <div className="pt-[64px] relative z-10 w-full min-h-screen">
-                    <div className="hidden lg:block fixed left-0 top-[64px] bottom-0 w-64 overflow-y-auto z-20">
+                <div className="pt-14 relative z-10 w-full min-h-screen">
+                    <div className="hidden lg:block fixed left-0 top-14 bottom-0 w-64 overflow-y-auto z-20">
                         <SectionSidebar title="Matchmaking" basePath="/matchmaking" items={MATCHMAKING_Sidebar} />
                     </div>
                     <div className="flex-1 flex flex-col w-full lg:pl-64">

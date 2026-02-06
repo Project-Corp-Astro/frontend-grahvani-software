@@ -731,6 +731,38 @@ export const kpApi = {
         }),
 
     /**
+     * Get KP Cuspal Interlinks
+     */
+    getInterlinks: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/interlinks`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get KP Advanced Interlinks (SSL)
+     */
+    getAdvancedInterlinks: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/interlinks-advanced`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get KP Nakshatra Nadi
+     */
+    getNakshatraNadi: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/nakshatra-nadi`, {
+            method: 'POST'
+        }),
+
+    /**
+     * Get KP Pars Fortuna
+     */
+    getFortuna: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/fortuna`, {
+            method: 'POST'
+        }),
+
+    /**
      * Get KP Horary (Prashna) Analysis
      * @param clientId - Client ID for birth details
      * @param horaryNumber - Number between 1-249

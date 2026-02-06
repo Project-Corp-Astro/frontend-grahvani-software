@@ -10,6 +10,10 @@ import {
     useKpHouseSignifications,
     useKpPlanetSignificators,
     useKpHoraryMutation,
+    useKpInterlinks,
+    useKpAdvancedInterlinks,
+    useKpNakshatraNadi,
+    useKpFortuna,
 } from '@/hooks/queries/useKP';
 import {
     KpPlanetaryTable,
@@ -18,6 +22,10 @@ import {
     RulingPlanetsWidget,
     HoraryPanel,
     BhavaDetailsTable,
+    KpInterlinksTable,
+    KpAdvancedSslTable,
+    KpFortunaView,
+    KpNakshatraNadiView,
 } from '@/components/kp';
 import HouseSignificatorsTable from '@/components/kp/HouseSignificatorsTable';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
@@ -35,12 +43,16 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type KpTab = 'planets-cusps' | 'significations' | 'bhava-details' | 'ruling-planets' | 'horary';
+type KpTab = 'planets-cusps' | 'significations' | 'bhava-details' | 'ruling-planets' | 'horary' | 'interlinks' | 'advanced-ssl' | 'fortuna' | 'nakshatra-nadi';
 
 const tabs: { id: KpTab; label: string; icon: React.ReactNode }[] = [
     { id: 'planets-cusps', label: 'Planets & Cusps', icon: <LayoutGrid className="w-4 h-4" /> },
     { id: 'significations', label: 'Significations', icon: <Grid3x3 className="w-4 h-4" /> },
     { id: 'bhava-details', label: 'Bhava Details', icon: <Home className="w-4 h-4" /> },
+    { id: 'interlinks', label: 'Cuspal Interlinks', icon: <ArrowLeft className="w-4 h-4 rotate-45" /> },
+    { id: 'advanced-ssl', label: 'Advanced SSL', icon: <Star className="w-4 h-4" /> },
+    { id: 'nakshatra-nadi', label: 'Nakshatra Nadi', icon: <HelpCircle className="w-4 h-4" /> },
+    { id: 'fortuna', label: 'Pars Fortuna', icon: <Clock className="w-4 h-4" /> },
     { id: 'ruling-planets', label: 'Ruling Planets', icon: <Clock className="w-4 h-4" /> },
     { id: 'horary', label: 'Horary (Prashna)', icon: <HelpCircle className="w-4 h-4" /> },
 ];
@@ -63,6 +75,10 @@ export default function KpDashboardPage() {
     const bhavaDetailsQuery = useKpBhavaDetails(clientId, { enabled: activeTab === 'bhava-details' });
     const rulingPlanetsQuery = useKpRulingPlanets(clientId, { enabled: activeTab === 'ruling-planets' });
     const horaryMutation = useKpHoraryMutation();
+    const interlinksQuery = useKpInterlinks(clientId, { enabled: activeTab === 'interlinks' });
+    const advancedSslQuery = useKpAdvancedInterlinks(clientId, { enabled: activeTab === 'advanced-ssl' });
+    const nakshatraNadiQuery = useKpNakshatraNadi(clientId, { enabled: activeTab === 'nakshatra-nadi' });
+    const fortunaQuery = useKpFortuna(clientId, { enabled: activeTab === 'fortuna' });
 
     // D1 Data for Visual Chart - Prioritize live KP data
     const d1Data = React.useMemo(() => {
@@ -432,6 +448,144 @@ export default function KpDashboardPage() {
         }));
     }, [houseSignificators, planetSignificatorsQuery.data]);
 
+    // --- DATA TRANSFORMATION HELPERS ---
+
+    // 1. Interlinks Transformer
+    const interlinksData = React.useMemo(() => {
+        const raw = interlinksQuery.data?.data;
+        if (!raw) return [];
+
+        const houseLords = raw.houses?.houses || {};
+
+        // Try house_relationships (Basic Interlinks)
+        if (raw.cuspal_interlinks?.house_relationships) {
+            return Object.entries(raw.cuspal_interlinks.house_relationships).map(([house, data]: [string, any]) => {
+                const hLords = houseLords[house] || {};
+                return {
+                    houseNumber: parseInt(house),
+                    topic: `House ${house}`,
+                    chain: {
+                        signLord: { planet: hLords.sign_lord || '-', isRetro: false },
+                        starLord: { planet: hLords.star_lord || '-', isRetro: false },
+                        subLord: { planet: hLords.sub_lord || '-', isRetro: false },
+                        subSubLord: { planet: hLords.sub_sub_lord || '-', isRetro: false }
+                    },
+                    positiveHouses: (data.favorable || []).map(Number),
+                    negativeHouses: (data.adverse || []).map(Number),
+                    strength: 'Neutral',
+                    verdict: 'Neutral'
+                };
+            });
+        }
+
+        // Try analysis (Advanced)
+        const analysis = raw.cuspal_interlinks_analysis || raw.cuspal_interlinks?.cuspal_interlinks_analysis;
+        if (!analysis) return [];
+
+        return Object.entries(analysis).map(([house, item]: [string, any]) => ({
+            houseNumber: parseInt(house),
+            topic: item.interpretation?.split('-')[0]?.trim() || `House ${house}`,
+            chain: {
+                signLord: { planet: item.cusp_lords?.sign_lord || '-', isRetro: false },
+                starLord: { planet: item.cusp_lords?.star_lord || '-', isRetro: false },
+                subLord: { planet: item.cusp_lords?.sub_lord || '-', isRetro: false },
+                subSubLord: { planet: item.cusp_lords?.sub_sub_lord || '-', isRetro: false }
+            },
+            positiveHouses: (item.combined_positive_links || []).map(Number),
+            negativeHouses: (item.combined_negative_links || []).map(Number),
+            strength: item.promise_strength || 'Neutral',
+            verdict: item.promise_strength || 'Neutral'
+        }));
+    }, [interlinksQuery.data]);
+
+    // 2. SSL Transformer
+    const sslData = React.useMemo(() => {
+        const raw = advancedSslQuery.data?.data;
+        if (!raw) return [];
+
+        const analysis = raw.cuspal_interlinks_analysis || raw.cuspal_interlinks?.cuspal_interlinks_analysis;
+        if (!analysis) return [];
+
+        return Object.entries(analysis).map(([house, item]: [string, any]) => ({
+            houseNumber: parseInt(house),
+            topic: `House ${house}`,
+            chain: {
+                signLord: { planet: item.cusp_lords?.sign_lord || '-', isRetro: false },
+                starLord: { planet: item.cusp_lords?.star_lord || '-', isRetro: false },
+                subLord: { planet: item.cusp_lords?.sub_lord || '-', isRetro: false },
+                subSubLord: { planet: item.cusp_lords?.sub_sub_lord || '-', isRetro: false }
+            },
+            positiveHouses: (item.combined_positive_links || []).map(Number),
+            negativeHouses: (item.combined_negative_links || []).map(Number),
+            strength: item.promise_strength || 'Neutral',
+            verdict: item.promise_strength || 'Neutral'
+        }));
+    }, [advancedSslQuery.data]);
+
+    // 3. Nakshatra Nadi Transformer
+    const nadiData = React.useMemo(() => {
+        const raw = nakshatraNadiQuery.data?.data;
+        if (!raw || !raw.planets || !raw.houses) return null;
+
+        // Transform Planets
+        const planets = Object.entries(raw.planets).map(([name, p]: [string, any]) => ({
+            name: name,
+            isRetro: p.is_retrograde,
+            longitude: p.position_dms || p.longitude, // Use formatted if available
+            sign: p.sign_name,
+            nakshatraLord: p.nakshatra_lord,
+            nakshatraName: p.nakshatra_name,
+            subLord: p.sub_lord
+        }));
+
+        // Transform Cusps
+        const cusps = Object.entries(raw.houses).map(([key, h]: [string, any]) => {
+            let label = key.replace('House_', '');
+            if (key === 'MC') label = '10';
+            if (key === 'Ascendant' || key === 'Lagna') label = '1';
+
+            return {
+                label: label,
+                longitude: h.position_dms || h.longitude,
+                sign: h.sign_name,
+                nakshatraLord: h.nakshatra_lord,
+                nakshatraName: h.nakshatra_name,
+                subLord: h.sub_lord
+            };
+        }).sort((a, b) => {
+            const numA = parseInt(a.label) || (a.label === '1' ? 1 : a.label === 'Ascendant' ? 1 : 99);
+            const numB = parseInt(b.label) || (b.label === '1' ? 1 : b.label === 'Ascendant' ? 1 : 99);
+            return numA - numB;
+        });
+
+        return { planets, cusps };
+    }, [nakshatraNadiQuery.data]);
+
+    // 4. Fortuna Transformer
+    const fortunaData = React.useMemo(() => {
+        const raw = fortunaQuery.data?.data;
+        if (!raw || !raw.details) return null;
+
+        // Construct calculation array
+        const calculation = [
+            { component: 'Ascendant', dms: '-', longitude: raw.details.ascendant.longitude, sign: raw.details.ascendant.sign, house: raw.details.ascendant.house },
+            { component: 'Moon', dms: '-', longitude: raw.details.moon.longitude, sign: raw.details.moon.sign, house: raw.details.moon.house },
+            { component: 'Sun', dms: '-', longitude: raw.details.sun.longitude, sign: raw.details.sun.sign, house: raw.details.sun.house }
+        ];
+
+        return {
+            calculation,
+            fortunaHouse: {
+                sign: raw.fortuna_sign,
+                houseNumber: raw.fortuna_house,
+                cuspLongitude: `${raw.fortuna_longitude?.toFixed(2)}`
+            }
+        };
+
+    }, [fortunaQuery.data]);
+
+
+
     // KP Bhava Data
     // We now use the raw API response directly for the table
     const bhavaDetails = React.useMemo(() => {
@@ -440,6 +594,15 @@ export default function KpDashboardPage() {
         }
         return {};
     }, [bhavaDetailsQuery.data]);
+
+    // KP Debug Logs
+    console.log('KP Debug Data:', {
+        interlinks: interlinksQuery.data,
+        ssl: advancedSslQuery.data,
+        nadi: nakshatraNadiQuery.data,
+        fortuna: fortunaQuery.data
+    });
+
     if (ayanamsa !== 'KP') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -622,6 +785,96 @@ export default function KpDashboardPage() {
                         />
                     </div>
                 )}
+
+                {/* Cuspal Interlinks */}
+                {/* Custom Interlinks - Debug Logs Included */}
+                {/* Cuspal Interlinks */}
+
+                {activeTab === 'interlinks' && (
+                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                        {interlinksQuery.isLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
+                            </div>
+                        ) : (
+                            interlinksQuery.data?.data ? (
+                                <KpInterlinksTable promises={interlinksData} />
+                            ) : (
+                                <p className="text-muted text-center py-8">No interlinks data available</p>
+                            )
+                        )}
+                    </div>
+                )}
+
+                {/* Advanced SSL */}
+                {activeTab === 'advanced-ssl' && (
+                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                        {advancedSslQuery.isLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
+                            </div>
+                        ) : (
+                            advancedSslQuery.data?.data ? (
+                                <KpAdvancedSslTable promises={sslData} />
+                            ) : (
+                                <p className="text-muted text-center py-8">No Advanced SSL data available</p>
+                            )
+                        )}
+                    </div>
+                )}
+
+                {/* Nakshatra Nadi */}
+                {activeTab === 'nakshatra-nadi' && (
+                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                        {nakshatraNadiQuery.isLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
+                            </div>
+                        ) : (
+                            nakshatraNadiQuery.data?.data && nadiData ? (
+                                <KpNakshatraNadiView data={{ nadiData }} />
+                            ) : (
+                                <p className="text-muted text-center py-8">No Nakshatra Nadi data available</p>
+                            )
+                        )}
+                    </div>
+                )}
+
+                {/* Pars Fortuna */}
+                {activeTab === 'fortuna' && (
+                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                        {fortunaQuery.isLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
+                            </div>
+                        ) : (
+                            fortunaQuery.data?.data && fortunaData ? (
+                                <KpFortunaView data={{ fortunaData }} />
+                            ) : (
+                                <p className="text-muted text-center py-8">No Fortuna data available</p>
+                            )
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Debug Box */}
+            <div className="mt-8 p-4 border-t border-antique/20">
+                <details className="bg-slate-900 rounded-lg overflow-hidden">
+                    <summary className="p-4 text-white font-mono text-xs cursor-pointer hover:bg-slate-800 transition-colors">
+                        🛠️ Debug Data Inspector (Click to Expand)
+                    </summary>
+                    <div className="p-4 bg-slate-950 text-green-400 font-mono text-xs overflow-auto max-h-[500px]">
+                        <pre>
+                            {JSON.stringify({
+                                interlinksRaw: interlinksQuery.data,
+                                sslRaw: advancedSslQuery.data,
+                                nadiRaw: nakshatraNadiQuery.data,
+                                fortunaRaw: fortunaQuery.data
+                            }, null, 2)}
+                        </pre>
+                    </div>
+                </details>
             </div>
         </div>
     );

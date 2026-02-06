@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, HelpCircle, Clock, User, Bell, ChevronDown } from "lucide-react";
+import { Settings, Clock, User, Bell, ChevronDown } from "lucide-react";
 import GoldenButton from "@/components/GoldenButton";
 import { useAstrologerStore } from "@/store/useAstrologerStore";
 import { useAuth } from "@/context/AuthContext";
@@ -35,7 +35,7 @@ export default function GlobalHeader() {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-[64px]">
+        <header className="fixed top-0 left-0 right-0 z-50 h-14">
             {/* Main Header Container */}
             <div
                 className="relative h-full w-full flex items-center justify-between px-4 lg:px-8 bg-header-gradient"
@@ -58,8 +58,8 @@ export default function GlobalHeader() {
                             <div className="w-8 h-8 rounded-full border border-[#D08C60] flex items-center justify-center bg-[#2A1810]">
                                 <span className="font-serif text-white font-bold text-lg leading-none pt-1">G</span>
                             </div>
-                            <span className="font-serif text-lg font-bold text-white tracking-widest group-hover:text-[#D08C60] transition-colors">
-                                GRAHVANI
+                            <span className="font-serif text-lg font-bold text-white tracking-wider group-hover:text-[#D08C60] transition-colors">
+                                Grahvani
                             </span>
                         </div>
                     </Link>
@@ -81,8 +81,8 @@ export default function GlobalHeader() {
                 <div className="flex items-center gap-4 lg:gap-6">
                     {/* Time / Ayanamsa Display (Static) */}
                     <div className="hidden lg:flex flex-col items-end mr-2 text-right">
-                        <span className="text-[10px] font-serif text-white tracking-widest uppercase">{settings.ayanamsa} Ayanamsa</span>
-                        <div className="flex items-center gap-1.5 text-white/90">
+                        <span className="text-[10px] font-serif text-white tracking-wider">{settings.ayanamsa} Ayanamsa</span>
+                        <div className="flex items-center gap-1.5 text-white">
                             <Clock className="w-3 h-3" />
                             <span className="text-xs font-serif tracking-wider" suppressHydrationWarning>
                                 {mounted ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}
@@ -102,9 +102,6 @@ export default function GlobalHeader() {
                         >
                             <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
                             <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#D08C60] rounded-full border border-[#763A1F]" />
-                        </button>
-                        <button className="text-white hover:text-[#FEFAEA] transition-colors" title="Help">
-                            <HelpCircle className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -136,7 +133,7 @@ export default function GlobalHeader() {
                                         <p className="font-serif font-bold text-lg leading-tight truncate">
                                             {user?.name || user?.email}
                                         </p>
-                                        <p className="text-[#FFD27D]/70 text-[10px] uppercase tracking-widest mt-1 truncate">
+                                        <p className="text-[#FFD27D]/70 text-[10px] tracking-widest mt-1 truncate">
                                             {user?.role || 'Astro Seeker'} • {user?.email}
                                         </p>
                                     </div>
@@ -189,10 +186,10 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
         <Link
             href={href}
             className={`
-                px-4 py-2 font-serif text-xs font-bold uppercase tracking-[0.15em] transition-all duration-300 relative
+                px-4 py-2 font-serif text-xs font-bold tracking-wide transition-all duration-300 relative
                 ${active
-                    ? 'text-white text-shadow-glow'
-                    : 'text-white/70 hover:text-white'
+                    ? 'text-[#FFD27D] text-shadow-glow'
+                    : 'text-white hover:text-[#FFD27D]'
                 }
             `}
         >

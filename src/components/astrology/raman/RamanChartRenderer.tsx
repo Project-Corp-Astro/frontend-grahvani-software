@@ -47,7 +47,7 @@ export const RamanChartRenderer: React.FC<RamanChartRendererProps> = ({ houses }
                 x={center.x}
                 y={center.y + (i * 6) - ((points.length - 1) * 3)} // Stack vertically centered
                 textAnchor="middle"
-                className={`text-[3px] font-medium fill-slate-800 ${p.isRetro ? 'fill-red-700' : ''}`}
+                className={`text-[3px] font-medium fill-black ${p.isRetro ? 'fill-red-800' : ''}`}
                 style={{ fontSize: '0.25rem' }}
             >
                 {p.name}{p.isRetro ? '(R)' : ''} {Math.floor(parseFloat(p.longitude))}°
@@ -87,7 +87,7 @@ export const RamanChartRenderer: React.FC<RamanChartRendererProps> = ({ houses }
                 x={center.x + offset.dx}
                 y={center.y + offset.dy}
                 textAnchor="middle"
-                className="text-[4px] font-bold fill-amber-700/50"
+                className="text-[4px] font-bold fill-amber-900"
                 style={{ fontSize: '0.35rem' }}
             >
                 {sign}

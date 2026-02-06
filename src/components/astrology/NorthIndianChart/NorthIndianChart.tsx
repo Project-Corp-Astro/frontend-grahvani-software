@@ -155,7 +155,7 @@ export default function NorthIndianChart({
                             fontFamily="serif"
                             fontWeight="900"
                             fill="#3D2618"
-                            fillOpacity="0.5"
+                            fillOpacity="0.9"
                             textAnchor="middle"
                             dominantBaseline="central"
                             className="select-none pointer-events-none"
@@ -203,7 +203,7 @@ export default function NorthIndianChart({
                                                 )}
                                             >
                                                 {displayName}
-                                                <tspan fontSize="9" fontWeight="500" fill="#664d03" dx="2">
+                                                <tspan fontSize="9" fontWeight="500" fill="#3D2618" dx="2">
                                                     {p.degree}
                                                 </tspan>
                                             </text>

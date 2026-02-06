@@ -41,10 +41,10 @@ export default async function ClientLayout({
             />
 
             {/* Content starts below header */}
-            <div className="pt-[64px] relative z-10 w-full min-h-screen">
+            <div className="pt-14 relative z-10 w-full min-h-screen">
 
                 {/* Sidebar - Fixed Position */}
-                <div className="hidden lg:block fixed left-0 top-[64px] bottom-0 w-64 overflow-y-auto z-20">
+                <div className="hidden lg:block fixed left-0 top-14 bottom-0 w-64 overflow-y-auto z-20">
                     <ClientSidebar basePath={`/client/${id}`} />
                 </div>
 

@@ -21,8 +21,7 @@ import {
     NotebookPen,
     User,
     ArrowLeft,
-    ChevronLeft,
-    ChevronRight,
+    ChevronDown,
     Shield,
     Layers,
     Sparkles
@@ -45,128 +44,81 @@ const VEDIC_NAV_ITEMS: SidebarItem[] = [
     { name: "Comparison", path: "/comparison", icon: GitCompare },
 ];
 
-// Initial Layout Component separated for cleaner logic
-function CollapsibleSidebar({ isClientSet, clientDetails, setClientDetails, pathname, router, ayanamsa }: any) {
-    const [isCollapsed, setIsCollapsed] = React.useState(false);
+// Horizontal Sub-Header Hub for Consultation Workspace
+function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, ayanamsa }: any) {
+    const [isMoreOpen, setIsMoreOpen] = React.useState(false);
 
-    // Filter nav items based on ayanamsa - only show KP System when KP is selected
+    // Filter nav items - only show KP System when KP is selected
     const filteredNavItems = VEDIC_NAV_ITEMS.filter(item => {
-        if (item.path === '/kp') {
-            return ayanamsa === 'KP';
-        }
+        if (item.path === '/kp') return ayanamsa === 'KP';
         return true;
     });
 
     return (
-        <aside
-            className={cn(
-                "h-full flex flex-col border-r border-[#D08C60]/30 hidden lg:flex relative z-10 transition-all duration-300",
-                isCollapsed ? "w-20" : "w-72"
-            )}
-            style={{
-                background: 'linear-gradient(180deg, #98522F 0%, #763A1F 40%, #55250F 100%)',
-                boxShadow: 'inset 0 2px 4px rgba(255,210,125,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
-            }}
+        <div
+            className="sticky top-14 left-0 right-0 z-40 h-12 bg-header-gradient flex items-center px-4 md:px-6 gap-4"
         >
-            {/* Toggle Button - Outside Scroll Area */}
-            <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute top-6 right-0 translate-x-1/2 z-50 w-6 h-6 bg-[#763A1F] border border-[#D08C60] rounded-full flex items-center justify-center text-[#FFD27D] hover:scale-110 transition-transform shadow-md"
-            >
-                {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-            </button>
+            {/* Top Border Indicator (Matching GlobalHeader) */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-[#D08C60] opacity-10" />
 
-            {/* Scrollable Content Container */}
-            <div className={cn(
-                "flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden flex flex-col py-6",
-                isCollapsed ? "px-2" : "px-4"
-            )}>
-                {/* CUSTOM PROFILE HEADER - Only when client is active */}
-                {clientDetails ? (
-                    <div className="mb-8 relative z-10 flex flex-col items-center shrink-0">
-                        {/* Back Link */}
-                        <button
-                            onClick={() => setClientDetails(null)}
+            {/* Bottom Ornament (Matching GlobalHeader) */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D08C60] to-transparent shadow-[0_1px_3px_rgba(0,0,0,0.3)]" />
+
+            {/* 1. Navigation Items (Left/Center) */}
+            <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar h-full">
+                {filteredNavItems.map((item) => {
+                    const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
+                    const isActive = pathname === href;
+
+                    return (
+                        <Link
+                            key={item.name}
+                            href={href}
                             className={cn(
-                                "flex items-center gap-2 text-[#FFD27D]/60 hover:text-[#FFD27D] text-xs font-serif uppercase tracking-wider mb-8 transition-colors group",
-                                isCollapsed ? "justify-center w-full" : "self-start"
+                                "flex items-center px-3 py-2 transition-all duration-300 relative group shrink-0 whitespace-nowrap font-serif text-[11px] font-medium tracking-wide",
+                                isActive
+                                    ? "text-[#FFD27D] text-shadow-glow"
+                                    : "text-white hover:text-[#FFD27D]"
                             )}
-                            title="Back to Archives"
                         >
-                            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
-                            {!isCollapsed && "Back to Archives"}
-                        </button>
+                            <span>{item.name}</span>
 
-                        {/* Avatar Circle */}
-                        <div className="relative mb-3 group cursor-pointer" onClick={() => router.push(`/client/${clientDetails.id || '1'}/overview`)}>
-                            <div className={cn(
-                                "rounded-full bg-[#2A1810] border border-[#FFD27D]/20 flex items-center justify-center text-[#FFD27D] font-serif shadow-[0_0_25px_rgba(255,210,125,0.1)] group-hover:border-[#FFD27D]/50 transition-all",
-                                isCollapsed ? "w-10 h-10 text-xl" : "w-20 h-20 text-3xl"
-                            )}>
+                            {/* Active Indicator (Matching GlobalHeader exactly) */}
+                            {isActive && (
+                                <>
+                                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#FFD27D] to-transparent shadow-[0_0_10px_2px_rgba(255,210,125,0.5)]" />
+                                    <span
+                                        className="absolute inset-0 -z-10 rounded-lg opacity-20 blur-md pointer-events-none"
+                                        style={{ background: 'radial-gradient(ellipse at center, #FFD27D 0%, transparent 70%)' }}
+                                    />
+                                </>
+                            )}
+                        </Link>
+                    )
+                })}
+            </nav>
+
+            {/* 2. Client Profile Card (Right) */}
+            {
+                clientDetails && (
+                    <div className="flex items-center gap-4 pl-6 border-l border-[#D08C60]/20 shrink-0 h-10 ml-4">
+                        <div
+                            className="flex items-center gap-3 cursor-pointer group"
+                            onClick={() => router.push(`/vedic-astrology/overview`)}
+                        >
+                            <div className="hidden sm:block text-right">
+                                <h2 className="text-white font-serif font-bold text-sm tracking-widest group-hover:text-[#FFD27D] transition-colors">{clientDetails.name}</h2>
+                            </div>
+                            <div className="w-9 h-9 rounded-full bg-[#2A1810] border border-[#D08C60]/30 flex items-center justify-center text-[#FFD27D] font-serif font-bold text-sm shadow-[0_0_15px_rgba(208,140,96,0.1)] group-hover:border-[#FFD27D]/50 transition-all">
                                 {clientDetails.name.charAt(0)}
                             </div>
-                            {/* Active Dot */}
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#00C853] border-[2px] border-[#55250F] rounded-full" />
                         </div>
-
-                        {/* Client Name & ID */}
-                        {!isCollapsed && (
-                            <>
-                                <h2 className="text-2xl font-serif font-bold text-white mb-0.5 animate-in fade-in">{clientDetails.name.split(' ')[0]}</h2>
-                                <p className="text-xs text-[#FFD27D]/60 font-mono tracking-widest animate-in fade-in">#{clientDetails.id || '001'}</p>
-                            </>
-                        )}
                     </div>
-                ) : (
-                    <div className="mb-8 px-2 relative z-10 shrink-0 text-center">
-                        {!isCollapsed ? (
-                            <h3 className="text-[10px] font-black text-[#FFD27D]/80 uppercase tracking-[0.3em] font-serif animate-in fade-in">
-                                Analytical Engine
-                            </h3>
-                        ) : (
-                            <div className="w-8 h-8 mx-auto rounded-full bg-[#FFD27D]/10 flex items-center justify-center">
-                                <Compass className="w-4 h-4 text-[#FFD27D]" />
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <nav className="space-y-1 flex-1 relative z-10 min-h-0 pb-4">
-                    {filteredNavItems.map((item) => {
-                        const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
-                        const isActive = pathname === href;
-
-                        return (
-                            <Link
-                                key={item.name}
-                                href={href}
-                                className={cn(
-                                    "flex items-center px-3 py-3 rounded-lg transition-all duration-300 group relative overflow-hidden",
-                                    isActive
-                                        ? "bg-gradient-to-r from-[#FFD27D]/25 via-[#FFD27D]/15 to-[#FFD27D]/15 text-white font-bold shadow-[0_0_20px_rgba(255,210,125,0.5),inset_0_0_10px_rgba(255,210,125,0.1)]"
-                                        : "text-[#FFF5E6] hover:bg-[#FEFAEA]/10 hover:text-white",
-                                    isCollapsed ? "justify-center" : "justify-between hover:pl-4"
-                                )}
-                                title={isCollapsed ? item.name : undefined}
-                            >
-                                {/* Active Indicator Line - Tab Style */}
-                                {isActive && <div className="absolute left-0 top-1 bottom-1 w-1 bg-[#FFD27D] shadow-[0_0_10px_#FFD27D] rounded-r-sm" />}
-
-                                <div className="flex items-center gap-3">
-                                    <item.icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "text-[#FFD27D] scale-110" : "text-[#FFD27D]/70 group-hover:text-[#FFD27D] group-hover:scale-105")} />
-                                    {!isCollapsed && <span className="font-serif text-sm tracking-wide animate-in fade-in slide-in-from-left-2">{item.name}</span>}
-                                </div>
-                            </Link>
-                        )
-                    })}
-                </nav>
-            </div>
-        </aside>
+                )
+            }
+        </div >
     );
 }
-
-
-
 
 export default function VedicLayout({ children }: { children: React.ReactNode }) {
     const { isClientSet, clientDetails, setClientDetails } = useVedicClient();
@@ -186,10 +138,9 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
         return null;
     }
 
-
     return (
-        <div className="flex h-screen pt-[64px] bg-luxury-radial relative overflow-hidden">
-            {/* Subtle Texture Overlay - matching Dashboard Layout */}
+        <div className="flex flex-col min-h-screen pt-14 bg-luxury-radial relative">
+            {/* Subtle Texture Overlay */}
             <div
                 className="absolute inset-0 opacity-15 pointer-events-none z-0"
                 style={{
@@ -198,10 +149,9 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
                 }}
             />
 
-            {/* Unified Professional Sidebar - Collapsible */}
+            {/* Sub-Header Hub - Desktop only for now */}
             {pathname !== "/vedic-astrology" && (
-                <CollapsibleSidebar
-                    isClientSet={isClientSet}
+                <VedicSubHeader
                     clientDetails={clientDetails}
                     setClientDetails={setClientDetails}
                     pathname={pathname}
@@ -210,8 +160,8 @@ export default function VedicLayout({ children }: { children: React.ReactNode })
                 />
             )}
 
-            {/* Main Content Area - Scrollable */}
-            <main className="flex-1 overflow-y-auto relative z-10 h-full">
+            {/* Main Content Area */}
+            <main className="flex-1 relative z-10 transition-all duration-500">
                 <div className="p-2 lg:p-4 w-full h-full pb-20">
                     {children}
                 </div>
