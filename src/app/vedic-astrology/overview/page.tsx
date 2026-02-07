@@ -1,38 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import NorthIndianChart, { ChartWithPopup, Planet } from "@/components/astrology/NorthIndianChart";
+import { ChartWithPopup } from "@/components/astrology/NorthIndianChart";
 import { cn } from "@/lib/utils";
 import { useDasha } from "@/hooks/queries/useCalculations";
 import {
+    Maximize2,
+    TrendingUp,
+    ArrowRight,
+    Loader2,
     Calendar,
     Clock,
     MapPin,
-    TrendingUp,
-    Sparkles,
-    ArrowRight,
-    Activity,
-    Maximize2,
-    AlertTriangle,
-    CheckCircle2,
-    User,
-    Edit3,
-    Loader2,
-    Shield,
-    Compass,
-    Layers,
-    Star,
+    Sparkle,
     X,
-    Sparkle
+    LayoutDashboard
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
-import { clientApi, DashaResponse } from '@/lib/api';
+import { DashaResponse } from '@/lib/api';
 import DoshaAnalysis from '@/components/astrology/DoshaAnalysis';
 import YogaAnalysisView from '@/components/astrology/YogaAnalysis';
-
-import { parseChartData } from '@/lib/chart-helpers';
+import PlanetaryTable from '@/components/astrology/PlanetaryTable';
+import { parseChartData, signIdToName } from '@/lib/chart-helpers';
+import VimshottariTreeGrid from '@/components/astrology/VimshottariTreeGrid';
+import { processDashaResponse } from '@/lib/dasha-utils';
 
 // Helper for formatting
 const formatDate = (dateStr: string) => {
@@ -53,21 +46,15 @@ const formatDate = (dateStr: string) => {
 const formatTime = (timeStr: string) => {
     if (!timeStr) return "";
     try {
-        // If it contains a T, it's an ISO string, extract time part carefully
-        // We use string manipulation to avoid timezone shifts if the data is raw storage
         if (timeStr.includes('T')) {
             const timePart = timeStr.split('T')[1];
-            // Remove Z or offset
             const cleanTime = timePart.replace('Z', '').split('+')[0].split('.')[0];
             const [hours, minutes] = cleanTime.split(':');
             const h = parseInt(hours);
-            const m = parseInt(minutes);
             const ampm = h >= 12 ? 'PM' : 'AM';
             const h12 = h % 12 || 12;
             return `${h12}:${minutes} ${ampm}`;
         }
-
-        // Fallback to Date parsing if standard time string
         const date = new Date(`1970-01-01T${timeStr}`);
         if (!isNaN(date.getTime())) {
             return date.toLocaleTimeString('en-US', {
@@ -82,73 +69,38 @@ const formatTime = (timeStr: string) => {
     }
 };
 
-// ... (other imports)
-
 export default function VedicOverviewPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
-    const [notes, setNotes] = useState("");
     const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 
-    // Calculate Age
-    const age = clientDetails ? new Date().getFullYear() - new Date(clientDetails.dateOfBirth).getFullYear() : 0;
+    // Dasha Query
+    const { data: dashaDataVal, isLoading: dashaLoading } = useDasha(
+        clientDetails?.id || '',
+        'mahadasha',
+        settings.ayanamsa.toLowerCase()
+    );
 
-    // DEBUG: Check available charts
     useEffect(() => {
-        if (processedCharts && Object.keys(processedCharts).length > 0) {
-            console.log("🔍 DEBUG: Available Keys:", Object.keys(processedCharts));
-            const d1Key = `D1_${settings.ayanamsa.toLowerCase()}`;
-            console.log(`🔍 DEBUG: Checking ${d1Key}:`, processedCharts[d1Key]);
-            if (processedCharts[d1Key]) {
-                console.log(`🔍 DEBUG: D1 Data Paylod:`, processedCharts[d1Key]?.chartData);
-            }
-        } else {
-            console.log("🔍 DEBUG: No processedCharts yet", { isLoadingCharts, isRefreshingCharts });
-        }
-    }, [processedCharts, settings.ayanamsa, isLoadingCharts, isRefreshingCharts]);
+        if (dashaDataVal) setDashaData(dashaDataVal);
+    }, [dashaDataVal]);
 
     useEffect(() => {
         if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
             refreshCharts();
         }
-        // Dasha fetching handled by useDasha hook
     }, [clientDetails?.id, settings.ayanamsa]);
 
-    // Dasha Query
-    const { data: dashaDataVal, isLoading: dashaLoadingVal } = useDasha(
-        clientDetails?.id || '',
-        'mahadasha', // 'mahadasha' for overview
-        settings.ayanamsa.toLowerCase()
-    );
-
-    // Sync dasha data
-    useEffect(() => {
-        if (dashaDataVal) {
-            setDashaData(dashaDataVal);
-        }
-    }, [dashaDataVal]);
-
-    const dashaLoading = dashaLoadingVal;
-
-    /* Removed manual fetchDasha */
-
-    const isLoading = (Object.keys(processedCharts).length === 0 && isLoadingCharts) || !clientDetails;
-
     // Memoize chart data transformations
-    const d1Data = React.useMemo(() => {
-        const key = `D1_${activeSystem}`;
-        return parseChartData(processedCharts[key]?.chartData);
-    }, [processedCharts, activeSystem]);
-
-    const d9Data = React.useMemo(() => {
-        const key = `D9_${activeSystem}`;
-        return parseChartData(processedCharts[key]?.chartData);
-    }, [processedCharts, activeSystem]);
+    const d1Data = React.useMemo(() => parseChartData(processedCharts[`D1_${activeSystem}`]?.chartData), [processedCharts, activeSystem]);
+    const d9Data = React.useMemo(() => parseChartData(processedCharts[`D9_${activeSystem}`]?.chartData), [processedCharts, activeSystem]);
+    const d10Data = React.useMemo(() => parseChartData(processedCharts[`D10_${activeSystem}`]?.chartData), [processedCharts, activeSystem]);
+    const d60Data = React.useMemo(() => parseChartData(processedCharts[`D60_${activeSystem}`]?.chartData), [processedCharts, activeSystem]);
 
     const zoomedData = React.useMemo(() => {
         if (!zoomedChart) return { planets: [], ascendant: 1 };
@@ -156,280 +108,196 @@ export default function VedicOverviewPage() {
         return parseChartData(processedCharts[key]?.chartData);
     }, [zoomedChart, processedCharts, activeSystem]);
 
+    // Prepare Planetary Data for Table
+    const planetaryTableData = React.useMemo(() => {
+        return d1Data.planets.filter(p => p.name !== 'As').map(p => ({
+            planet: p.name,
+            sign: signIdToName[p.signId] || '-',
+            degree: p.degree,
+            nakshatra: p.nakshatra || '-',
+            nakshatraPart: p.pada ? (typeof p.pada === 'number' ? p.pada : parseInt(String(p.pada).replace('Pada ', ''))) : undefined,
+            house: p.house || 0,
+            isRetro: p.isRetro
+        }));
+    }, [d1Data]);
+
+    const isLoading = isGeneratingCharts || (isLoadingCharts && Object.keys(processedCharts).length === 0);
+
+    const yogas = React.useMemo(() => {
+        return Object.values(processedCharts)
+            .filter((c: any) => c.chartType?.startsWith('yoga_'))
+            .map((c: any) => {
+                const subType = c.chartType.replace('yoga_', '');
+                const label = subType.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+                return { name: label, subType: subType };
+            });
+    }, [processedCharts]);
+
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 relative">
-            {clientDetails && (
-                <div className="bg-softwhite border border-antique rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gold-primary to-gold-dark flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg">
-                            {clientDetails.name.charAt(0)}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-serif font-bold text-ink">{clientDetails.name}</h1>
-                                <span className="text-xs text-muted bg-parchment px-2 py-0.5 rounded-full border border-antique">{age} yrs • {clientDetails.gender}</span>
-                                {isGeneratingCharts && (
-                                    <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-200 animate-pulse">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        <span className="text-[10px] font-semibold text-green-700 uppercase">Generating...</span>
-                                    </div>
-                                )}
-                                {isRefreshingCharts && !isGeneratingCharts && (
-                                    <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                                        <Loader2 className="w-2.5 h-2.5 text-blue-500 animate-spin" />
-                                        <span className="text-[10px] font-semibold text-blue-700 uppercase">Refreshing...</span>
-                                    </div>
-                                )}
-                                {!isGeneratingCharts && !isRefreshingCharts && (
-                                    <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        <span className="text-[10px] font-semibold text-green-700 uppercase">Active • {settings.ayanamsa}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted mt-1">
-                                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatDate(clientDetails.dateOfBirth)}</span>
-                                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {formatTime(clientDetails.timeOfBirth)}</span>
-                                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {clientDetails.placeOfBirth.city}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <Link href="/vedic-astrology/workbench" className="px-5 py-2.5 bg-gold-primary text-ink rounded-lg font-semibold text-sm hover:bg-gold-soft transition-colors flex items-center gap-2">
-                        Analytical Workbench <ArrowRight className="w-4 h-4" />
-                    </Link>
+        <div className="p-2 w-full min-h-screen animate-in fade-in duration-500">
+            {/* Header / Client Context - Removed and moved to Profile Card */}
+            {isLoading && (
+                <div className="absolute top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-gold-primary/90 text-white rounded-full text-xs font-medium shadow-lg animate-in fade-in slide-in-from-top-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Analyzing Chart...
                 </div>
             )}
 
-
-
-            {/* 2. CORE SIGNATURES - Dynamically extracted from D1 chart */}
-            {(() => {
-                // Extract core signatures from D1 chart
-                const key = `D1_${activeSystem}`;
-                const chartData = processedCharts[key]?.chartData;
-
-                // Sign names for ID mapping
-                const signNames = ['', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-                    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-
-                // Nakshatra lords
-                const nakshatraLords: Record<string, string> = {
-                    'Ashwini': 'Ketu', 'Bharani': 'Venus', 'Krittika': 'Sun',
-                    'Rohini': 'Moon', 'Mrigashira': 'Mars', 'Ardra': 'Rahu',
-                    'Punarvasu': 'Jupiter', 'Pushya': 'Saturn', 'Ashlesha': 'Mercury',
-                    'Magha': 'Ketu', 'Purva Phalguni': 'Venus', 'Uttara Phalguni': 'Sun',
-                    'Hasta': 'Moon', 'Chitra': 'Mars', 'Swati': 'Rahu',
-                    'Vishakha': 'Jupiter', 'Anuradha': 'Saturn', 'Jyeshtha': 'Mercury',
-                    'Mula': 'Ketu', 'Purva Ashadha': 'Venus', 'Uttara Ashadha': 'Sun',
-                    'Shravana': 'Moon', 'Dhanishta': 'Mars', 'Shatabhisha': 'Rahu',
-                    'Purva Bhadrapada': 'Jupiter', 'Uttara Bhadrapada': 'Saturn', 'Revati': 'Mercury'
-                };
-
-                // Use robust d1Data derived via parseChartData
-                const ascendantSign = signNames[d1Data.ascendant] || '—';
-
-                const moon = d1Data.planets.find(p => p.name === 'Mo' || p.name === 'Moon');
-                const sun = d1Data.planets.find(p => p.name === 'Su' || p.name === 'Sun');
-
-                const moonSign = moon ? signNames[moon.signId] : (clientDetails?.rashi || '—');
-                const moonNakshatra = moon?.nakshatra || '—';
-                const moonPada = moon?.pada ? `Pada ${moon.pada}` : '';
-
-                const sunSign = sun ? signNames[sun.signId] : '—';
-                const sunDegrees = sun?.degree || '';
-
-                const nakshatraLord = nakshatraLords[moonNakshatra] || '—';
-
-                // Planets in 1st house for Lagna sub-text
-                // Filter planets where house === 1
-                const lagnaHousePlanets = d1Data.planets
-                    .filter(p => p.house === 1 && p.name !== 'As') // Exclude Ascendant marker itself
-                    .map(p => p.name)
-                    .join(', ') || 'No planets';
-
-                return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <SignatureCard
-                            label="Lagna"
-                            value={ascendantSign}
-                            sub={lagnaHousePlanets}
-                        />
-                        <SignatureCard
-                            label="Moon Sign"
-                            value={moonSign}
-                            sub={moonNakshatra && moonPada ? `${moonNakshatra} ${moonPada}` : moonNakshatra}
-                            highlight
-                        />
-                        <SignatureCard
-                            label="Sun Sign"
-                            value={sunSign}
-                            sub={sunDegrees}
-                        />
-                        <SignatureCard
-                            label="Nakshatra Lord"
-                            value={nakshatraLord}
-                            sub={nakshatraLord !== '—' ? nakshatraLords[moonNakshatra] || '' : ''}
-                        />
+            <div className="grid grid-cols-12 gap-2">
+                {/* LEFT COLUMN: D1 & Planetary Details */}
+                <div className="col-span-12 lg:col-span-5 flex flex-col gap-2">
+                    {/* D1 Chart Window */}
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
+                            <h3 className="font-serif font-bold text-ink text-sm">Birth Chart (D1)</h3>
+                            <button onClick={() => setZoomedChart({ varga: "D1", label: "Birth Chart (D1)" })} className="text-muted hover:text-gold-dark"><Maximize2 className="w-3 h-3" /></button>
+                        </div>
+                        <div className="w-full h-[380px] bg-[#FFFCF6]">
+                            <ChartWithPopup
+                                ascendantSign={d1Data.ascendant}
+                                planets={d1Data.planets}
+                                className="bg-transparent border-none w-full h-full"
+                                preserveAspectRatio="none"
+                            />
+                        </div>
                     </div>
-                );
-            })()}
 
-            {/* 3. MAIN GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div className="lg:col-span-7 grid grid-cols-2 gap-4">
-                    <ChartCard varga="D1" label={`Rashi Chart (${settings.ayanamsa})`} ascendantSign={d1Data.ascendant} planets={d1Data.planets} onZoom={() => setZoomedChart({ varga: "D1", label: "Rashi Chart" })} />
-                    {settings.ayanamsa !== 'KP' && (
-                        <ChartCard varga="D9" label="Navamsha" ascendantSign={d9Data.ascendant} planets={d9Data.planets} onZoom={() => setZoomedChart({ varga: "D9", label: "Navamsha Chart" })} />
-                    )}
+                    {/* Planetary Details Window */}
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm flex-1">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                            <h3 className="font-serif font-bold text-ink text-sm">Planetary Details</h3>
+                        </div>
+                        <div className="overflow-x-auto text-[10px] md:text-xs bg-[#FFFCF6]">
+                            <PlanetaryTable
+                                planets={planetaryTableData}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                <div className="lg:col-span-5 bg-softwhite border border-antique rounded-2xl p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="font-serif font-bold text-lg text-ink">Vimshottari Dasha</h3>
-                            <p className="text-[10px] text-gold-dark uppercase tracking-widest">Active Lifecycle</p>
-                        </div>
-                        {dashaData?.data?.current_dasha && (
-                            <div className="bg-red-50 border border-red-200 px-3 py-1 rounded-lg">
-                                <span className="text-red-600 text-xs font-semibold">Active</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="space-y-3">
-                        {dashaLoading ? (
-                            <div className="flex items-center justify-center py-6"><Loader2 className="w-6 h-6 text-gold-primary animate-spin" /></div>
-                        ) : dashaData?.data?.mahadashas?.slice(0, 3).map((md: any, idx: number) => (
-                            <DashaRow key={idx} level={idx === 0 ? "Mahadasha" : idx === 1 ? "Antardasha" : "Pratyantardasha"} planet={md.planet || md.lord} ends={md.end_date ? new Date(md.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'} active={md.is_current || md.isCurrent || false} />
-                        )) || [1, 2, 3].map(i => <DashaRow key={i} level="Dasha" planet="—" ends="—" />)}
-                    </div>
-                    <Link href="/vedic-astrology/dashas" className="mt-4 flex items-center justify-center gap-2 text-gold-dark text-sm hover:text-gold-primary transition-colors py-2 border-t border-antique">
-                        <TrendingUp className="w-4 h-4" /> Dasha Explorer <ArrowRight className="w-3 h-3" />
-                    </Link>
-                </div>
-            </div>
+                {/* RIGHT COLUMN: Divisional Charts, Dasha, Profile */}
+                <div className="col-span-12 lg:col-span-7 grid grid-cols-3 gap-2 content-start">
 
-            {/* 4. PROFESSIONAL CONSULT SUITE */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-copper-200 to-transparent" />
-                    <h2 className="text-lg font-serif text-copper-900 font-bold px-4 flex items-center gap-2 whitespace-nowrap">
-                        <Layers className="w-5 h-5 text-copper-600" /> Professional Consult Suite
-                    </h2>
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-copper-200 to-transparent" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <div className="group bg-white border border-copper-200 rounded-2xl p-5 hover:shadow-xl transition-all cursor-pointer" onClick={() => window.location.href = '/vedic-astrology/ashtakavarga'}>
-                        <div className="flex justify-between mb-4">
-                            <div className="p-2 bg-amber-50 rounded-xl text-amber-600"><Shield className="w-5 h-5" /></div>
-                            <ArrowRight className="w-4 h-4 text-copper-300 group-hover:translate-x-1" />
+                    {/* Profile & Info */}
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                            <h3 className="font-serif font-bold text-ink text-sm">Client Profile</h3>
                         </div>
-                        <h3 className="font-serif font-bold text-ink">Ashtakavarga Strength</h3>
-                        <p className="text-[11px] text-muted mt-1 leading-relaxed">Numerical Bindu assessment to identify high-potential transits and natal house power.</p>
-                    </div>
-
-                    <div className="group bg-white border border-copper-200 rounded-2xl p-5 hover:shadow-xl transition-all cursor-pointer" onClick={() => window.location.href = '/vedic-astrology/chakras'}>
-                        <div className="flex justify-between mb-4">
-                            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600"><Compass className="w-5 h-5" /></div>
-                            <ArrowRight className="w-4 h-4 text-copper-300 group-hover:translate-x-1" />
-                        </div>
-                        <h3 className="font-serif font-bold text-ink">Sudarshan Confluence</h3>
-                        <p className="text-[11px] text-muted mt-1 leading-relaxed">Aligned life-dimension analysis. Triple-layer view of Body, Mind, and Soul alignment.</p>
-                    </div>
-
-                    <div className="group bg-copper-900 text-amber-50 rounded-2xl p-5 hover:shadow-xl transition-all cursor-pointer" onClick={() => window.location.href = '/vedic-astrology/workbench'}>
-                        <div className="flex justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-xl text-amber-400"><Star className="w-5 h-5" /></div>
-                            <ArrowRight className="w-4 h-4 text-copper-400 group-hover:translate-x-1" />
-                        </div>
-                        <h3 className="font-serif font-bold text-amber-200">Esoteric Lahiri Points</h3>
-                        <div className="mt-3 space-y-2">
-                            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                                <span className="text-[10px] text-copper-300 uppercase tracking-wider">Arudha Lagna</span>
-                                <span className="text-sm font-serif font-bold text-white">{processedCharts[`arudha_lagna_${activeSystem}`]?.chartData?.ascendant?.sign || '—'}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-copper-300 uppercase tracking-wider">Karkamsha (D1)</span>
-                                <span className="text-sm font-serif font-bold text-white">{processedCharts[`karkamsha_d1_${activeSystem}`]?.chartData?.ascendant?.sign || '—'}</span>
+                        <div className="p-3 space-y-3 flex-1 bg-[#FFFCF6]">
+                            {clientDetails && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-gold-primary flex items-center justify-center text-white font-serif font-bold text-lg shrink-0">
+                                            {clientDetails.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-ink text-sm leading-tight">{clientDetails.name}</div>
+                                            <div className="text-[10px] text-muted flex gap-2">
+                                                <span>{formatDate(clientDetails.dateOfBirth)}</span>
+                                                <span>{formatTime(clientDetails.timeOfBirth)}</span>
+                                            </div>
+                                            <div className="text-[10px] text-muted truncate max-w-[150px]">{clientDetails.placeOfBirth.city}</div>
+                                        </div>
+                                    </div>
+                                    <Link href="/vedic-astrology/workbench" className="block w-full text-center py-1.5 bg-gold-primary/10 text-gold-dark border border-gold-primary/20 rounded text-xs font-semibold hover:bg-gold-primary hover:text-ink transition-colors">
+                                        Open Workbench
+                                    </Link>
+                                </div>
+                            )}
+                            <hr className="border-antique/50" />
+                            {/* Quick Astrological Info */}
+                            <div className="flex flex-col gap-2 text-[10px]">
+                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
+                                    <span className="block text-muted uppercase text-[9px] tracking-wider">Lagna</span>
+                                    <span className="font-serif font-bold text-ink text-xs">{signIdToName[(d1Data.ascendant || 1) as number]}</span>
+                                </div>
+                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
+                                    <span className="block text-muted uppercase text-[9px] tracking-wider">Moon</span>
+                                    <span className="font-serif font-bold text-ink text-xs">{
+                                        d1Data.planets.find(p => p.name === "Mo")
+                                            ? signIdToName[d1Data.planets.find(p => p.name === "Mo")!.signId]
+                                            : "-"
+                                    }</span>
+                                </div>
+                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
+                                    <span className="block text-muted uppercase text-[9px] tracking-wider">Sun</span>
+                                    <span className="font-serif font-bold text-ink text-xs">{
+                                        d1Data.planets.find(p => p.name === "Su")
+                                            ? signIdToName[d1Data.planets.find(p => p.name === "Su")!.signId]
+                                            : "-"
+                                    }</span>
+                                </div>
                             </div>
                         </div>
-                        <p className="text-[9px] text-copper-400 mt-4 leading-relaxed">Arudha Lagna and Karkamsha charts for deep karmic manifestation analysis.</p>
+                    </div>
+
+                    {/* Vimshottari Dasha */}
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm h-full col-span-2">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                            <h3 className="font-serif font-bold text-ink text-sm">Vimshottari Dasha</h3>
+                        </div>
+                        <div className="p-0 h-full bg-[#FFFCF6]">
+                            <VimshottariTreeGrid
+                                data={dashaData ? processDashaResponse(dashaData) : []}
+                                isLoading={dashaLoading}
+                                className="h-full border-none shadow-none rounded-none bg-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* D9 & D10 Row */}
+                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                        {/* D9 Navamsha */}
+                        <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
+                                <h3 className="font-serif font-bold text-ink text-sm">Navamsha (D9)</h3>
+                                <button onClick={() => setZoomedChart({ varga: "D9", label: "Navamsha (D9)" })} className="text-muted hover:text-gold-dark"><Maximize2 className="w-3 h-3" /></button>
+                            </div>
+                            <div className="w-full h-[320px] bg-[#FFFCF6]">
+                                {d9Data.planets.length > 0 ? (
+                                    <ChartWithPopup ascendantSign={d9Data.ascendant} planets={d9Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" />
+                                ) : <div className="text-xs text-muted p-2">Loading...</div>}
+                            </div>
+                        </div>
+
+                        {/* D10 Dashamsha */}
+                        <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
+                                <h3 className="font-serif font-bold text-ink text-sm">Dashamsha (D10)</h3>
+                                <button onClick={() => setZoomedChart({ varga: "D10", label: "Dashamsha (D10)" })} className="text-muted hover:text-gold-dark"><Maximize2 className="w-3 h-3" /></button>
+                            </div>
+                            <div className="w-full h-[320px] bg-[#FFFCF6]">
+                                {d10Data.planets.length > 0 ? (
+                                    <ChartWithPopup ascendantSign={d10Data.ascendant} planets={d10Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" />
+                                ) : <div className="text-xs text-muted p-2">Loading...</div>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Yogas / Additional Info */}
+                    <div className="col-span-2 border border-antique rounded-lg overflow-hidden shadow-sm">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                            <h3 className="font-serif font-bold text-ink text-sm">Yogas & Combinations</h3>
+                        </div>
+                        <div className="p-2 max-h-[150px] overflow-y-auto custom-scrollbar bg-[#FFFCF6]">
+                            {yogas && yogas.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {yogas.map((yoga, i) => (
+                                        <span key={i} onClick={() => setAnalysisModal({ type: 'yoga', subType: yoga.subType, label: yoga.name })}
+                                            className="inline-flex items-center px-2 py-1 rounded bg-softwhite border border-antique/50 text-[10px] font-medium text-ink cursor-pointer hover:bg-gold-primary/10 transition-colors">
+                                            {yoga.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-xs text-muted italic p-2">No specific yogas identified.</div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* 5. BOTTOM ROW */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                    <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-gold-primary" /> Yogas & Doshas</h3>
-                    <div className="space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                        {Object.values(processedCharts).some((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')) ? (
-                            Object.values(processedCharts).filter((c: any) => c.chartType.startsWith('yoga_') || c.chartType.startsWith('dosha_')).slice(0, 8).map((c: any, i: number) => {
-                                const isYoga = c.chartType.startsWith('yoga_');
-                                const type = isYoga ? 'yoga' : 'dosha';
-                                const subType = c.chartType.replace(isYoga ? 'yoga_' : 'dosha_', '');
-                                const label = subType.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-
-                                return (
-                                    <YogaItem
-                                        key={i}
-                                        type={type as any}
-                                        name={label}
-                                        desc={isYoga ? "Benefic Combination" : "Malefic Influence"}
-                                        onClick={() => setAnalysisModal({ type: type as any, subType, label: `${label} ${isYoga ? 'Yoga' : 'Analysis'}` })}
-                                    />
-                                );
-                            })
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-4 border border-dashed border-antique rounded-lg bg-parchment/30">
-                                <Sparkle className="w-4 h-4 text-muted/30 mb-1" />
-                                <p className="text-[10px] text-muted italic text-center">No major signatures detected in core charts</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                    <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Transit Alerts</h3>
-                    <div className="space-y-2">
-                        {(() => {
-                            const transitKey = `transit_${activeSystem}`;
-                            const transitChart = processedCharts[transitKey];
-                            // Robust parsing for alerts
-                            const { planets: transitPlanets } = parseChartData(transitChart?.chartData);
-
-                            const saturn = transitPlanets.find(p => p.name === 'Sa' || p.name === 'Saturn');
-                            const jupiter = transitPlanets.find(p => p.name === 'Ju' || p.name === 'Jupiter');
-
-                            if (!saturn && !jupiter) {
-                                return (
-                                    <>
-                                        <AlertItem level="medium" text="Syncing real-time transit data..." />
-                                        <AlertItem level="low" text="Analyzing Gochar patterns..." />
-                                    </>
-                                );
-                            }
-
-                            // Helper to get sign name from ID if needed, or use robust parser's signId if we map it back
-                            // Since parseChartData gives signId, we need sign name
-                            const signNames = ['', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-                                'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-
-                            return (
-                                <>
-                                    {saturn && <AlertItem level="high" text={`Saturn Gochar: Currently in ${signNames[saturn.signId]} (${saturn.house}th house)`} />}
-                                    {jupiter && <AlertItem level="medium" text={`Jupiter Impact: Moving through ${signNames[jupiter.signId]}`} />}
-                                </>
-                            );
-                        })()}
-                    </div>
-                </div>
-                <div className="bg-softwhite border border-antique rounded-xl p-4">
-                    <h3 className="font-serif font-bold text-ink text-sm mb-3 flex items-center gap-2"><Edit3 className="w-4 h-4 text-gold-primary" /> Session Notes</h3>
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full h-20 text-xs bg-parchment border border-antique rounded-lg p-2 resize-none focus:outline-none focus:border-gold-primary" />
-                </div>
-            </div>
-
-            {/* ZOOM MODAL */}
+            {/* Modal for Zoom */}
             {zoomedChart && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-ink/40 animate-in fade-in zoom-in-95 duration-300">
                     <div className="bg-softwhite border border-antique rounded-3xl p-8 max-w-2xl w-full relative shadow-2xl">
@@ -440,7 +308,7 @@ export default function VedicOverviewPage() {
                             <h2 className="text-2xl font-serif text-ink font-bold">{zoomedChart.label}</h2>
                             <p className="text-xs text-muted uppercase tracking-widest mt-1">{zoomedChart.varga} Divisional Chart</p>
                         </div>
-                        <div className="aspect-square w-full max-w-md mx-auto bg-parchment rounded-2xl p-6 border border-antique">
+                        <div className="aspect-square w-full max-w-md mx-auto rounded-2xl p-6 border border-antique">
                             <ChartWithPopup ascendantSign={zoomedData.ascendant} planets={zoomedData.planets} className="bg-transparent border-none" />
                         </div>
                     </div>
@@ -454,110 +322,60 @@ export default function VedicOverviewPage() {
                         <button onClick={() => setAnalysisModal(null)} className="absolute top-6 right-6 p-2 rounded-2xl bg-white border border-antique text-muted hover:bg-red-50 hover:text-red-500 transition-all">
                             <X className="w-6 h-6" />
                         </button>
-
                         <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Sparkles className="w-4 h-4 text-gold-primary" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-dark">Lahiri Astrological Report</span>
-                            </div>
                             <h2 className="text-3xl font-serif text-ink font-bold">{analysisModal.label}</h2>
                         </div>
-
                         {analysisModal.type === 'yoga' ? (
-                            <YogaAnalysisView
-                                clientId={clientDetails?.id || ""}
-                                yogaType={analysisModal.subType}
-                                ayanamsa={settings.ayanamsa}
-                            />
+                            <YogaAnalysisView clientId={clientDetails?.id || ""} yogaType={analysisModal.subType} ayanamsa={settings.ayanamsa} />
                         ) : (
-                            <DoshaAnalysis
-                                clientId={clientDetails?.id || ""}
-                                doshaType={analysisModal.subType as any}
-                                ayanamsa={settings.ayanamsa}
-                            />
+                            <DoshaAnalysis clientId={clientDetails?.id || ""} doshaType={analysisModal.subType as any} ayanamsa={settings.ayanamsa} />
                         )}
-
-                        <div className="mt-8 pt-6 border-t border-antique/50 text-center">
-                            <p className="text-[10px] text-muted italic">
-                                * This analysis is based on Vedic principles and Lahiri Ayanamsa. Remedies are suggestive and for spiritual guidance.
-                            </p>
-                        </div>
                     </div>
                 </div>
             )}
+
         </div>
     );
 }
 
-function SignatureCard({ label, value, sub, highlight = false }: { label: string; value: string; sub?: string; highlight?: boolean }) {
-    return (
-        <div className={cn("p-4 rounded-xl border transition-all", highlight ? "bg-gold-primary/10 border-gold-primary/40 shadow-sm" : "bg-softwhite border-antique")}>
-            <p className="text-[10px] uppercase tracking-widest text-muted mb-1 font-semibold">{label}</p>
-            <p className={cn("font-serif font-bold text-lg", highlight ? "text-gold-dark" : "text-ink")}>{value}</p>
-            {sub && <p className="text-[10px] text-muted mt-0.5">{sub}</p>}
-        </div>
-    );
-}
+// Sub-components
 
-function ChartCard({ varga, label, ascendantSign, planets, onZoom }: any) {
+function SmallChartCard({ varga, label, data, onZoom }: { varga: string, label: string, data: any, onZoom: () => void }) {
     return (
-        <div className="bg-softwhite border border-antique rounded-xl p-4 hover:border-gold-primary/50 transition-colors group">
-            <div className="flex items-center justify-between mb-3">
-                <div>
-                    <h3 className="font-serif font-bold text-ink text-sm">{label}</h3>
-                    <p className="text-[9px] text-muted uppercase tracking-widest">{varga} Chart</p>
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); onZoom(); }} className="p-1.5 rounded-lg bg-parchment text-muted hover:bg-gold-primary/20 hover:text-ink transition-all"><Maximize2 className="w-4 h-4" /></button>
-            </div>
-            <div className="aspect-square bg-parchment rounded-lg p-2 border border-antique/50">
-                <ChartWithPopup ascendantSign={ascendantSign} planets={planets} className="bg-transparent border-none" />
-            </div>
-        </div>
-    );
-}
-
-function DashaRow({ level, planet, ends, active = false }: { level: string; planet: string; ends: string; active?: boolean }) {
-    return (
-        <div className={cn("flex items-center justify-between p-2.5 rounded-lg border", active ? "bg-gold-primary/10 border-gold-primary/30" : "bg-parchment border-antique/50")}>
-            <div>
-                <p className="text-[9px] uppercase tracking-widest text-muted">{level}</p>
-                <p className="font-serif font-bold text-ink text-sm">{planet}</p>
-            </div>
-            <div className="text-right">
-                <p className="text-[9px] text-muted">ends</p>
-                <p className="text-xs font-medium text-ink">{ends}</p>
-            </div>
-        </div>
-    );
-}
-
-function YogaItem({ type, name, desc, onClick }: { type: "yoga" | "dosha"; name: string; desc: string; onClick?: () => void }) {
-    return (
-        <div
-            className={cn(
-                "flex items-start gap-3 p-2 rounded-xl border border-transparent transition-all cursor-pointer group",
-                type === "yoga" ? "hover:bg-green-50 hover:border-green-100" : "hover:bg-orange-50 hover:border-orange-100"
-            )}
-            onClick={onClick}
-        >
-            <div className={cn(
-                "p-1.5 rounded-lg shrink-0",
-                type === "yoga" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-500"
-            )}>
-                {type === "yoga" ? <Sparkle className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-ink truncate group-hover:text-gold-dark transition-colors">{name}</p>
-                <div className="flex items-center justify-between">
-                    <p className="text-[9px] text-muted truncate">{desc}</p>
-                    <ArrowRight className="w-2.5 h-2.5 text-muted/0 group-hover:text-gold-primary group-hover:translate-x-0.5 transition-all" />
+        <div className="flex flex-col items-center transition-colors cursor-pointer group" onClick={onZoom}>
+            <div className="w-full aspect-square mb-2 relative overflow-hidden flex items-center justify-center">
+                {data.planets.length > 0 ? (
+                    <ChartWithPopup ascendantSign={data.ascendant} planets={data.planets} className="bg-transparent border-none scale-[0.8] origin-center" />
+                ) : (
+                    <div className="text-[10px] text-muted italic">loading...</div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <Maximize2 className="w-4 h-4 text-ink" />
                 </div>
             </div>
+            <span className="text-xs font-bold text-ink">{varga}</span>
+            <span className="text-[10px] text-muted">{label}</span>
         </div>
     );
 }
 
-function AlertItem({ level, text }: { level: "high" | "medium" | "low"; text: string }) {
-    const colors = { high: "bg-red-50 border-red-100 text-red-700", medium: "bg-orange-50 border-orange-100 text-orange-700", low: "bg-green-50 border-green-100 text-green-700" };
-    return <div className={cn("text-[10px] p-2 rounded-lg border", colors[level])}>{text}</div>;
+function ProfileItem({ label, value, sub, highlight }: { label: string, value: string, sub?: string, highlight?: boolean }) {
+    return (
+        <div className={cn("p-3 rounded-xl border transition-colors", highlight ? "bg-gold-primary/5 border-gold-primary/30" : "bg-softwhite border-antique/50 hover:border-gold-primary/20 hidden-scrollbar")}>
+            <div className="text-[10px] text-muted uppercase tracking-wider font-bold mb-1">{label}</div>
+            <div className={cn("font-serif text-lg font-bold leading-tight", highlight ? "text-gold-dark" : "text-ink")}>{value}</div>
+            {sub && <div className="text-[10px] text-muted italic mt-0.5">{sub}</div>}
+        </div>
+    );
 }
+
+const DashaRow = ({ planet, start, ends, duration, active }: { planet: string, start: string, ends: string, duration: string, active?: boolean }) => {
+    return (
+        <div className={cn("grid grid-cols-4 gap-2 p-3 rounded-xl border items-center text-center", active ? "bg-gold-primary/10 border-gold-primary/30" : "bg-parchment border-antique/30")}>
+            <span className="font-serif font-bold text-ink text-sm text-left pl-2">{planet}</span>
+            <span className="text-xs text-muted">{start}</span>
+            <span className="text-xs text-muted">{ends}</span>
+            <span className="text-xs font-medium text-ink">{duration}</span>
+        </div>
+    );
+};

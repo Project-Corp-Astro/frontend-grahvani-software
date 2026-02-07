@@ -19,6 +19,7 @@ interface NorthIndianChartProps {
     onHouseClick?: (houseNumber: number) => void;
     houseValues?: Record<number, number>; // Map of HouseNumber (1-12) to Value (e.g. Bindus)
     valueType?: 'bindu' | 'none';
+    preserveAspectRatio?: string;
 }
 
 export default function NorthIndianChart({
@@ -27,7 +28,8 @@ export default function NorthIndianChart({
     className = "",
     onHouseClick,
     houseValues,
-    valueType = 'none'
+    valueType = 'none',
+    preserveAspectRatio
 }: NorthIndianChartProps) {
     const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
 
@@ -97,7 +99,7 @@ export default function NorthIndianChart({
     };
 
     return (
-        <svg viewBox="-10 -10 420 420" className={cn("w-full h-full drop-shadow-2xl", className)}>
+        <svg viewBox="-10 -10 420 420" preserveAspectRatio={preserveAspectRatio} className={cn("w-full h-full drop-shadow-2xl", className)}>
             <defs>
                 <linearGradient id="chartParchment" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#FFF9E9" />
