@@ -197,7 +197,7 @@ function DashaDrillRow({ node, depth, onDrill }: { node: DashaNode; depth: numbe
             <td className="px-1.5 py-1 font-sans text-xs text-primary whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {formatDate(node.endDate)}
             </td>
-            <td className="px-1.5 py-1 font-sans text-base font-regular text-primary whitespace-nowrap overflow-hidden leading-normal">
+            <td className="px-1.5 py-1 font-sans text-xs text-primary whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {durationDisplay}
             </td>
         </tr>

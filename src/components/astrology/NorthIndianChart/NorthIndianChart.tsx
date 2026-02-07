@@ -182,13 +182,27 @@ export default function NorthIndianChart({
                             </text>
                         )}
 
-                        {/* Planets List - Clustered in centers */}
+                        {/* Planets List - Clustered in centers with color coding */}
                         <g transform={`translate(${pos.x}, ${pos.y + (houseValues ? 25 : -(boxPlanets.length > 3 ? 10 : 0))})`}>
                             {
                                 boxPlanets.map((p, i) => {
                                     const spacing = boxPlanets.length > 5 ? 10 : 14;
                                     const yOffset = (i * spacing) - ((boxPlanets.length - 1) * (spacing / 2));
-                                    const displayName = p.isRetro ? `${p.name}℞` : p.name;
+
+                                    // Planet color mapping
+                                    const planetColors: Record<string, string> = {
+                                        'Su': '#D97706', 'Sun': '#D97706',       // Amber
+                                        'Mo': '#6B7280', 'Moon': '#6B7280',       // Gray
+                                        'Ma': '#DC2626', 'Mars': '#DC2626',       // Red
+                                        'Me': '#059669', 'Mercury': '#059669',    // Green
+                                        'Ju': '#CA8A04', 'Jupiter': '#CA8A04',    // Yellow
+                                        'Ve': '#DB2777', 'Venus': '#DB2777',      // Pink
+                                        'Sa': '#4F46E5', 'Saturn': '#4F46E5',     // Indigo
+                                        'Ra': '#374151', 'Rahu': '#374151',       // Dark gray
+                                        'Ke': '#EA580C', 'Ketu': '#EA580C',       // Orange
+                                        'As': '#7C3AED', 'Asc': '#7C3AED',        // Purple
+                                    };
+                                    const planetColor = planetColors[p.name] || '#3D2618';
 
                                     return (
                                         <g key={p.name} transform={`translate(0, ${yOffset})`}>
@@ -196,7 +210,7 @@ export default function NorthIndianChart({
                                                 fontSize="14"
                                                 fontFamily="'Spectral', 'Crimson Pro', serif"
                                                 fontWeight="600"
-                                                fill="#2D2419"
+                                                fill={planetColor}
                                                 textAnchor="middle"
                                                 dominantBaseline="central"
                                                 className={cn(
@@ -204,7 +218,10 @@ export default function NorthIndianChart({
                                                     isHovered && "font-black"
                                                 )}
                                             >
-                                                {displayName}
+                                                {p.name}
+                                                {p.isRetro && (
+                                                    <tspan fontSize="10" fontWeight="bold" fill="#DC2626" dx="1">℞</tspan>
+                                                )}
                                                 <tspan fontSize="10" fontWeight="400" fill="#4A3F32" dx="2">
                                                     {p.degree}
                                                 </tspan>
