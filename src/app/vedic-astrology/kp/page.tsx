@@ -30,6 +30,7 @@ import {
 import HouseSignificatorsTable from '@/components/kp/HouseSignificatorsTable';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
 import { parseChartData, signNameToId } from '@/lib/chart-helpers';
+import { KpHouseSignification } from '@/types/kp.types';
 import { cn } from '@/lib/utils';
 import {
     Loader2,
@@ -193,66 +194,62 @@ export default function KpDashboardPage() {
 
     // KP Planetary Data - Transform API object to Array
     const planetaryData = React.useMemo(() => {
-        const rawPlanets = planetsCuspsQuery.data?.data?.planets;
+        const rawResponse = planetsCuspsQuery.data?.data || processedCharts['kp_planets_cusps_kp']?.chartData?.data || processedCharts['kp_planets_cusps_kp']?.chartData;
+        const rawPlanets = rawResponse?.planets || rawResponse?.planetary_positions;
+
         // Check if it's the new Record format (check if keys are strings like "Sun")
         if (rawPlanets && !Array.isArray(rawPlanets)) {
-            return Object.entries(rawPlanets).map(([name, p]) => ({
+            return Object.entries(rawPlanets).map(([name, p]: [string, any]) => ({
                 name: name,
                 fullName: name,
                 sign: p.sign,
                 signId: signNameToId[p.sign] || 1,
-                degree: parseDms(p.longitude),
-                degreeFormatted: p.longitude, // Use provided DMS
-                house: p.house,
+                degree: parseDms(p.longitude || p.degreeFormatted || p.degree),
+                degreeFormatted: p.longitude || p.degreeFormatted || p.degree,
+                house: p.house || p.bhava,
                 nakshatra: p.nakshatra,
-                nakshatraLord: p.star_lord, // Map JSON star_lord -> nakshatraLord
-                subLord: p.sub_lord,      // Map JSON sub_lord -> subLord
-                subSubLord: p.sub_sub_lord || '-',
-                isRetrograde: p.is_retro || false
+                nakshatraLord: p.star_lord || p.nakshatra_lord || p.nakshatraLord,
+                subLord: p.sub_lord || p.subLord,
+                subSubLord: p.sub_sub_lord || p.subSubLord || '-',
+                isRetrograde: p.is_retro || p.is_retrograde || p.isRetrograde || false
             }));
         }
 
         // Handle Array format (legacy or fallback)
         if (Array.isArray(rawPlanets)) {
-            return rawPlanets;
+            return rawPlanets.map((p: any) => ({
+                name: p.name || p.planet,
+                fullName: p.full_name || p.name || p.planet,
+                sign: p.sign || '-',
+                signId: p.sign_id || p.signId || signNameToId[p.sign] || 1,
+                degree: typeof p.degree === 'number' ? p.degree : parseFloat(p.degree) || 0,
+                degreeFormatted: p.degreeFormatted || p.longitude || p.degree || `${(p.degree || 0).toFixed(2)}°`,
+                house: p.house || p.bhava || 1,
+                nakshatra: p.nakshatra || '-',
+                nakshatraLord: p.star_lord || p.nakshatra_lord || p.nakshatraLord || '-',
+                subLord: p.sub_lord || p.subLord || '-',
+                subSubLord: p.sub_sub_lord || p.subSubLord || '-',
+                isRetrograde: p.isRetrograde || p.is_retro || p.is_retrograde || false
+            }));
         }
 
-        const d1Kp = processedCharts['D1_kp'];
-        if (d1Kp?.chartData) {
-            const data = d1Kp.chartData.data || d1Kp.chartData;
-            const planetsList = data.planets || data.planetary_positions || [];
-            if (Array.isArray(planetsList)) {
-                return planetsList.map((p: any) => ({
-                    name: p.name || p.planet,
-                    fullName: p.full_name || p.name || p.planet,
-                    sign: p.sign || '-',
-                    signId: p.sign_id || p.signId || 1,
-                    degree: typeof p.degree === 'number' ? p.degree : parseFloat(p.degree) || 0,
-                    degreeFormatted: p.degreeFormatted || `${(p.degree || 0).toFixed(2)}°`,
-                    house: p.house || p.bhava || 1,
-                    nakshatra: p.nakshatra || '-',
-                    nakshatraLord: p.nakshatra_lord || '-',
-                    subLord: p.sub_lord || '-',
-                    subSubLord: p.sub_sub_lord || '-',
-                    isRetrograde: p.isRetrograde || p.is_retro || false
-                }));
-            }
-        }
         return [];
     }, [planetsCuspsQuery.data, processedCharts]);
 
     // KP House Significator Data (House View)
     const houseSignificators = React.useMemo(() => {
-        const data = planetsCuspsQuery.data?.data;
-        // Check for new API format: house_significations inside the query response
-        const newSignifications = (houseSignificationsQuery.data?.data as any)?.house_significations;
+        const rawResponse = planetsCuspsQuery.data?.data || houseSignificationsQuery.data?.data || processedCharts['kp_house_significations_kp']?.chartData?.data || processedCharts['kp_house_significations_kp']?.chartData;
+        const planetsResponse = planetsCuspsQuery.data?.data || processedCharts['kp_planets_cusps_kp']?.chartData?.data || processedCharts['kp_planets_cusps_kp']?.chartData;
 
-        if (newSignifications && data?.planets) {
+        // Check for new API format: house_significations inside the query response
+        const newSignifications = rawResponse?.house_significations || rawResponse?.significators;
+
+        if (newSignifications && planetsResponse?.planets) {
             const normalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
             // Create map of Planet -> StarLord
             const planetStarLords: Record<string, string> = {};
-            const rawPlanets = data.planets;
+            const rawPlanets = planetsResponse.planets;
             if (Array.isArray(rawPlanets)) {
                 rawPlanets.forEach((p: any) => {
                     planetStarLords[normalize(p.name || p.planet)] = normalize(p.star_lord || p.nakshatra_lord || '');
@@ -271,17 +268,19 @@ export default function KpDashboardPage() {
                 const lord: string = normalize(hData.lord);
                 const nakshatraPlanets: string[] = Array.isArray(hData.nakshatra_planets) ? hData.nakshatra_planets.map(normalize) : [];
 
-                const levelA: string[] = [];
-                const levelB = occupants;
-                const levelC: string[] = [];
-                const levelD = lord ? [lord] : [];
+                const levelA: string[] = hData.A || [];
+                const levelB: string[] = hData.B || occupants;
+                const levelC: string[] = hData.C || [];
+                const levelD: string[] = hData.D || (lord ? [lord] : []);
 
-                nakshatraPlanets.forEach(planet => {
-                    const starLord = planetStarLords[planet];
-                    if (!starLord) return;
-                    if (occupants.includes(starLord)) levelA.push(planet);
-                    if (starLord === lord) levelC.push(planet);
-                });
+                if (levelA.length === 0 && levelC.length === 0 && nakshatraPlanets.length > 0) {
+                    nakshatraPlanets.forEach(planet => {
+                        const starLord = planetStarLords[planet];
+                        if (!starLord) return;
+                        if (occupants.includes(starLord)) levelA.push(planet);
+                        if (starLord === lord) levelC.push(planet);
+                    });
+                }
 
                 return {
                     house: houseNum,
@@ -289,139 +288,34 @@ export default function KpDashboardPage() {
                     levelB: Array.from(new Set(levelB)),
                     levelC: Array.from(new Set(levelC)),
                     levelD: Array.from(new Set(levelD)),
-                };
-            }).filter((h): h is NonNullable<typeof h> => h !== null).sort((a, b) => a.house - b.house);
-        }
-
-        const rawSignificators = data?.significators;
-
-        // 1. Use pre-calculated if available
-        if (rawSignificators) {
-            return Object.entries(rawSignificators).map(([houseKey, levels]: [string, any]) => {
-                const houseNum = parseInt(houseKey);
-                if (isNaN(houseNum)) return null;
-
-                return {
-                    house: houseNum,
-                    levelA: Array.isArray(levels.A) ? levels.A : [],
-                    levelB: Array.isArray(levels.B) ? levels.B : [],
-                    levelC: Array.isArray(levels.C) ? levels.C : [],
-                    levelD: Array.isArray(levels.D) ? levels.D : [],
-                };
-            }).filter((h): h is NonNullable<typeof h> => h !== null).sort((a, b) => a.house - b.house);
-        }
-
-        // 2. Fallback: Calculate from Planets & Houses (Required for new API format)
-        const rawPlanets = data?.planets;
-        const rawHouses = (data as any)?.houses; // Check for house-to-sign map
-
-        if (rawPlanets && rawHouses) {
-            const SIGN_LORDS: Record<string, string> = {
-                "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
-                "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
-                "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
-            };
-            const normalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
-
-            // Initialize structure
-            const houseLevels: Record<number, { A: string[], B: string[], C: string[], D: string[] }> = {};
-            for (let i = 1; i <= 12; i++) houseLevels[i] = { A: [], B: [], C: [], D: [] };
-
-            // Normalize Planet Data
-            const planetInfo: Record<string, { house: number, starLord: string }> = {};
-            let planetsList: { name: string, house: number, star_lord?: string, nakshatra_lord?: string }[] = [];
-
-            if (Array.isArray(rawPlanets)) {
-                planetsList = rawPlanets.map((p: any) => ({ ...p, name: p.name || p.planet }));
-            } else {
-                planetsList = Object.entries(rawPlanets).map(([k, v]: [string, any]) => ({ ...v, name: k }));
-            }
-
-            // Pass 1: Populate Occupants (Level B) and Planet Info
-            planetsList.forEach(p => {
-                if (['Uranus', 'Neptune', 'Pluto'].some(n => p.name.includes(n))) return;
-
-                // Use standard name (e.g. "Sun", "Jupiter")
-                const name = normalize(p.name);
-                const house = p.house;
-                const starLord = normalize(p.star_lord || p.nakshatra_lord || '');
-
-                planetInfo[name] = { house, starLord };
-
-                if (house >= 1 && house <= 12) {
-                    houseLevels[house].B.push(name);
-                }
-            });
-
-            // Pass 2: Populate House Lords (Level D)
-            Object.entries(rawHouses).forEach(([houseKey, signName]: [string, any]) => {
-                const houseNum = parseInt(houseKey);
-                if (houseNum >= 1 && houseNum <= 12 && typeof signName === 'string') {
-                    const lord = SIGN_LORDS[normalize(signName)];
-                    if (lord) houseLevels[houseNum].D.push(lord);
-                }
-            });
-
-            // Pass 3: Populate Levels A & C (Dependent on Star Lord)
-            Object.entries(planetInfo).forEach(([planetName, data]) => {
-                const { starLord } = data;
-                if (!starLord) return;
-
-                for (let i = 1; i <= 12; i++) {
-                    // Level A: Planet is in star of Occupant
-                    if (houseLevels[i].B.includes(starLord)) {
-                        houseLevels[i].A.push(planetName);
-                    }
-                    // Level C: Planet is in star of House Lord
-                    if (houseLevels[i].D.includes(starLord)) {
-                        houseLevels[i].C.push(planetName);
-                    }
-                }
-            });
-
-            return Object.values(houseLevels).map((levels, idx) => ({
-                house: idx + 1,
-                levelA: levels.A,
-                levelB: levels.B,
-                levelC: levels.C,
-                levelD: levels.D
-            }));
+                } as KpHouseSignification;
+            }).filter((h): h is KpHouseSignification => h !== null).sort((a, b) => a.house - b.house);
         }
 
         return [];
-    }, [planetsCuspsQuery.data]);
+    }, [planetsCuspsQuery.data, houseSignificationsQuery.data, processedCharts]);
 
-    // KP Signification Data (Planet View) - Derived from House Data for Consistency
     // KP Signification Data (Planet View)
     const significationData = React.useMemo(() => {
-        const apiData = planetSignificatorsQuery.data?.data;
+        const rawResponse = planetSignificatorsQuery.data?.data || processedCharts['kp_planet_significators_kp']?.chartData?.data || processedCharts['kp_planet_significators_kp']?.chartData;
+        const apiData = rawResponse?.planet_significators || rawResponse;
 
         // If API provides direct matrix data (from new endpoint)
-        if (apiData) {
-            // Handle if it's an object { Sun: { ... }, Moon: { ... } }
-            if (!Array.isArray(apiData)) {
-                return Object.entries(apiData).map(([planet, details]: [string, any]) => ({
-                    planet,
-                    // Map backend structure to UI props
-                    // Assuming backend returns { "Very Strong": [...], "Strong": [...] }
-                    // OR { levelA: [...], levelB: [...] }
-                    // We map to Strong, Normal, Weak based on previous logic if strictly needed,
-                    // but likely backend returns explicit arrays.
-                    // Let's assume standard keys: levelA..levelD or explicit names.
-                    levelA: details.levelA || details["Very Strong"] || details.very_strong || [],
-                    levelB: details.levelB || details["Strong"] || details.strong || [],
-                    levelC: details.levelC || details["Normal"] || details.normal || [],
-                    levelD: details.levelD || details["Weak"] || details.weak || [],
-                    houses: Array.from(new Set([
-                        ...(details.levelA || details["Very Strong"] || details.very_strong || []),
-                        ...(details.levelB || details["Strong"] || details.strong || []),
-                        ...(details.levelC || details["Normal"] || details.normal || []),
-                        ...(details.levelD || details["Weak"] || details.weak || [])
-                    ].map(Number))).sort((a: number, b: number) => a - b),
-                    strong: (details.levelA || details["Very Strong"] || details.very_strong || []).length > 0
-                }));
-            }
-            return apiData;
+        if (apiData && typeof apiData === 'object' && !Array.isArray(apiData) && Object.keys(apiData).length > 0) {
+            return Object.entries(apiData).map(([planet, details]: [string, any]) => ({
+                planet,
+                levelA: details.levelA || details["Very Strong"] || details.very_strong || [],
+                levelB: details.levelB || details["Strong"] || details.strong || [],
+                levelC: details.levelC || details["Normal"] || details.normal || [],
+                levelD: details.levelD || details["Weak"] || details.weak || [],
+                houses: Array.from(new Set([
+                    ...(details.levelA || details["Very Strong"] || details.very_strong || []),
+                    ...(details.levelB || details["Strong"] || details.strong || []),
+                    ...(details.levelC || details["Normal"] || details.normal || []),
+                    ...(details.levelD || details["Weak"] || details.weak || [])
+                ].map(Number))).sort((a: number, b: number) => a - b),
+                strong: (details.levelA || details["Very Strong"] || details.very_strong || []).length > 0
+            }));
         }
 
         // Fallback: Pivot houseSignificators to Planet View (Client-side calculation)
@@ -431,10 +325,10 @@ export default function KpDashboardPage() {
         planets.forEach(p => { planetMap[p] = { A: [], B: [], C: [], D: [] }; });
 
         houseSignificators.forEach(h => {
-            h.levelA.forEach((p: string) => planetMap[p]?.A.push(h.house));
-            h.levelB.forEach((p: string) => planetMap[p]?.B.push(h.house));
-            h.levelC.forEach((p: string) => planetMap[p]?.C.push(h.house));
-            h.levelD.forEach((p: string) => planetMap[p]?.D.push(h.house));
+            h.levelA.forEach((p: string) => { if (planetMap[p]) planetMap[p].A.push(h.house); });
+            h.levelB.forEach((p: string) => { if (planetMap[p]) planetMap[p].B.push(h.house); });
+            h.levelC.forEach((p: string) => { if (planetMap[p]) planetMap[p].C.push(h.house); });
+            h.levelD.forEach((p: string) => { if (planetMap[p]) planetMap[p].D.push(h.house); });
         });
 
         return Object.entries(planetMap).map(([planet, levels]) => ({
@@ -446,13 +340,13 @@ export default function KpDashboardPage() {
             levelD: levels.D.sort((a, b) => a - b),
             strong: (levels.A.length > 0 || levels.B.length > 0)
         }));
-    }, [houseSignificators, planetSignificatorsQuery.data]);
+    }, [houseSignificators, planetSignificatorsQuery.data, processedCharts]);
 
     // --- DATA TRANSFORMATION HELPERS ---
 
     // 1. Interlinks Transformer
     const interlinksData = React.useMemo(() => {
-        const raw = interlinksQuery.data?.data;
+        const raw = interlinksQuery.data?.data || processedCharts['kp_interlinks_kp']?.chartData?.data || processedCharts['kp_interlinks_kp']?.chartData;
         if (!raw) return [];
 
         const houseLords = raw.houses?.houses || {};
@@ -496,11 +390,11 @@ export default function KpDashboardPage() {
             strength: item.promise_strength || 'Neutral',
             verdict: item.promise_strength || 'Neutral'
         }));
-    }, [interlinksQuery.data]);
+    }, [interlinksQuery.data, processedCharts]);
 
     // 2. SSL Transformer
     const sslData = React.useMemo(() => {
-        const raw = advancedSslQuery.data?.data;
+        const raw = advancedSslQuery.data?.data || processedCharts['kp_interlinks_advanced_kp']?.chartData?.data || processedCharts['kp_interlinks_advanced_kp']?.chartData;
         if (!raw) return [];
 
         const analysis = raw.cuspal_interlinks_analysis || raw.cuspal_interlinks?.cuspal_interlinks_analysis;
@@ -520,11 +414,11 @@ export default function KpDashboardPage() {
             strength: item.promise_strength || 'Neutral',
             verdict: item.promise_strength || 'Neutral'
         }));
-    }, [advancedSslQuery.data]);
+    }, [advancedSslQuery.data, processedCharts]);
 
     // 3. Nakshatra Nadi Transformer
     const nadiData = React.useMemo(() => {
-        const raw = nakshatraNadiQuery.data?.data;
+        const raw = nakshatraNadiQuery.data?.data || processedCharts['kp_nakshatra_nadi_kp']?.chartData?.data || processedCharts['kp_nakshatra_nadi_kp']?.chartData;
         if (!raw || !raw.planets || !raw.houses) return null;
 
         // Transform Planets
@@ -559,11 +453,11 @@ export default function KpDashboardPage() {
         });
 
         return { planets, cusps };
-    }, [nakshatraNadiQuery.data]);
+    }, [nakshatraNadiQuery.data, processedCharts]);
 
     // 4. Fortuna Transformer
     const fortunaData = React.useMemo(() => {
-        const raw = fortunaQuery.data?.data;
+        const raw = fortunaQuery.data?.data || processedCharts['kp_fortuna_kp']?.chartData?.data || processedCharts['kp_fortuna_kp']?.chartData;
         if (!raw || !raw.details) return null;
 
         // Construct calculation array
@@ -582,18 +476,19 @@ export default function KpDashboardPage() {
             }
         };
 
-    }, [fortunaQuery.data]);
+    }, [fortunaQuery.data, processedCharts]);
 
 
 
     // KP Bhava Data
     // We now use the raw API response directly for the table
     const bhavaDetails = React.useMemo(() => {
-        if (bhavaDetailsQuery.data?.data?.bhava_details) {
-            return bhavaDetailsQuery.data.data.bhava_details;
+        const raw = bhavaDetailsQuery.data?.data || processedCharts['kp_bhava_details_kp']?.chartData?.data || processedCharts['kp_bhava_details_kp']?.chartData;
+        if (raw?.bhava_details) {
+            return raw.bhava_details;
         }
         return {};
-    }, [bhavaDetailsQuery.data]);
+    }, [bhavaDetailsQuery.data, processedCharts]);
 
     // KP Debug Logs
     console.log('KP Debug Data:', {
@@ -859,20 +754,81 @@ export default function KpDashboardPage() {
             </div>
 
             {/* Debug Box */}
-            <div className="mt-8 p-4 border-t border-antique/20">
-                <details className="bg-slate-900 rounded-lg overflow-hidden">
-                    <summary className="p-4 text-white font-mono text-xs cursor-pointer hover:bg-slate-800 transition-colors">
-                        🛠️ Debug Data Inspector (Click to Expand)
+            <div className="mt-8 pt-8 border-t border-antique/20">
+                <details className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                    <summary className="p-4 text-white font-mono text-xs cursor-pointer hover:bg-slate-800 transition-colors flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                            <Star className="w-3 h-3 text-gold-primary" />
+                            🛠️ KP Storage & Debug Inspector
+                        </span>
+                        <span className="text-[10px] opacity-50 uppercase tracking-widest">Click to Expand</span>
                     </summary>
-                    <div className="p-4 bg-slate-950 text-green-400 font-mono text-xs overflow-auto max-h-[500px]">
-                        <pre>
-                            {JSON.stringify({
-                                interlinksRaw: interlinksQuery.data,
-                                sslRaw: advancedSslQuery.data,
-                                nadiRaw: nakshatraNadiQuery.data,
-                                fortunaRaw: fortunaQuery.data
-                            }, null, 2)}
-                        </pre>
+                    <div className="p-6 bg-slate-950 space-y-6">
+                        {/* Storage Status Grid */}
+                        <div>
+                            <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold-primary mb-3 font-bold">Database Storage Status</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                {[
+                                    { id: 'D1_kp', label: 'Natal Chart (KP)' },
+                                    { id: 'kp_planets_cusps_kp', label: 'Planets & Cusps' },
+                                    { id: 'kp_significations_kp', label: 'Significations' },
+                                    { id: 'kp_house_significations_kp', label: 'House Table' },
+                                    { id: 'kp_planet_significators_kp', label: 'Planet Matrix' },
+                                    { id: 'kp_bhava_details_kp', label: 'Bhava Details' },
+                                    { id: 'kp_interlinks_kp', label: 'Interlinks' },
+                                    { id: 'kp_interlinks_advanced_kp', label: 'Advanced SSL' },
+                                    { id: 'kp_interlinks_sl_kp', label: 'Interlinks (SL)' },
+                                    { id: 'kp_nakshatra_nadi_kp', label: 'Nakshatra Nadi' },
+                                    { id: 'kp_fortuna_kp', label: 'Pars Fortuna' },
+                                    { id: 'kp_ruling_planets_kp', label: 'Ruling Planets' },
+                                ].map((item) => {
+                                    const isSaved = !!processedCharts[item.id];
+                                    return (
+                                        <div key={item.id} className={cn(
+                                            "p-2 rounded border text-[10px] font-mono flex items-center justify-between gap-2",
+                                            isSaved
+                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                                : "bg-rose-500/10 border-rose-500/30 text-rose-400 opacity-60"
+                                        )}>
+                                            <span className="truncate">{item.label}</span>
+                                            <span className="flex-shrink-0">{isSaved ? '✅ SAVED' : '❌ MISS'}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Raw API Response Viewers */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold-primary mb-3 font-bold">Active Tab Query State</h4>
+                                <div className="bg-black/40 rounded p-3 h-[200px] overflow-auto border border-white/5 scrollbar-thin">
+                                    <pre className="text-green-500 text-[10px] leading-relaxed">
+                                        {activeTab === 'interlinks' && JSON.stringify(interlinksQuery.data, null, 2)}
+                                        {activeTab === 'advanced-ssl' && JSON.stringify(advancedSslQuery.data, null, 2)}
+                                        {activeTab === 'nakshatra-nadi' && JSON.stringify(nakshatraNadiQuery.data, null, 2)}
+                                        {activeTab === 'fortuna' && JSON.stringify(fortunaQuery.data, null, 2)}
+                                        {activeTab === 'planets-cusps' && JSON.stringify(planetsCuspsQuery.data, null, 2)}
+                                        {activeTab === 'significations' && JSON.stringify({ house: houseSignificationsQuery.data, planet: planetSignificatorsQuery.data }, null, 2)}
+                                        {activeTab === 'bhava-details' && JSON.stringify(bhavaDetailsQuery.data, null, 2)}
+                                        {activeTab === 'ruling-planets' && JSON.stringify(rulingPlanetsQuery.data, null, 2)}
+                                    </pre>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold-primary mb-3 font-bold">Full Payload Inspector</h4>
+                                <div className="bg-black/40 rounded p-3 h-[200px] overflow-auto border border-white/5 scrollbar-thin">
+                                    <pre className="text-blue-400 text-[10px] leading-relaxed">
+                                        {JSON.stringify({
+                                            processedKeys: Object.keys(processedCharts).filter(k => k.toLowerCase().includes('kp') || k.startsWith('D1')),
+                                            ayanamsa,
+                                            clientId,
+                                            tab: activeTab
+                                        }, null, 2)}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </details>
             </div>
