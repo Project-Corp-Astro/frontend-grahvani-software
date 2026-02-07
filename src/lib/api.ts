@@ -458,7 +458,7 @@ export const clientApi = {
                 charts: {
                     // Synced with backend - removed D6 and D150 (not supported)
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon_chart', 'sun_chart', 'sudarshana', 'transit'],
+                    special: ['moon_chart', 'sun_chart', 'sudarshana', 'transit', 'shodasha_varga_signs'],
                     lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
                 },
                 features: {
@@ -477,7 +477,7 @@ export const clientApi = {
                 charts: {
                     // No D6 or D150 for Raman
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon', 'sun', 'sudarshan', 'transit'],
+                    special: ['moon', 'sun', 'sudarshan', 'transit', 'shodasha_varga_signs'],
                     lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
                 },
                 features: {
