@@ -31,22 +31,22 @@ export default function VedicClientSelectionPage() {
 
     return (
         <div className="w-full space-y-6 animate-in fade-in duration-700 py-4 px-0">
-            <div className="px-4 text-xs font-serif uppercase tracking-widest font-bold text-[#6B4423]">
+            <div className="px-4 font-sans text-xs font-medium uppercase tracking-wider text-secondary leading-compact">
                 Vedic Astrology
             </div>
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
                 <div>
-                    <h1 className="text-5xl font-serif font-bold text-ink tracking-tight mb-2">
+                    <h1 className="font-serif text-5xl font-bold text-primary tracking-tight leading-tight mb-2">
                         Client Registry
                     </h1>
-                    <p className="font-serif text-muted italic text-lg opacity-80">
+                    <p className="font-serif text-lg text-secondary italic leading-relaxed opacity-90">
                         The archives of souls and their celestial blueprints.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link href="/clients/new" className="px-8 py-4 bg-gradient-to-r from-gold-primary to-gold-dark text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-button hover:scale-105 transition-transform border border-white/10">
+                    <Link href="/clients/new" className="px-8 py-4 bg-gradient-to-r from-gold-primary to-gold-dark text-white rounded-2xl font-sans text-xs font-bold uppercase tracking-wider shadow-button hover:scale-105 transition-transform border border-white/10 leading-compact">
                         Add New Soul
                     </Link>
                 </div>
@@ -72,17 +72,17 @@ export default function VedicClientSelectionPage() {
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 animate-pulse">
                         <Loader2 className="w-10 h-10 text-gold-primary animate-spin mb-4" />
-                        <p className="font-serif text-ink/70">Accessing Soul Archives...</p>
+                        <p className="font-serif text-base text-secondary leading-relaxed">Accessing Soul Archives...</p>
                     </div>
                 )}
 
                 {/* Error State */}
                 {!loading && error && (
                     <div className="text-center py-32 rounded-3xl bg-red-50 border border-red-100">
-                        <p className="font-serif text-xl text-red-600 mb-2">{error}</p>
+                        <p className="font-serif text-xl text-red-600 leading-tight mb-2">{error}</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="text-xs font-bold uppercase tracking-widest text-[#6B4423] underline decoration-gold-primary decoration-2 underline-offset-4 hover:text-gold-dark"
+                            className="font-sans text-xs font-semibold uppercase tracking-wider text-secondary underline decoration-gold-primary decoration-2 underline-offset-4 hover:text-accent-gold leading-compact"
                         >
                             Try Again
                         </button>
@@ -101,7 +101,7 @@ export default function VedicClientSelectionPage() {
                 {/* Empty State */}
                 {!loading && !error && filteredClients.length === 0 && (
                     <div className="text-center py-32 rounded-3xl bg-softwhite border border-antique">
-                        <p className="font-serif text-2xl italic text-muted">
+                        <p className="font-serif text-2xl italic text-muted-refined leading-relaxed">
                             No constellations match your search.
                         </p>
                     </div>
@@ -111,7 +111,7 @@ export default function VedicClientSelectionPage() {
             {/* Pagination / Total Count Footer */}
             {!loading && !error && (
                 <div className="pt-8 border-t border-divider text-center">
-                    <span className="font-serif text-[10px] text-bronze font-black uppercase tracking-[0.3em]">
+                    <span className="font-sans text-xs text-secondary font-semibold uppercase tracking-wider leading-compact">
                         Synchronized with {filteredClients.length} Collective Records
                     </span>
                 </div>

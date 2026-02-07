@@ -75,15 +75,21 @@
   --hero-bg: #f4e8d8;
   --hero-bg-secondary: #e8dcc8;
   --hero-texture: rgba(227, 206, 178, 0.3);
+
+  /* ============================================ */
+  /* 🔴 OLD TYPOGRAPHY (LEGACY - DO NOT USE)     */
+  /* These will be removed after full migration  */
+  /* ============================================ */
   --text-secondary: #3a2318;
   --text-body: #4a2f20;
   --bronze-accent: #8b5a2b;
   --bronze-dark: #6b4423;
   --bronze-hover: #a0683c;
-  
+  /* =========== END OLD TYPOGRAPHY =========== */
+
 
   /* ============================================ */
-  /* TYPOGRAPHY DESIGN SYSTEM                    */
+  /* ✅ NEW TYPOGRAPHY DESIGN SYSTEM (USE THIS)  */
   /* Professional typography for data-dense      */
   /* astrology software with long reading        */
   /* sessions and complex tables                 */

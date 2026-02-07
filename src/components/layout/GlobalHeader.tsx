@@ -58,7 +58,7 @@ export default function GlobalHeader() {
                             <div className="w-8 h-8 rounded-full border border-[#D08C60] flex items-center justify-center bg-[#2A1810]">
                                 <span className="font-serif text-white font-bold text-lg leading-none pt-1">G</span>
                             </div>
-                            <span className="font-serif text-lg font-bold text-white tracking-wider group-hover:text-[#D08C60] transition-colors">
+                            <span className="font-serif text-xl font-semibold text-white tracking-wide group-hover:text-[#D08C60] transition-colors">
                                 Grahvani
                             </span>
                         </div>
@@ -186,7 +186,7 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
         <Link
             href={href}
             className={`
-                px-4 py-2 font-serif text-xs font-bold tracking-wide transition-all duration-300 relative
+                px-4 py-2 font-serif text-sm font-semibold tracking-wide transition-all duration-300 relative
                 ${active
                     ? 'text-[#FFD27D] text-shadow-glow'
                     : 'text-white hover:text-[#FFD27D]'

@@ -20,7 +20,7 @@ export default function PlanetaryTable({ planets, className }: PlanetaryTablePro
     return (
         <div className={cn("w-full", className)}>
             {/* Header */}
-            <div className="flex bg-[#EAD8B1] py-1.5 px-3 border-b border-antique font-sans text-sm font-semibold text-secondary uppercase tracking-wider leading-normal">
+            <div className="flex bg-[#EAD8B1] py-1.5 px-3 border-b border-antique font-sans text-sm font-semibold text-primary capitalize tracking-wider leading-normal">
                 <div className="flex-1 min-w-[80px]">Planet</div>
                 <div className="flex-1 min-w-[80px]">Sign</div>
                 <div className="flex-1 min-w-[60px]">Deg</div>
@@ -45,7 +45,7 @@ export default function PlanetaryTable({ planets, className }: PlanetaryTablePro
                         </div>
 
                         {/* Sign */}
-                        <div className="flex-1 min-w-[80px] font-regular text-secondary">
+                        <div className="flex-1 min-w-[80px] font-regular text-primary">
                             {p.sign}
                         </div>
 
@@ -55,9 +55,9 @@ export default function PlanetaryTable({ planets, className }: PlanetaryTablePro
                         </div>
 
                         {/* Nakshatra */}
-                        <div className="flex-1 min-w-[100px] font-regular text-secondary">
+                        <div className="flex-1 min-w-[100px] font-regular text-primary">
                             {p.nakshatra}
-                            {p.nakshatraPart && <span className="text-muted-refined ml-1">- {p.nakshatraPart}</span>}
+                            {p.nakshatraPart && <span className="text-secondary ml-1">- {p.nakshatraPart}</span>}
                         </div>
 
                         {/* House */}

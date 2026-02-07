@@ -154,9 +154,9 @@ export default function NorthIndianChart({
                             x={pos.x}
                             y={pos.y + (pos.h === 1 || pos.h === 4 || pos.h === 7 || pos.h === 10 ? 35 : pos.h % 2 === 0 ? 30 : -30)}
                             fontSize="22"
-                            fontFamily="serif"
-                            fontWeight="900"
-                            fill="#3D2618"
+                            fontFamily="'Spectral', 'Crimson Pro', serif"
+                            fontWeight="700"
+                            fill="#4A3F32"
                             fillOpacity="0.9"
                             textAnchor="middle"
                             dominantBaseline="central"
@@ -171,9 +171,9 @@ export default function NorthIndianChart({
                                 x={pos.x}
                                 y={pos.y}
                                 fontSize="34"
-                                fontFamily="serif"
-                                fontWeight="bold"
-                                fill={houseValues[pos.h] < 20 ? "#E11D48" : houseValues[pos.h] >= 30 ? "#10B981" : "#3D2618"}
+                                fontFamily="'Inter', 'Source Sans 3', sans-serif"
+                                fontWeight="600"
+                                fill={houseValues[pos.h] < 20 ? "#E11D48" : houseValues[pos.h] >= 30 ? "#10B981" : "#2D2419"}
                                 textAnchor="middle"
                                 dominantBaseline="central"
                                 className="select-none pointer-events-none"
@@ -194,9 +194,9 @@ export default function NorthIndianChart({
                                         <g key={p.name} transform={`translate(0, ${yOffset})`}>
                                             <text
                                                 fontSize="14"
-                                                fontFamily="serif"
-                                                fontWeight="900"
-                                                fill="#3D2618"
+                                                fontFamily="'Spectral', 'Crimson Pro', serif"
+                                                fontWeight="600"
+                                                fill="#2D2419"
                                                 textAnchor="middle"
                                                 dominantBaseline="central"
                                                 className={cn(
@@ -205,7 +205,7 @@ export default function NorthIndianChart({
                                                 )}
                                             >
                                                 {displayName}
-                                                <tspan fontSize="9" fontWeight="500" fill="#3D2618" dx="2">
+                                                <tspan fontSize="10" fontWeight="400" fill="#4A3F32" dx="2">
                                                     {p.degree}
                                                 </tspan>
                                             </text>

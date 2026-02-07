@@ -75,7 +75,7 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
                             key={item.name}
                             href={href}
                             className={cn(
-                                "flex items-center px-3 py-2 transition-all duration-300 relative group shrink-0 whitespace-nowrap font-serif text-[11px] font-medium tracking-wide",
+                                "flex items-center px-3 py-2 transition-all duration-300 relative group shrink-0 whitespace-nowrap font-serif text-sm font-medium tracking-wide",
                                 isActive
                                     ? "text-[#FFD27D] text-shadow-glow"
                                     : "text-white hover:text-[#FFD27D]"
@@ -107,7 +107,7 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
                             onClick={() => router.push(`/vedic-astrology/overview`)}
                         >
                             <div className="hidden sm:block text-right">
-                                <h2 className="text-white font-serif font-bold text-sm tracking-widest group-hover:text-[#FFD27D] transition-colors">{clientDetails.name}</h2>
+                                <h2 className="text-white font-serif font-semibold text-md tracking-wide group-hover:text-[#FFD27D] transition-colors">{clientDetails.name}</h2>
                             </div>
                             <div className="w-9 h-9 rounded-full bg-[#2A1810] border border-[#D08C60]/30 flex items-center justify-center text-[#FFD27D] font-serif font-bold text-sm shadow-[0_0_15px_rgba(208,140,96,0.1)] group-hover:border-[#FFD27D]/50 transition-all">
                                 {clientDetails.name.charAt(0)}

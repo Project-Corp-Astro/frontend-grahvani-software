@@ -179,9 +179,9 @@ export default function VedicOverviewPage() {
                 <div className="col-span-12 lg:col-span-7 grid grid-cols-3 gap-2 content-start">
 
                     {/* Profile & Info */}
-                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col h-full min-h-[415px]">
                         <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
-                            <h3 className="font-serif text-md font-medium text-primary leading-tight">Client Profile</h3>
+                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Client Profile</h3>
                         </div>
                         <div className="p-3 space-y-3 flex-1 bg-[#FFFCF6]">
                             {clientDetails && (
@@ -192,11 +192,11 @@ export default function VedicOverviewPage() {
                                         </div>
                                         <div>
                                             <div className="font-serif text-md font-medium text-primary leading-tight">{clientDetails.name}</div>
-                                            <div className="font-sans text-xs text-muted-refined leading-compact flex gap-2">
+                                            <div className="font-sans text-xs text-primary leading-compact flex gap-2">
                                                 <span>{formatDate(clientDetails.dateOfBirth)}</span>
                                                 <span>{formatTime(clientDetails.timeOfBirth)}</span>
                                             </div>
-                                            <div className="font-sans text-xs text-muted-refined leading-compact truncate max-w-[150px]">{clientDetails.placeOfBirth.city}</div>
+                                            <div className="font-sans text-xs text-primary leading-compact truncate max-w-[150px]">{clientDetails.placeOfBirth.city}</div>
                                         </div>
                                     </div>
                                     <Link href="/vedic-astrology/workbench" className="block w-full text-center py-1.5 bg-gold-primary/10 border border-gold-primary/20 rounded font-sans text-base font-medium text-accent-gold hover:bg-gold-primary hover:text-primary transition-colors">
@@ -208,11 +208,11 @@ export default function VedicOverviewPage() {
                             {/* Quick Astrological Info */}
                             <div className="flex flex-col gap-2">
                                 <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary uppercase tracking-wider leading-compact">Lagna</span>
+                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Lagna</span>
                                     <span className="font-serif text-sm font-medium text-primary leading-tight">{signIdToName[(d1Data.ascendant || 1) as number]}</span>
                                 </div>
                                 <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary uppercase tracking-wider leading-compact">Moon</span>
+                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Moon</span>
                                     <span className="font-serif text-sm font-medium text-primary leading-tight">{
                                         d1Data.planets.find(p => p.name === "Mo")
                                             ? signIdToName[d1Data.planets.find(p => p.name === "Mo")!.signId]
@@ -220,7 +220,7 @@ export default function VedicOverviewPage() {
                                     }</span>
                                 </div>
                                 <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary uppercase tracking-wider leading-compact">Sun</span>
+                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Sun</span>
                                     <span className="font-serif text-sm font-medium text-primary leading-tight">{
                                         d1Data.planets.find(p => p.name === "Su")
                                             ? signIdToName[d1Data.planets.find(p => p.name === "Su")!.signId]
@@ -232,7 +232,7 @@ export default function VedicOverviewPage() {
                     </div>
 
                     {/* Vimshottari Dasha */}
-                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm h-full col-span-2">
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm h-full col-span-2 min-h-[340px]">
                         <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
                             <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Vimshottari Dasha</h3>
                         </div>
@@ -250,7 +250,7 @@ export default function VedicOverviewPage() {
                         {/* D9 Navamsha */}
                         <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
                             <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
-                                <h3 className="font-serif text-md font-medium text-primary leading-tight">Navamsha (D9)</h3>
+                                <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Navamsha (D9)</h3>
                                 <button onClick={() => setZoomedChart({ varga: "D9", label: "Navamsha (D9)" })} className="text-secondary hover:text-accent-gold transition-colors"><Maximize2 className="w-3 h-3" /></button>
                             </div>
                             <div className="w-full h-[320px] bg-[#FFFCF6]">
@@ -263,7 +263,7 @@ export default function VedicOverviewPage() {
                         {/* D10 Dashamsha */}
                         <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
                             <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
-                                <h3 className="font-serif text-md font-medium text-primary leading-tight">Dashamsha (D10)</h3>
+                                <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Dashamsha (D10)</h3>
                                 <button onClick={() => setZoomedChart({ varga: "D10", label: "Dashamsha (D10)" })} className="text-secondary hover:text-accent-gold transition-colors"><Maximize2 className="w-3 h-3" /></button>
                             </div>
                             <div className="w-full h-[320px] bg-[#FFFCF6]">
@@ -277,7 +277,7 @@ export default function VedicOverviewPage() {
                     {/* Yogas / Additional Info */}
                     <div className="col-span-2 border border-antique rounded-lg overflow-hidden shadow-sm">
                         <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
-                            <h3 className="font-serif text-md font-medium text-primary leading-tight">Yogas & Combinations</h3>
+                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Combinations</h3>
                         </div>
                         <div className="p-2 max-h-[150px] overflow-y-auto custom-scrollbar bg-[#FFFCF6]">
                             {yogas && yogas.length > 0 ? (

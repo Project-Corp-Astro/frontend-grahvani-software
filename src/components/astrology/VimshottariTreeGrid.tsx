@@ -88,7 +88,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
 
                 {navPath.map((node, i) => (
                     <React.Fragment key={i}>
-                        <ChevronRight className="w-2.5 h-2.5 text-muted-refined/30 flex-shrink-0" />
+                        <ChevronRight className="w-2.5 h-2.5 text-primary/70 flex-shrink-0" />
                         <button
                             onClick={() => setNavPath(navPath.slice(0, i + 1))}
                             className="px-1.5 py-0.5 rounded font-sans text-xs font-medium text-accent-gold hover:bg-gold-primary/10 whitespace-nowrap transition-colors leading-compact"
@@ -175,7 +175,7 @@ function DashaDrillRow({ node, depth, onDrill }: { node: DashaNode; depth: numbe
                 <div className="flex flex-col gap-1 w-full">
                     <div className="flex items-center gap-2">
                         {isDrillable ? (
-                            <ChevronRight className="w-2.5 h-2.5 text-accent-gold/40 group-hover:text-accent-gold transition-colors flex-shrink-0" />
+                            <ChevronRight className="w-2.5 h-2.5 text-primary/70 group-hover:text-accent-gold transition-colors flex-shrink-0" />
                         ) : (
                             // Spacer for alignment if no chevron
                             <span className="w-2.5 inline-block" />
@@ -191,10 +191,10 @@ function DashaDrillRow({ node, depth, onDrill }: { node: DashaNode; depth: numbe
                     </div>
                 </div>
             </td>
-            <td className="px-1.5 py-1 font-sans text-xs text-muted-refined whitespace-nowrap overflow-hidden leading-compact tracking-tight">
+            <td className="px-1.5 py-1 font-sans text-xs text-primary whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {formatDate(node.startDate)}
             </td>
-            <td className="px-1.5 py-1 font-sans text-xs text-muted-refined whitespace-nowrap overflow-hidden leading-compact tracking-tight">
+            <td className="px-1.5 py-1 font-sans text-xs text-primary whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {formatDate(node.endDate)}
             </td>
             <td className="px-1.5 py-1 font-sans text-base font-regular text-primary whitespace-nowrap overflow-hidden leading-normal">
