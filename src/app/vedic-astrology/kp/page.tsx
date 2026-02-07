@@ -26,6 +26,9 @@ import {
     KpAdvancedSslTable,
     KpFortunaView,
     KpNakshatraNadiView,
+    KpFocusedCuspView,
+    KpAdvancedSslView,
+    KpNakshatraNadiFocusedView,
 } from '@/components/kp';
 import HouseSignificatorsTable from '@/components/kp/HouseSignificatorsTable';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
@@ -693,7 +696,7 @@ export default function KpDashboardPage() {
                             </div>
                         ) : (
                             interlinksQuery.data?.data ? (
-                                <KpInterlinksTable promises={interlinksData} />
+                                <KpFocusedCuspView promises={interlinksData} cusps={cuspData} />
                             ) : (
                                 <p className="text-muted text-center py-8">No interlinks data available</p>
                             )
@@ -710,7 +713,7 @@ export default function KpDashboardPage() {
                             </div>
                         ) : (
                             advancedSslQuery.data?.data ? (
-                                <KpAdvancedSslTable promises={sslData} />
+                                <KpAdvancedSslView promises={sslData} cusps={cuspData} />
                             ) : (
                                 <p className="text-muted text-center py-8">No Advanced SSL data available</p>
                             )
@@ -720,14 +723,14 @@ export default function KpDashboardPage() {
 
                 {/* Nakshatra Nadi */}
                 {activeTab === 'nakshatra-nadi' && (
-                    <div className="bg-white border border-antique rounded-2xl p-6 overflow-hidden">
+                    <div className="bg-white border border-antique rounded-2xl overflow-hidden">
                         {nakshatraNadiQuery.isLoading ? (
                             <div className="flex items-center justify-center py-12">
                                 <Loader2 className="w-6 h-6 text-gold-primary animate-spin" />
                             </div>
                         ) : (
                             nakshatraNadiQuery.data?.data && nadiData ? (
-                                <KpNakshatraNadiView data={{ nadiData }} />
+                                <KpNakshatraNadiFocusedView data={{ nadiData }} />
                             ) : (
                                 <p className="text-muted text-center py-8">No Nakshatra Nadi data available</p>
                             )

@@ -17,7 +17,8 @@ import {
     Eye,
     Loader2,
     RefreshCw,
-    Layers
+    Layers,
+    Shield
 } from 'lucide-react';
 import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
@@ -26,7 +27,7 @@ import { clientApi } from '@/lib/api';
 import { useSystemCapabilities } from "@/hooks/queries/useCalculations";
 import { useChartMutations } from "@/hooks/mutations/useChartMutations";
 
-import { parseChartData, signNameToId, signIdToName } from '@/lib/chart-helpers';
+import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 
 const CHART_NAMES: Record<string, string> = {
     // Divisional Charts
@@ -198,7 +199,32 @@ export default function AnalyticalWorkbenchPage() {
                             </div>
                         </div>
                     ) : (
-                        <ShodashaDignity data={{ charts: Object.values(processedCharts) }} />
+                        <div className="space-y-6">
+                            {processedCharts[`shodasha_varga_signs_${activeSystem}`] || Object.values(processedCharts).some(c => c.chartType && c.chartType.startsWith('D')) ? (
+                                <ShodashaDignity data={{ charts: Object.values(processedCharts) }} activeSystem={activeSystem} />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center min-h-[500px] bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-copper-100 border-dashed p-12 text-center shadow-xl">
+                                    <div className="p-6 bg-copper-50 rounded-full mb-6">
+                                        <Shield className="w-12 h-12 text-copper-300" />
+                                    </div>
+                                    <h3 className="text-2xl font-serif font-bold text-copper-900 mb-3">Shodasha Analysis Required</h3>
+                                    <p className="text-copper-600 mb-8 max-w-md leading-relaxed font-medium">
+                                        To view the complete Dignity Matrix and Vimsopaka strengths, we need to generate the Shodasha Varga summary.
+                                    </p>
+                                    <button
+                                        onClick={() => clientApi.generateChart(clientDetails.id!, 'shodasha_varga_signs', activeSystem as any).then(refreshCharts)}
+                                        className="px-10 py-4 bg-copper-900 text-white rounded-2xl font-bold hover:shadow-2xl transition-all flex items-center gap-3 group"
+                                    >
+                                        {isGeneratingLocal ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
+                                        )}
+                                        Generate Dignity Analysis
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
 
