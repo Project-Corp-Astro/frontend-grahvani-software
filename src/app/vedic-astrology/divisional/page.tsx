@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown } from 'lucide-react';
+import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown, LayoutGrid, Columns2, Columns3, Rows3 } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
+import DivisionalChartZoomModal from '@/components/astrology/DivisionalChartZoomModal';
 import { cn } from "@/lib/utils";
 import { clientApi, CHART_METADATA } from '@/lib/api';
 import { useSystemCapabilities } from "@/hooks/queries/useCalculations";
 
 import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 
-type GridSize = '2x2' | '2x3' | '3x3';
+type ColumnCount = 1 | 2 | 3 | 4 | 5;
 
 // Safe degree parsing - handles string/number from API (Keep if needed locally or move to utils if generic)
 function parseDegree(value: any): number | null {
@@ -77,14 +78,18 @@ function getHouseDistributionFromPlanets(planets: Planet[], ascendantSign: numbe
     return houses;
 }
 
-const DEFAULT_CHART_SLOTS = ['D1', 'D9', 'D4', 'D7', 'D10', 'D3'];
+// All 16 Shodashvarga divisional charts
+const DEFAULT_CHART_SLOTS = [
+    'D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12',
+    'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'
+];
 
 export default function VedicDivisionalPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
     const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
 
-    const [gridSize, setGridSize] = useState<GridSize>('2x3');
+    const [columnCount, setColumnCount] = useState<ColumnCount>(3);
     const [chartSlots, setChartSlots] = useState<string[]>(DEFAULT_CHART_SLOTS);
     const [maximizedChart, setMaximizedChart] = useState<string | null>(null);
     const [showSettings, setShowSettings] = useState<number | null>(null);
@@ -92,14 +97,29 @@ export default function VedicDivisionalPage() {
     const [openHouseDetails, setOpenHouseDetails] = useState<Set<string>>(new Set());
     // Show Add Chart selector
     const [showAddChartSelector, setShowAddChartSelector] = useState(false);
+    // Zoom modal state
+    const [zoomModalData, setZoomModalData] = useState<{
+        isOpen: boolean;
+        chartType: string;
+        chartName: string;
+        chartDesc: string;
+        planets: Planet[];
+        ascendant: number;
+        chartData: any;
+    } | null>(null);
 
     // Get available divisional charts based on system
     const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
     const availableCharts = systemCapabilities.charts.divisional;
 
-    // Grid columns based on size
-    const gridCols = gridSize === '2x2' ? 'grid-cols-2' : gridSize === '2x3' ? 'grid-cols-3' : 'grid-cols-3';
-    const gridRows = gridSize === '2x2' ? 4 : gridSize === '2x3' ? 6 : 9;
+    // Grid columns based on columnCount
+    const gridColsClass = {
+        1: 'grid-cols-1',
+        2: 'grid-cols-2',
+        3: 'grid-cols-3',
+        4: 'grid-cols-4',
+        5: 'grid-cols-5',
+    }[columnCount];
 
     useEffect(() => {
         if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
@@ -127,10 +147,23 @@ export default function VedicDivisionalPage() {
         });
     };
 
-    // Replace chart in slot
+    // Replace or swap chart in slot
     const replaceChart = (slotIndex: number, newChartType: string) => {
         const newSlots = [...chartSlots];
-        newSlots[slotIndex] = newChartType;
+        const currentChart = newSlots[slotIndex];
+
+        // Check if the new chart is already displayed elsewhere
+        const existingIndex = newSlots.findIndex(c => c === newChartType);
+
+        if (existingIndex !== -1 && existingIndex !== slotIndex) {
+            // SWAP: Exchange positions of both charts
+            newSlots[slotIndex] = newChartType;
+            newSlots[existingIndex] = currentChart;
+        } else {
+            // Simple replace (chart not currently displayed)
+            newSlots[slotIndex] = newChartType;
+        }
+
         setChartSlots(newSlots);
         setShowSettings(null);
     };
@@ -142,20 +175,9 @@ export default function VedicDivisionalPage() {
         setShowSettings(null);
     };
 
-    // Add specific chart with auto-resize logic
+    // Add specific chart
     const addChart = (chartType: string) => {
         if (!chartSlots.includes(chartType)) {
-            // Check if grid needs expansion
-            const currentLimit = gridSize === '2x2' ? 4 : gridSize === '2x3' ? 6 : 9;
-            if (chartSlots.length >= currentLimit) {
-                if (gridSize === '2x2') {
-                    setGridSize('2x3');
-                } else if (gridSize === '2x3') {
-                    setGridSize('3x3');
-                }
-                // If 3x3 (9) is full, we append anyway. Consider removing the slice constraint in render if functionality allows, 
-                // but for now resizing handles the common 99% case.
-            }
             setChartSlots([...chartSlots, chartType]);
         }
         setShowAddChartSelector(false);
@@ -215,16 +237,24 @@ export default function VedicDivisionalPage() {
                         <RefreshCw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
                     </button>
 
-                    {/* Grid Size Selector */}
-                    <select
-                        value={gridSize}
-                        onChange={(e) => setGridSize(e.target.value as GridSize)}
-                        className="text-xs bg-white border border-[#D08C60]/30 rounded-lg px-2 py-1.5 text-[#8B5A2B] font-bold"
-                    >
-                        <option value="2x2">2×2 Grid</option>
-                        <option value="2x3">2×3 Grid</option>
-                        <option value="3x3">3×3 Grid</option>
-                    </select>
+                    {/* Column Count Selector */}
+                    <div className="flex items-center gap-1 bg-white border border-[#D08C60]/30 rounded-lg p-1">
+                        {([1, 2, 3, 4, 5] as ColumnCount[]).map((col) => (
+                            <button
+                                key={col}
+                                onClick={() => setColumnCount(col)}
+                                className={cn(
+                                    "w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold transition-all",
+                                    columnCount === col
+                                        ? "bg-[#D08C60] text-white shadow-sm"
+                                        : "text-[#8B5A2B] hover:bg-[#D08C60]/10"
+                                )}
+                                title={`${col} column${col > 1 ? 's' : ''}`}
+                            >
+                                {col}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </header>
 
@@ -239,10 +269,10 @@ export default function VedicDivisionalPage() {
             {/* Grid View - Show if we have data, even if refreshing */}
             {Object.keys(processedCharts).length > 0 && (
                 <div className={cn(
-                    "grid gap-4",
-                    maximizedChart ? "grid-cols-1" : gridCols
+                    "grid gap-4 items-start",
+                    maximizedChart ? "grid-cols-1" : gridColsClass
                 )}>
-                    {chartSlots.slice(0, gridRows).map((chartType, idx) => {
+                    {chartSlots.map((chartType, idx) => {
                         if (maximizedChart && maximizedChart !== chartType) return null;
 
                         const chartData = getChartData(chartType);
@@ -251,6 +281,19 @@ export default function VedicDivisionalPage() {
                         const isGenerating = !chartData && isGeneratingCharts;
                         const houseData = chartData ? getHouseDistributionFromPlanets(planets, ascendant) : {};
                         const isHouseDetailsOpen = openHouseDetails.has(chartType);
+
+                        // Open zoom modal handler
+                        const openZoomModal = () => {
+                            setZoomModalData({
+                                isOpen: true,
+                                chartType,
+                                chartName: meta.name,
+                                chartDesc: meta.desc,
+                                planets,
+                                ascendant,
+                                chartData
+                            });
+                        };
 
                         return (
                             <div key={`${chartType}-${idx}`} className={cn(
@@ -279,14 +322,16 @@ export default function VedicDivisionalPage() {
                                             </button>
                                         )}
 
-                                        {/* Maximize */}
-                                        <button
-                                            onClick={() => setMaximizedChart(maximizedChart === chartType ? null : chartType)}
-                                            className="p-1 hover:bg-[#D08C60]/10 rounded text-[#8B5A2B]"
-                                            title="Zoom"
-                                        >
-                                            {maximizedChart === chartType ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                                        </button>
+                                        {/* Zoom - Opens Modal */}
+                                        {chartData && (
+                                            <button
+                                                onClick={openZoomModal}
+                                                className="p-1 hover:bg-[#D08C60]/10 rounded text-[#8B5A2B]"
+                                                title="Zoom Details"
+                                            >
+                                                <Maximize2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
 
                                         {/* Settings (Replace/Remove) */}
                                         <div className="relative">
@@ -299,30 +344,56 @@ export default function VedicDivisionalPage() {
                                             </button>
 
                                             {showSettings === idx && (
-                                                <div className="absolute right-0 top-7 z-30 bg-white border border-[#D08C60]/30 rounded-lg shadow-xl py-1 min-w-[140px]">
-                                                    <div className="px-2 py-1 text-[10px] text-[#8B5A2B]/60 uppercase font-bold border-b border-[#D08C60]/10">Replace With</div>
-                                                    <div className="max-h-40 overflow-y-auto">
-                                                        {availableCharts.filter(c => !chartSlots.includes(c) || c === chartType).map(chart => (
-                                                            <button
-                                                                key={chart}
-                                                                onClick={() => replaceChart(idx, chart)}
-                                                                className={cn(
-                                                                    "w-full px-3 py-1.5 text-left text-xs hover:bg-[#D08C60]/10 flex justify-between",
-                                                                    chart === chartType && "bg-[#D08C60]/10"
-                                                                )}
-                                                            >
-                                                                <span className="font-bold">{chart}</span>
-                                                                <span className="text-[9px] text-[#8B5A2B]/60">{CHART_METADATA[chart]?.name}</span>
-                                                            </button>
-                                                        ))}
+                                                <div className="absolute right-0 top-7 z-30 bg-white border border-[#D08C60]/30 rounded-xl shadow-2xl py-2 min-w-[200px]">
+                                                    <div className="px-3 py-1.5 text-[10px] text-[#8B5A2B]/70 uppercase font-bold border-b border-[#D08C60]/10 flex items-center gap-2">
+                                                        <RefreshCw className="w-3 h-3" />
+                                                        Replace / Swap With
+                                                    </div>
+                                                    <div className="max-h-[280px] overflow-y-auto py-1">
+                                                        {availableCharts.map(chart => {
+                                                            const isCurrentChart = chart === chartType;
+                                                            const isDisplayed = chartSlots.includes(chart) && !isCurrentChart;
+                                                            const displayIndex = chartSlots.indexOf(chart) + 1;
+
+                                                            return (
+                                                                <button
+                                                                    key={chart}
+                                                                    onClick={() => !isCurrentChart && replaceChart(idx, chart)}
+                                                                    disabled={isCurrentChart}
+                                                                    className={cn(
+                                                                        "w-full px-3 py-2 text-left text-xs flex items-center justify-between gap-2 transition-colors",
+                                                                        isCurrentChart
+                                                                            ? "bg-[#D08C60]/15 cursor-default"
+                                                                            : isDisplayed
+                                                                                ? "hover:bg-amber-50 border-l-2 border-transparent hover:border-amber-400"
+                                                                                : "hover:bg-[#D08C60]/10"
+                                                                    )}
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className={cn(
+                                                                            "font-bold",
+                                                                            isCurrentChart ? "text-[#D08C60]" : "text-[#3E2A1F]"
+                                                                        )}>{chart}</span>
+                                                                        <span className="text-[9px] text-[#8B5A2B]/60">{CHART_METADATA[chart]?.name}</span>
+                                                                    </div>
+                                                                    {isCurrentChart ? (
+                                                                        <span className="text-[9px] bg-[#D08C60]/20 text-[#8B5A2B] px-1.5 py-0.5 rounded-full font-bold">Current</span>
+                                                                    ) : isDisplayed ? (
+                                                                        <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                                                            <RefreshCw className="w-2.5 h-2.5" /> Swap #{displayIndex}
+                                                                        </span>
+                                                                    ) : null}
+                                                                </button>
+                                                            );
+                                                        })}
                                                     </div>
                                                     <div className="border-t border-[#D08C60]/10 mt-1 pt-1">
                                                         <button
                                                             onClick={() => removeChart(idx)}
-                                                            className="w-full px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
                                                         >
                                                             <X className="w-3 h-3" />
-                                                            Remove Chart
+                                                            Remove from Grid
                                                         </button>
                                                     </div>
                                                 </div>
@@ -380,7 +451,7 @@ export default function VedicDivisionalPage() {
                                 {/* Quick Stats - Ascendant Info (only when house details closed) */}
                                 {chartData && !isHouseDetailsOpen && (
                                     <div className="mt-2 flex items-center justify-between text-[9px] text-[#8B5A2B]">
-                                        <span>Asc: <strong className="text-[#3E2A1F]">{chartData?.ascendant?.sign || '—'}</strong></span>
+                                        <span>Asc: <strong className="text-[#3E2A1F]">{signIdToName[ascendant] || 'Aries'}</strong></span>
                                         <span className="text-[#8B5A2B]/50">{planets.filter(p => p.isRetro).length > 0 ? `${planets.filter(p => p.isRetro).length} Retro` : 'No Retro'}</span>
                                     </div>
                                 )}
@@ -432,6 +503,20 @@ export default function VedicDivisionalPage() {
                 <div
                     className="fixed inset-0 z-30"
                     onClick={() => setShowAddChartSelector(false)}
+                />
+            )}
+
+            {/* Zoom Modal */}
+            {zoomModalData && (
+                <DivisionalChartZoomModal
+                    isOpen={zoomModalData.isOpen}
+                    onClose={() => setZoomModalData(null)}
+                    chartType={zoomModalData.chartType}
+                    chartName={zoomModalData.chartName}
+                    chartDesc={zoomModalData.chartDesc}
+                    planets={zoomModalData.planets}
+                    ascendantSign={zoomModalData.ascendant}
+                    chartData={zoomModalData.chartData}
                 />
             )}
         </div>
