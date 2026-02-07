@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -80,6 +80,107 @@
   --bronze-accent: #8b5a2b;
   --bronze-dark: #6b4423;
   --bronze-hover: #a0683c;
+  
+
+  /* ============================================ */
+  /* TYPOGRAPHY DESIGN SYSTEM                    */
+  /* Professional typography for data-dense      */
+  /* astrology software with long reading        */
+  /* sessions and complex tables                 */
+  /* ============================================ */
+
+  /* --- OPTIMIZED TEXT COLORS --- */
+  /* High-contrast text colors optimized for readability */
+  /* on cream/parchment backgrounds during 30+ min sessions */
+
+  --text-primary: #2D2419;
+  /* Primary text - WCAG AAA compliant, deep warm brown */
+  /* Use for: Chart titles, client names, planet names, table body text */
+
+  --text-secondary: #4A3F32;
+  /* Secondary text - Strong contrast, medium brown */
+  /* Use for: Nakshatra names, sign names, supporting information */
+
+  --text-muted-refined: #6B5D4F;
+  /* Muted/metadata - De-emphasized details */
+  /* Use for: Dates, degrees, metadata labels */
+
+  --text-accent-gold: #B8860B;
+  /* Accent spiritual - Dark goldenrod */
+  /* Use for: Active states, "Open Workbench" button, highlights */
+
+  --text-accent-gold-light: #D4A574;
+  /* Accent light - Lighter gold */
+  /* Use for: Hover states, subtle emphasis */
+
+  --text-disabled: #9B8D7E;
+  /* Disabled/inactive - Very light brown */
+  /* Use for: Inactive navigation, disabled controls */
+
+  /* --- TYPOGRAPHY FAMILIES --- */
+  /* Serif for classical authority, sans-serif for data clarity */
+
+  --font-family-serif: 'Spectral', 'Crimson Pro', 'Lora', Georgia, serif;
+  /* Primary font for headers, titles, narrative content */
+  /* Evokes tradition, scholarship, spiritual depth */
+
+  --font-family-sans: 'Inter', 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Secondary font for tables, data, UI elements */
+  /* Provides numeric clarity and scanability */
+
+  /* --- FONT SIZE SCALE --- */
+  /* Precise hierarchy from app title to chart annotations */
+
+  --font-size-xl: 1.25rem;
+  /* 20px - App title/logo */
+  --font-size-lg: 1.125rem;
+  /* 18px - Section headers (Birth Chart, Vimshottari Dasha) */
+  --font-size-md: 0.9375rem;
+  /* 15px - Card titles (Client Profile, Navamsa D9) */
+  --font-size-base: 0.875rem;
+  /* 14px - Table body, navigation */
+  --font-size-sm: 0.8125rem;
+  /* 13px - Table headers */
+  --font-size-xs: 0.75rem;
+  /* 12px - Metadata/secondary labels */
+  --font-size-2xs: 0.6875rem;
+  /* 11px - Chart annotations */
+
+  /* --- FONT WEIGHTS --- */
+  /* Semantic weight naming for consistent hierarchy */
+
+  --font-weight-regular: 400;
+  /* Body text, table rows */
+  --font-weight-medium: 500;
+  /* Card titles, emphasized data, navigation */
+  --font-weight-semibold: 600;
+  /* Section headers, table headers */
+  --font-weight-bold: 700;
+  /* Special emphasis (rarely used) */
+
+  /* --- LINE HEIGHTS --- */
+  /* Optimized for readability across different content types */
+
+  --line-height-tight: 1.2;
+  /* Headers - compact for impact */
+  --line-height-compact: 1.3;
+  /* Dense data/chart annotations */
+  --line-height-normal: 1.4;
+  /* Tables - balance density and readability */
+  --line-height-relaxed: 1.5;
+  /* Body text - comfortable reading */
+
+  /* --- LETTER SPACING --- */
+  /* Subtle adjustments for typography refinement */
+
+  --letter-spacing-tight: -0.01em;
+  /* Numeric data - slightly tighter */
+  --letter-spacing-normal: 0;
+  /* Default spacing */
+  --letter-spacing-wide: 0.01em;
+  /* Headers - slight tracking for elegance */
+  --letter-spacing-wider: 0.05em;
+  /* All-caps labels */
 }
 
 @theme {
@@ -125,10 +226,85 @@
   --color-bronze: var(--bronze-accent);
   --color-bronze-dark: var(--bronze-dark);
 
-  /* Fonts */
-  --font-serif: "Playfair Display", serif;
+  /* ============================================ */
+  /* TYPOGRAPHY DESIGN SYSTEM - TAILWIND THEME   */
+  /* ============================================ */
+
+  /* --- Text Colors (Optimized for Readability) --- */
+  --color-primary: var(--text-primary);
+  /* text-primary - Deep warm brown for primary content */
+
+  --color-secondary: var(--text-secondary);
+  /* text-secondary - Medium brown for supporting info */
+
+  --color-muted-refined: var(--text-muted-refined);
+  /* text-muted-refined - Light brown for metadata */
+
+  --color-accent-gold: var(--text-accent-gold);
+  /* text-accent-gold - Dark goldenrod for emphasis */
+
+  --color-accent-gold-light: var(--text-accent-gold-light);
+  /* text-accent-gold-light - Lighter gold for hovers */
+
+  --color-disabled: var(--text-disabled);
+  /* text-disabled - Very light for inactive states */
+
+  /* --- Font Families --- */
+  --font-serif: var(--font-family-serif);
+  /* font-serif - Spectral for headers & titles */
+
+  --font-sans: var(--font-family-sans);
+  /* font-sans - Inter for tables & data */
+
+  /* Legacy fonts (preserved) */
   --font-inter: "Inter", sans-serif;
   --font-cormorant: "Cormorant Garamond", serif;
+
+  /* --- Font Sizes --- */
+  --font-size-xl: var(--font-size-xl);
+  /* text-xl - 20px */
+  --font-size-lg: var(--font-size-lg);
+  /* text-lg - 18px */
+  --font-size-md: var(--font-size-md);
+  /* text-md - 15px */
+  --font-size-base: var(--font-size-base);
+  /* text-base - 14px */
+  --font-size-sm: var(--font-size-sm);
+  /* text-sm - 13px */
+  --font-size-xs: var(--font-size-xs);
+  /* text-xs - 12px */
+  --font-size-2xs: var(--font-size-2xs);
+  /* text-2xs - 11px */
+
+  /* --- Font Weights --- */
+  --font-weight-regular: var(--font-weight-regular);
+  /* font-regular - 400 */
+  --font-weight-medium: var(--font-weight-medium);
+  /* font-medium - 500 */
+  --font-weight-semibold: var(--font-weight-semibold);
+  /* font-semibold - 600 */
+  --font-weight-bold: var(--font-weight-bold);
+  /* font-bold - 700 */
+
+  /* --- Line Heights --- */
+  --line-height-tight: var(--line-height-tight);
+  /* leading-tight - 1.2 */
+  --line-height-compact: var(--line-height-compact);
+  /* leading-compact - 1.3 */
+  --line-height-normal: var(--line-height-normal);
+  /* leading-normal - 1.4 */
+  --line-height-relaxed: var(--line-height-relaxed);
+  /* leading-relaxed - 1.5 */
+
+  /* --- Letter Spacing --- */
+  --letter-spacing-tight: var(--letter-spacing-tight);
+  /* tracking-tight - -0.01em */
+  --letter-spacing-normal: var(--letter-spacing-normal);
+  /* tracking-normal - 0 */
+  --letter-spacing-wide: var(--letter-spacing-wide);
+  /* tracking-wide - 0.01em */
+  --letter-spacing-wider: var(--letter-spacing-wider);
+  /* tracking-wider - 0.05em */
 }
 
 body {

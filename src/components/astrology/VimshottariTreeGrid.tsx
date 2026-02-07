@@ -39,7 +39,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
         return (
             <div className="flex flex-col items-center justify-center py-6">
                 <Loader2 className="w-5 h-5 text-gold-primary animate-spin mb-1" />
-                <p className="text-[9px] text-muted italic">Processing dasha...</p>
+                <p className="font-sans text-xs text-muted-refined italic leading-compact">Processing dasha...</p>
             </div>
         );
     }
@@ -80,7 +80,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
                     onClick={handleReset}
                     className={cn(
                         "p-1 rounded transition-colors",
-                        navPath.length === 0 ? "text-muted/40 cursor-default" : "text-gold-dark hover:bg-gold-primary/10"
+                        navPath.length === 0 ? "text-disabled cursor-default" : "text-accent-gold hover:bg-gold-primary/10"
                     )}
                 >
                     <Home className="w-3 h-3" />
@@ -88,10 +88,10 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
 
                 {navPath.map((node, i) => (
                     <React.Fragment key={i}>
-                        <ChevronRight className="w-2.5 h-2.5 text-muted/30 flex-shrink-0" />
+                        <ChevronRight className="w-2.5 h-2.5 text-muted-refined/30 flex-shrink-0" />
                         <button
                             onClick={() => setNavPath(navPath.slice(0, i + 1))}
-                            className="px-1.5 py-0.5 rounded text-[10px] font-bold text-gold-dark hover:bg-gold-primary/10 whitespace-nowrap transition-colors"
+                            className="px-1.5 py-0.5 rounded font-sans text-xs font-medium text-accent-gold hover:bg-gold-primary/10 whitespace-nowrap transition-colors leading-compact"
                         >
                             {node.planet}
                         </button>
@@ -102,12 +102,11 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
             <div className="flex-1 overflow-x-auto scrollbar-hidden">
                 <table className="w-full border-collapse table-fixed">
                     <thead className="sticky top-0 z-20 bg-parchment/95 backdrop-blur-sm shadow-sm">
-                        <tr className="text-[8px] uppercase tracking-tighter text-ink/80 font-bold border-b border-antique/10">
-                            <th className="px-1.5 py-1 text-left font-serif w-[40%]">{currentLevelName}</th>
-                            <th className="px-1.5 py-1 text-left font-serif w-[20%]">Start</th>
-                            <th className="px-1.5 py-1 text-left font-serif w-[20%]">End</th>
-                            <th className="px-1.5 py-1 text-left font-serif w-[15%]">Dur</th>
-                            <th className="px-1.5 py-1 text-center font-serif w-[5%]">S</th>
+                        <tr className="font-sans text-sm font-semibold text-secondary tracking-wider border-b border-antique/10 leading-normal">
+                            <th className="px-1.5 py-1 text-left w-[45%]">{currentLevelName}</th>
+                            <th className="px-1.5 py-1 text-left w-[20%]">Start</th>
+                            <th className="px-1.5 py-1 text-left w-[20%]">End</th>
+                            <th className="px-1.5 py-1 text-left w-[15%]">Dur</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-antique/5">
@@ -122,7 +121,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className="py-4 text-center text-[10px] text-muted italic">No sub-periods found</td>
+                                <td colSpan={4} className="py-4 text-center font-sans text-xs text-muted-refined italic leading-compact">No sub-periods found</td>
                             </tr>
                         )}
                     </tbody>
@@ -132,7 +131,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
             {navPath.length > 0 && (
                 <button
                     onClick={handleBack}
-                    className="p-2 border-t border-antique/10 bg-parchment/20 flex items-center justify-center gap-1.5 text-[10px] font-bold text-gold-dark hover:bg-gold-primary/10 transition-colors"
+                    className="p-2 border-t border-antique/10 bg-parchment/20 flex items-center justify-center gap-1.5 font-sans text-xs font-medium text-accent-gold hover:bg-gold-primary/10 transition-colors leading-compact"
                 >
                     <ChevronLeft className="w-3 h-3" /> Back to {LEVEL_LABELS[navPath.length - 1] || "Previous"}
                 </button>
@@ -166,49 +165,40 @@ function DashaDrillRow({ node, depth, onDrill }: { node: DashaNode; depth: numbe
         <tr
             onClick={isDrillable ? onDrill : undefined}
             className={cn(
-                "transition-colors group",
-                isActive ? "bg-[#1a237e] text-white" : "hover:bg-parchment/10 text-ink",
+                "transition-colors group border-b border-antique/5",
+                isActive ? "bg-gold-primary/10 font-bold" : "hover:bg-gold-primary/5 text-ink",
                 isDrillable ? "cursor-pointer" : "cursor-default",
-                depth > 0 ? "text-[9px]" : "text-[11px]"
+                depth > 0 ? "text-[10px]" : "text-[11px]"
             )}
         >
             <td className="px-1.5 py-1 align-middle">
                 <div className="flex flex-col gap-1 w-full">
-                    <div className="flex items-center gap-1">
-                        {isDrillable && <ChevronRight className="w-2.5 h-2.5 text-gold-dark/40 group-hover:text-gold-primary transition-colors flex-shrink-0" />}
-                        <span className={cn(
-                            "font-serif font-black",
-                            isActive ? "text-white" : "text-ink"
-                        )}>
+                    <div className="flex items-center gap-2">
+                        {isDrillable ? (
+                            <ChevronRight className="w-2.5 h-2.5 text-accent-gold/40 group-hover:text-accent-gold transition-colors flex-shrink-0" />
+                        ) : (
+                            // Spacer for alignment if no chevron
+                            <span className="w-2.5 inline-block" />
+                        )}
+                        <span className="font-sans text-base font-medium text-primary leading-normal">
                             {node.planet}
                         </span>
+                        {isActive && (
+                            <span className="ml-1 px-1 py-0.5 font-sans text-2xs font-semibold text-green-800 bg-green-100 border border-green-300 rounded leading-none">
+                                A
+                            </span>
+                        )}
                     </div>
-
-                    {isActive && (
-                        <div className="w-full h-0.5 bg-white/10 rounded-full overflow-hidden mt-0.5">
-                            <div
-                                className="h-full bg-gold-primary"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                    )}
                 </div>
             </td>
-            <td className="px-1.5 py-1 text-[9px] font-sans text-ink whitespace-nowrap overflow-hidden">
+            <td className="px-1.5 py-1 font-sans text-xs text-muted-refined whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {formatDate(node.startDate)}
             </td>
-            <td className="px-1.5 py-1 text-[9px] font-sans text-ink whitespace-nowrap overflow-hidden">
+            <td className="px-1.5 py-1 font-sans text-xs text-muted-refined whitespace-nowrap overflow-hidden leading-compact tracking-tight">
                 {formatDate(node.endDate)}
             </td>
-            <td className="px-1.5 py-1 text-[9px] font-sans text-ink whitespace-nowrap overflow-hidden italic">
+            <td className="px-1.5 py-1 font-sans text-base font-regular text-primary whitespace-nowrap overflow-hidden leading-normal">
                 {durationDisplay}
-            </td>
-            <td className="px-1.5 py-1 text-center">
-                {isActive ? (
-                    <div className="w-1 h-1 mx-auto rounded-full bg-gold-primary animate-pulse" />
-                ) : (
-                    <span className="text-muted/10">—</span>
-                )}
             </td>
         </tr>
     );
