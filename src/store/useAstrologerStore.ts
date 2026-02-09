@@ -3,16 +3,19 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type Ayanamsa = "Lahiri" | "Raman" | "KP" | "Tropical" | "Yukteswar";
 export type ChartStyle = "North Indian" | "South Indian";
+export type ChartColorTheme = "classic" | "modern" | "royal" | "earth" | "ocean";
 
 interface AstrologerSettings {
     ayanamsa: Ayanamsa;
     chartStyle: ChartStyle;
+    chartColorTheme: ChartColorTheme;
     recentClientIds: string[];
 }
 
 interface AstrologerStore extends AstrologerSettings {
     setAyanamsa: (val: Ayanamsa) => void;
     setChartStyle: (val: ChartStyle) => void;
+    setChartColorTheme: (val: ChartColorTheme) => void;
     addRecentClient: (id: string) => void;
     updateSettings: (newSettings: Partial<AstrologerSettings>) => void;
 }
@@ -20,6 +23,7 @@ interface AstrologerStore extends AstrologerSettings {
 const DEFAULT_SETTINGS: AstrologerSettings = {
     ayanamsa: "Lahiri",
     chartStyle: "North Indian",
+    chartColorTheme: "classic",
     recentClientIds: [],
 };
 
@@ -31,6 +35,8 @@ export const useAstrologerStore = create<AstrologerStore>()(
             setAyanamsa: (val) => set({ ayanamsa: val }),
 
             setChartStyle: (val) => set({ chartStyle: val }),
+
+            setChartColorTheme: (val) => set({ chartColorTheme: val }),
 
             addRecentClient: (id) => set((state) => {
                 const filtered = state.recentClientIds.filter(cid => cid !== id);

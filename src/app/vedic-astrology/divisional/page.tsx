@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown, LayoutGrid, Columns2, Columns3, Rows3 } from 'lucide-react';
+import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown, LayoutGrid, Columns2, Columns3, Rows3, Palette, BookOpen, Eye, EyeOff } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
+import SouthIndianChart, { ChartColorMode } from '@/components/astrology/SouthIndianChart';
 import DivisionalChartZoomModal from '@/components/astrology/DivisionalChartZoomModal';
+import DivisionalChartInsights from '@/components/astrology/DivisionalChartInsights';
+import ChartCustomizationPanel from '@/components/astrology/ChartCustomizationPanel';
 import { cn } from "@/lib/utils";
 import { clientApi, CHART_METADATA } from '@/lib/api';
 import { useSystemCapabilities } from "@/hooks/queries/useCalculations";
@@ -86,7 +89,7 @@ const DEFAULT_CHART_SLOTS = [
 
 export default function VedicDivisionalPage() {
     const { clientDetails, processedCharts, isLoadingCharts, isRefreshingCharts, refreshCharts, isGeneratingCharts } = useVedicClient();
-    const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
+    const { ayanamsa, chartStyle, chartColorTheme, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
 
     const [columnCount, setColumnCount] = useState<ColumnCount>(3);
@@ -107,6 +110,20 @@ export default function VedicDivisionalPage() {
         ascendant: number;
         chartData: any;
     } | null>(null);
+
+    // Customization panel state
+    const [customizationPanel, setCustomizationPanel] = useState<{ isOpen: boolean; selectedChart?: string }>({ isOpen: false });
+
+    // Per-chart color mode (individual charts can be color or black-white)
+    const [chartColorModes, setChartColorModes] = useState<Record<string, ChartColorMode>>({});
+
+    // Toggle individual chart color mode
+    const toggleChartColorMode = (chartType: string) => {
+        setChartColorModes(prev => ({
+            ...prev,
+            [chartType]: prev[chartType] === 'blackwhite' ? 'color' : 'blackwhite'
+        }));
+    };
 
     // Get available divisional charts based on system
     const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
@@ -233,9 +250,25 @@ export default function VedicDivisionalPage() {
                         onClick={refreshCharts}
                         disabled={isLoadingCharts}
                         className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
+                        title="Refresh Charts"
                     >
                         <RefreshCw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
                     </button>
+
+                    {/* Customize Charts Button */}
+                    <button
+                        onClick={() => setCustomizationPanel({ isOpen: true })}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-medium hover:from-purple-700 hover:to-purple-800 shadow-sm"
+                        title="Customize Charts"
+                    >
+                        <Palette className="w-4 h-4" />
+                        <span className="hidden sm:inline">Customize</span>
+                    </button>
+
+                    {/* Current Chart Style Badge */}
+                    <div className="px-2 py-1 rounded-lg bg-[#FAF8F5] border border-[#D08C60]/30 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">
+                        {chartStyle === 'South Indian' ? '🔲 South' : '◇ North'}
+                    </div>
 
                     {/* Column Count Selector */}
                     <div className="flex items-center gap-1 bg-white border border-[#D08C60]/30 rounded-lg p-1">
@@ -319,6 +352,35 @@ export default function VedicDivisionalPage() {
                                                 title="House Details"
                                             >
                                                 <House className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
+
+                                        {/* Learn - Opens educational content */}
+                                        <button
+                                            onClick={() => setCustomizationPanel({ isOpen: true, selectedChart: chartType })}
+                                            className="p-1 hover:bg-purple-100 rounded text-purple-600"
+                                            title={`Learn about ${chartType}`}
+                                        >
+                                            <BookOpen className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        {/* Color Mode Toggle - Individual chart B&W / Color */}
+                                        {chartData && (
+                                            <button
+                                                onClick={() => toggleChartColorMode(chartType)}
+                                                className={cn(
+                                                    "p-1 rounded transition-colors",
+                                                    chartColorModes[chartType] === 'blackwhite'
+                                                        ? "bg-gray-200 text-gray-700"
+                                                        : "hover:bg-[#D08C60]/10 text-[#8B5A2B]"
+                                                )}
+                                                title={chartColorModes[chartType] === 'blackwhite' ? "Switch to Color" : "Switch to B&W"}
+                                            >
+                                                {chartColorModes[chartType] === 'blackwhite' ? (
+                                                    <EyeOff className="w-3.5 h-3.5" />
+                                                ) : (
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                )}
                                             </button>
                                         )}
 
@@ -413,11 +475,22 @@ export default function VedicDivisionalPage() {
                                             <p className="text-[10px] text-[#8B5A2B]/60">Generating...</p>
                                         </div>
                                     ) : chartData ? (
-                                        <ChartWithPopup
-                                            ascendantSign={ascendant}
-                                            planets={planets}
-                                            className="bg-transparent border-none w-full h-full"
-                                        />
+                                        // Render correct chart based on global chartStyle setting
+                                        chartStyle === 'South Indian' ? (
+                                            <SouthIndianChart
+                                                ascendantSign={ascendant}
+                                                planets={planets}
+                                                colorMode={chartColorModes[chartType] || 'color'}
+                                                colorTheme={chartColorTheme}
+                                                className="w-full h-full"
+                                            />
+                                        ) : (
+                                            <ChartWithPopup
+                                                ascendantSign={ascendant}
+                                                planets={planets}
+                                                className="bg-transparent border-none w-full h-full"
+                                            />
+                                        )
                                     ) : (
                                         <div className="flex flex-col items-center justify-center text-center">
                                             <p className="text-[10px] text-[#8B5A2B]/60">Awaiting data...</p>
@@ -454,6 +527,15 @@ export default function VedicDivisionalPage() {
                                         <span>Asc: <strong className="text-[#3E2A1F]">{signIdToName[ascendant] || 'Aries'}</strong></span>
                                         <span className="text-[#8B5A2B]/50">{planets.filter(p => p.isRetro).length > 0 ? `${planets.filter(p => p.isRetro).length} Retro` : 'No Retro'}</span>
                                     </div>
+                                )}
+
+                                {/* Chart-Specific Insights - NEW */}
+                                {chartData && !isHouseDetailsOpen && (
+                                    <DivisionalChartInsights
+                                        chartType={chartType}
+                                        planets={planets}
+                                        ascendant={ascendant}
+                                    />
                                 )}
                             </div>
                         );
@@ -519,6 +601,13 @@ export default function VedicDivisionalPage() {
                     chartData={zoomModalData.chartData}
                 />
             )}
+
+            {/* Customization Panel Modal */}
+            <ChartCustomizationPanel
+                isOpen={customizationPanel.isOpen}
+                onClose={() => setCustomizationPanel({ isOpen: false })}
+                selectedChart={customizationPanel.selectedChart}
+            />
         </div>
     );
 }
