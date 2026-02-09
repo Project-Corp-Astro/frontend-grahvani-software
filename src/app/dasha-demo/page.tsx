@@ -379,7 +379,7 @@ const PLANET_COLORS: Record<string, string> = {
 // =============================================================================
 
 export default function DashaDemoPage() {
-    const data = rawDashaData as VimshottariDataType;
+    const data = rawDashaData as unknown as VimshottariDataType;
 
     // Compute summary if missing (for raw data file)
     const all_mahadashas_summary = useMemo(() => {
