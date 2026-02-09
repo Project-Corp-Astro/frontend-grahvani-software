@@ -161,6 +161,7 @@ export default function VedicOverviewPage() {
                                 planets={d1Data.planets}
                                 className="bg-transparent border-none w-full h-full"
                                 preserveAspectRatio="none"
+                                showDegrees={true}
                             />
                         </div>
                     </div>
@@ -273,7 +274,7 @@ export default function VedicOverviewPage() {
                             </div>
                             <div className="w-full h-[320px] bg-[#FFFCF6]">
                                 {d9Data.planets.length > 0 ? (
-                                    <ChartWithPopup ascendantSign={d9Data.ascendant} planets={d9Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" />
+                                    <ChartWithPopup ascendantSign={d9Data.ascendant} planets={d9Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" showDegrees={false} />
                                 ) : <div className="font-sans text-xs text-muted-refined p-2">Loading...</div>}
                             </div>
                         </div>
@@ -286,7 +287,7 @@ export default function VedicOverviewPage() {
                             </div>
                             <div className="w-full h-[320px] bg-[#FFFCF6]">
                                 {d10Data.planets.length > 0 ? (
-                                    <ChartWithPopup ascendantSign={d10Data.ascendant} planets={d10Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" />
+                                    <ChartWithPopup ascendantSign={d10Data.ascendant} planets={d10Data.planets} className="bg-transparent border-none w-full h-full" preserveAspectRatio="none" showDegrees={false} />
                                 ) : <div className="font-sans text-xs text-muted-refined p-2">Loading...</div>}
                             </div>
                         </div>
@@ -328,7 +329,7 @@ export default function VedicOverviewPage() {
                             <p className="font-sans text-xs text-muted-refined uppercase tracking-wider leading-compact mt-2">{zoomedChart.varga} Divisional Chart</p>
                         </div>
                         <div className="aspect-square w-full max-w-md mx-auto rounded-2xl p-6 border border-antique">
-                            <ChartWithPopup ascendantSign={zoomedData.ascendant} planets={zoomedData.planets} className="bg-transparent border-none" />
+                            <ChartWithPopup ascendantSign={zoomedData.ascendant} planets={zoomedData.planets} className="bg-transparent border-none" showDegrees={zoomedChart?.varga === 'D1'} />
                         </div>
                     </div>
                 </div>

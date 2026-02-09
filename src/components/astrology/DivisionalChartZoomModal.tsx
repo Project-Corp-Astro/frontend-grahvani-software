@@ -277,6 +277,7 @@ export default function DivisionalChartZoomModal({
                                 ascendantSign={ascendantSign}
                                 planets={planets}
                                 className="w-full h-full"
+                                showDegrees={chartType === 'D1'}
                             />
                         </div>
                     </div>

@@ -11,9 +11,10 @@ interface ChartWithPopupProps {
     ascendantSign: number;
     className?: string;
     preserveAspectRatio?: string;
+    showDegrees?: boolean;
 }
 
-export default function ChartWithPopup({ planets, ascendantSign, className = "", preserveAspectRatio }: ChartWithPopupProps) {
+export default function ChartWithPopup({ planets, ascendantSign, className = "", preserveAspectRatio, showDegrees = true }: ChartWithPopupProps) {
     const [selectedHouse, setSelectedHouse] = useState<number | null>(null);
     const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -71,6 +72,7 @@ export default function ChartWithPopup({ planets, ascendantSign, className = "",
                 ascendantSign={ascendantSign}
                 preserveAspectRatio={preserveAspectRatio}
                 onHouseClick={handleHouseClick}
+                showDegrees={showDegrees}
             />
 
             {/* Inline Popup */}

@@ -35,7 +35,7 @@ const VEDIC_NAV_ITEMS: SidebarItem[] = [
     { name: "Planetary Details", path: "/planets", icon: Compass },
     { name: "Divisional Charts", path: "/divisional", icon: Map },
     { name: "Ashtakavarga", path: "/ashtakavarga", icon: Shield },
-    { name: "Vimshottari Dasha", path: "/dashas", icon: History },
+    { name: "Dasha Systems", path: "/dashas", icon: History },
     { name: "Chakras", path: "/chakras", icon: Layers },
     { name: "Transits", path: "/transits", icon: Globe },
     { name: "Report Lab", path: "/reports", icon: FileText },

@@ -192,6 +192,7 @@ export default function AstrologyDashboard() {
                                     planets={D1_PLANETS}
                                     ascendantSign={D1_ASC_SIGN}
                                     className="w-full max-w-[420px] max-h-[420px]"
+                                    showDegrees={true}
                                 />
                             </div>
                         </ChartCard>
@@ -203,6 +204,7 @@ export default function AstrologyDashboard() {
                                     planets={D9_PLANETS}
                                     ascendantSign={D9_ASC_SIGN}
                                     className="w-full max-w-[420px] max-h-[420px]"
+                                    showDegrees={false}
                                 />
                             </div>
                         </ChartCard>

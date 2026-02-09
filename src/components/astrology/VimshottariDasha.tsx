@@ -143,7 +143,7 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
             <div className="flex items-center gap-2 mb-6 text-sm overflow-x-auto">
                 <button
                     onClick={() => setExpanded([])}
-                    className={cn("hover:text-[#D08C60] transition-colors font-bold uppercase tracking-widest text-[10px]", expanded.length === 0 ? "text-[#D08C60]" : "text-[#3E2A1F]/60")}
+                    className={cn("hover:text-[#D08C60] transition-colors font-semibold uppercase tracking-widest text-xs", expanded.length === 0 ? "text-[#D08C60]" : "text-[#3E2A1F]/60")}
                 >
                     Mahadasha
                 </button>
@@ -152,7 +152,7 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
                     return (
                         <React.Fragment key={id}>
                             <ChevronRight className="w-3 h-3 text-[#D08C60]/40" />
-                            <span className="font-bold uppercase tracking-widest text-[10px] text-[#D08C60] whitespace-nowrap">
+                            <span className="font-semibold uppercase tracking-widest text-xs text-[#D08C60] whitespace-nowrap">
                                 {label}
                             </span>
                         </React.Fragment>
@@ -182,13 +182,13 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
                 <div>
                     {!compact ? (
                         <>
-                            <h3 className="text-[10px] font-black text-[#D08C60] uppercase tracking-[0.3em] mb-1">Vimshottari System</h3>
-                            <h2 className="text-2xl font-serif text-[#3E2A1F] font-black tracking-tight italic">Temporal Matrix</h2>
+                            <h3 className="text-xs font-semibold text-[#D08C60] uppercase tracking-[0.3em] mb-1">Vimshottari System</h3>
+                            <h2 className="text-2xl font-serif text-[#3E2A1F] font-bold tracking-tight italic">Temporal Matrix</h2>
                         </>
                     ) : (
                         <div>
-                            <h2 className="text-lg font-serif text-[#3E2A1F] font-black tracking-tight">{currentMaha} Mahadasha</h2>
-                            <p className="text-[9px] text-[#A8653A] uppercase tracking-[0.3em] font-black mt-1">Time Lord Sequence</p>
+                            <h2 className="text-lg font-serif text-[#3E2A1F] font-bold tracking-tight">{currentMaha} Mahadasha</h2>
+                            <p className="text-2xs text-[#A8653A] uppercase tracking-[0.3em] font-semibold mt-1">Time Lord Sequence</p>
                         </div>
                     )}
                 </div>
@@ -196,7 +196,7 @@ export default function VimshottariDasha({ compact = false }: VimshottariDashaPr
                     !compact && currentMaha && (
                         <div className="bg-[#FFD27D]/10 px-4 py-1.5 rounded-full border border-[#FFD27D]/30 flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-[#FFD27D] animate-pulse" />
-                            <span className="text-[9px] font-black text-[#FFD27D] uppercase tracking-widest">Active: {currentMaha}</span>
+                            <span className="text-[9px] font-semibold text-[#FFD27D] uppercase tracking-widest">Active: {currentMaha}</span>
                         </div>
                     )
                 }
@@ -264,16 +264,16 @@ function DashaItem({ level, depth, expanded, onToggle, compact = false, path }: 
                     </div>
 
                     <div>
-                        <h4 className={cn("font-serif font-black tracking-tight flex items-center gap-2",
+                        <h4 className={cn("font-serif font-bold tracking-tight flex items-center gap-2",
                             depth === 0 ? "text-lg text-[#3E2A1F]" : "text-md text-[#5A3E2B]",
                             compact && (depth === 0 ? "text-md" : "text-sm")
                         )}>
                             {level.planet}
-                            {isActive && <span className="text-[8px] bg-[#3E2A1F] text-[#FFD27D] px-1.5 py-0.5 rounded uppercase tracking-wider">Current</span>}
+                            {isActive && <span className="text-[9px] bg-[#3E2A1F] text-[#FFD27D] px-1.5 py-0.5 rounded uppercase tracking-wider">Current</span>}
                         </h4>
                         <div className="flex items-center gap-2 mt-0.5">
                             <Calendar className="w-3 h-3 text-[#D08C60]/60" />
-                            <span className="text-[9px] font-black text-[#8B5A2B]/40 uppercase tracking-widest">{formatDate(level.start)} — {formatDate(level.end)}</span>
+                            <span className="text-2xs font-semibold text-[#8B5A2B]/40 uppercase tracking-widest">{formatDate(level.start)} — {formatDate(level.end)}</span>
                         </div>
                     </div>
                 </div>

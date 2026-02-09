@@ -107,6 +107,7 @@ export default function ChartsPage({ params }: ChartsPageProps) {
                                                 <NorthIndianChart
                                                     ascendantSign={processed.ascendant}
                                                     planets={processed.planets}
+                                                    showDegrees={true}
                                                 />
                                             )}
                                         </div>

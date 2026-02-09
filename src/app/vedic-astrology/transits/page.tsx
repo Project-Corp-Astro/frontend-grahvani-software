@@ -223,6 +223,7 @@ export default function TransitsPage() {
                                     ascendantSign={natalAscendant}
                                     planets={transitPlanets}
                                     className="bg-transparent border-none w-full h-full"
+                                    showDegrees={false}
                                 />
                             </div>
                             <p className="text-[10px] text-center text-[#8B5A2B] mt-2">

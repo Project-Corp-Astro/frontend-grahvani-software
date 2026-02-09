@@ -70,21 +70,21 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
     const finalPeriods = (cycles[selectedCycle] || []).slice(0, 8);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700">
+        <div className="space-y-3 animate-in fade-in duration-700">
             {/* Applicability Warning */}
             {!isApplicable && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
                     <div>
-                        <p className="text-sm font-bold text-amber-900">Not Highly Applicable</p>
-                        <p className="text-xs text-amber-700">This Śattriṁśat Samā (36-year) system is specifically for Daytime births with Moon in Lagna.</p>
+                        <p className="text-xs font-bold text-amber-900">Not Highly Applicable</p>
+                        <p className="text-[10px] text-amber-700">This Śattriṁśat Samā (36-year) system is specifically for Daytime births with Moon in Lagna.</p>
                     </div>
                 </div>
             )}
 
             {/* Cycle Toggle Navigation */}
             {availableCycles.length > 1 && (
-                <div className="flex bg-[#F5E6D3]/30 rounded-3xl p-1 gap-2 border border-[#D08C60]/10 backdrop-blur-sm shadow-inner overflow-x-auto scrollbar-hide">
+                <div className="flex bg-[#F5E6D3]/40 rounded-lg p-0.5 gap-1 border border-[#D08C60]/10 backdrop-blur-sm overflow-x-auto scrollbar-hide w-fit max-w-full">
                     {availableCycles.map((c) => {
                         const isActive = selectedCycle === c;
                         const cyclePeriods = cycles[c];
@@ -96,47 +96,31 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                                 key={c}
                                 onClick={() => setSelectedCycle(c)}
                                 className={cn(
-                                    "flex-1 min-w-[150px] flex flex-col items-center justify-center py-2.5 px-4 rounded-2xl transition-all duration-300",
-                                    isActive ? "bg-[#3E2A1F] text-[#FFD27D] shadow-lg" : "bg-transparent text-[#3E2A1F]/40 hover:text-[#3E2A1F]/70"
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-200 whitespace-nowrap",
+                                    isActive
+                                        ? "bg-[#3E2A1F] text-[#FFD27D] shadow-sm font-semibold"
+                                        : "hover:bg-[#3E2A1F]/5 text-[#3E2A1F]/70 font-medium"
                                 )}
                             >
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Cycle {c}</span>
-                                <span className="text-[11px] font-mono font-bold">{startYear} — {endYear}</span>
+                                <span className="text-[10px] uppercase tracking-wider">Cycle {c}</span>
+                                <span className="text-[10px] opacity-60">|</span>
+                                <span className="text-[10px] font-mono opacity-80">{startYear}-{endYear}</span>
                             </button>
                         );
                     })}
                 </div>
             )}
 
-            {/* Header Info */}
-            <div className="bg-[#3E2A1F]/5 rounded-2xl p-4 border border-[#D08C60]/10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#D08C60]/10 flex items-center justify-center">
-                        <Milestone className="w-5 h-5 text-[#D08C60]" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-black text-[#3E2A1F] uppercase tracking-wider">Śattriṁśat Samā Dasha</h3>
-                        <p className="text-[10px] font-bold text-[#8B5A2B]/60 uppercase">
-                            {availableCycles.length > 1 ? `Cycle ${selectedCycle} of ${availableCycles.length}` : 'Single 36-Year Cycle'} • 8 Planets
-                        </p>
-                    </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[#D08C60]/60 uppercase">
-                    <Info className="w-3.5 h-3.5" />
-                    Click row to expand sub-periods
-                </div>
-            </div>
-
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full">
-                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
+                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[9px] tracking-widest border-b border-[#D08C60]/10">
                         <tr>
-                            <th className="px-6 py-4 text-left">Planet</th>
-                            <th className="px-6 py-4 text-left">Start Date</th>
-                            <th className="px-6 py-4 text-left">End Date</th>
-                            <th className="px-6 py-4 text-left">Duration</th>
-                            <th className="px-6 py-4 text-center">Status</th>
+                            <th className="px-3 py-2 text-left">Planet</th>
+                            <th className="px-3 py-2 text-left">Start Date</th>
+                            <th className="px-3 py-2 text-left">End Date</th>
+                            <th className="px-3 py-2 text-left">Duration</th>
+                            <th className="px-3 py-2 text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#D08C60]/10 font-medium">
@@ -156,35 +140,35 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                                         )}
                                         onClick={() => setExpandedMahadasha(isExpanded ? null : uniqueId)}
                                     >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
+                                        <td className="px-3 py-2">
+                                            <div className="flex items-center gap-2">
                                                 <span className={cn(
-                                                    "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border shadow-sm",
+                                                    "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border shadow-sm min-w-[60px] justify-center",
                                                     PLANET_COLORS[mahadasha.planet || ''] || "bg-white"
                                                 )}>
                                                     {mahadasha.planet}
                                                 </span>
                                                 {mahadasha.isCurrent && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
-                                                        Current Active
+                                                    <span className="inline-flex items-center px-1.5 py-0 rounded-full text-[8px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
+                                                        Current
                                                     </span>
                                                 )}
                                                 {isBalance && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
-                                                        <AlertCircle className="w-2.5 h-2.5" />
-                                                        Balance at Birth
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0 rounded-full text-[8px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                                                        <AlertCircle className="w-2 h-2" />
+                                                        Bal
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-3.5 h-3.5 text-[#8B5A2B]/40" />
+                                        <td className="px-3 py-2 text-xs text-[#3E2A1F] font-mono">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar className="w-3 h-3 text-[#8B5A2B]/40" />
                                                 {formatDateDisplay(mahadasha.startDate)}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">{formatDateDisplay(mahadasha.endDate)}</td>
-                                        <td className="px-6 py-4 text-sm text-[#8B5A2B] font-bold">
+                                        <td className="px-3 py-2 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(mahadasha.endDate)}</td>
+                                        <td className="px-3 py-2 text-xs text-[#8B5A2B] font-bold">
                                             <div className="flex flex-col">
                                                 <span>{calculateDuration(mahadasha.startDate, mahadasha.endDate)}</span>
                                                 {fixedYears && (
@@ -192,14 +176,14 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 {mahadasha.isCurrent ? (
-                                                    <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200 shadow-sm animate-pulse">ACTIVE</span>
+                                                    <span className="text-[9px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 shadow-sm">ACTIVE</span>
                                                 ) : antardashas.length > 0 ? (
-                                                    isExpanded ? <ChevronUp className="w-4 h-4 text-[#D08C60]" /> : <ChevronDown className="w-4 h-4 text-[#D08C60]" />
+                                                    isExpanded ? <ChevronUp className="w-3 h-3 text-[#D08C60]" /> : <ChevronDown className="w-3 h-3 text-[#D08C60]" />
                                                 ) : (
-                                                    <span className="text-[#D08C60]/40">—</span>
+                                                    <span className="text-[#D08C60]/40 text-xs">—</span>
                                                 )}
                                             </div>
                                         </td>
@@ -208,9 +192,9 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                                     {/* Expanded Antardasha Row */}
                                     {isExpanded && antardashas.length > 0 && (
                                         <tr>
-                                            <td colSpan={5} className="bg-[#FAF7F2]/60 px-6 py-4">
-                                                <div className="text-[9px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-3">
-                                                    Antardasha Sub-Periods
+                                            <td colSpan={5} className="bg-[#FAF7F2]/60 px-3 py-2">
+                                                <div className="text-[9px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-2 pl-2 border-l-2 border-[#D08C60]/30 ml-1">
+                                                    Sub-Periods
                                                 </div>
                                                 <table className="w-full">
                                                     <tbody className="divide-y divide-[#D08C60]/10">
@@ -219,22 +203,22 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
                                                                 "hover:bg-white/50 transition-colors",
                                                                 antar.isCurrent && "bg-green-50/50"
                                                             )}>
-                                                                <td className="px-4 py-2.5">
+                                                                <td className="px-3 py-1.5">
                                                                     <span className={cn(
-                                                                        "inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border",
+                                                                        "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border opacity-90",
                                                                         PLANET_COLORS[antar.planet || ''] || "bg-white"
                                                                     )}>
                                                                         {antar.planet}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.startDate)}</td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.endDate)}</td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#8B5A2B] font-bold">
+                                                                <td className="px-3 py-1.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.startDate)}</td>
+                                                                <td className="px-3 py-1.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.endDate)}</td>
+                                                                <td className="px-3 py-1.5 text-xs text-[#8B5A2B] font-bold">
                                                                     {calculateDuration(antar.startDate, antar.endDate)}
                                                                 </td>
-                                                                <td className="px-4 py-2.5 text-center">
+                                                                <td className="px-3 py-1.5 text-center">
                                                                     {antar.isCurrent && (
-                                                                        <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200 animate-pulse">ACTIVE</span>
+                                                                        <span className="text-[9px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 shadow-sm">ACTIVE</span>
                                                                     )}
                                                                 </td>
                                                             </tr>
@@ -253,7 +237,7 @@ export default function ShattrimshatsamaDasha({ periods, isApplicable = true }: 
 
             {/* Shastra Timeline Footer */}
             <div className="text-center pt-2">
-                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                <p className="text-xs font-semibold text-gray-300 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                     <Info className="w-3 h-3" />
                     Shastra Timeline End (36 Years)
                 </p>

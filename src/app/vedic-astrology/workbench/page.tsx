@@ -177,7 +177,7 @@ export default function AnalyticalWorkbenchPage() {
                                 {isLoadingCharts && Object.keys(processedCharts).length === 0 ? (
                                     <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-8 h-8 text-gold-primary animate-spin" /></div>
                                 ) : displayPlanets.length > 0 ? (
-                                    <ChartWithPopup ascendantSign={ascendantSign} planets={displayPlanets} className="bg-transparent border-none" />
+                                    <ChartWithPopup ascendantSign={ascendantSign} planets={displayPlanets} className="bg-transparent border-none" showDegrees={selectedChartType === 'D1'} />
                                 ) : (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
                                         <p className="text-muted italic mb-4">No data for {CHART_NAMES[selectedChartType] || selectedChartType}</p>

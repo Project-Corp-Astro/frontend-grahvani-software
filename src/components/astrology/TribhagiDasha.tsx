@@ -64,52 +64,60 @@ export default function TribhagiDasha({ periods }: TribhagiDashaProps) {
     const currentCyclePeriods = cycles[selectedCycle] || [];
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700">
-            {/* Cycle/Era Navigation */}
-            <div className="flex bg-[#F5E6D3]/30 rounded-3xl p-1 gap-2 border border-[#D08C60]/10 backdrop-blur-sm shadow-inner overflow-x-auto scrollbar-hide">
-                {availableCycles.map((c) => {
-                    const isActive = selectedCycle === c;
-                    const cyclePeriods = cycles[c];
-                    const startYear = cyclePeriods.length > 0 ? formatDateDisplay(cyclePeriods[0].startDate).split(' ').pop() : '';
-                    const endYear = cyclePeriods.length > 0 ? formatDateDisplay(cyclePeriods[cyclePeriods.length - 1].endDate).split(' ').pop() : '';
+        <div className="space-y-3 animate-in fade-in duration-700">
+            {/* Cycle/Era Navigation - Compact Tabs */}
+            <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex bg-[#F5E6D3]/40 rounded-lg p-0.5 gap-1 border border-[#D08C60]/10 backdrop-blur-sm overflow-x-auto scrollbar-hide">
+                    {availableCycles.map((c) => {
+                        const isActive = selectedCycle === c;
+                        const cyclePeriods = cycles[c];
+                        const startYear = cyclePeriods.length > 0 ? formatDateDisplay(cyclePeriods[0].startDate).split(' ').pop() : '';
+                        const endYear = cyclePeriods.length > 0 ? formatDateDisplay(cyclePeriods[cyclePeriods.length - 1].endDate).split(' ').pop() : '';
 
-                    return (
-                        <button
-                            key={c}
-                            onClick={() => setSelectedCycle(c)}
-                            className={cn(
-                                "flex-1 min-w-[150px] flex flex-col items-center justify-center py-2.5 px-4 rounded-2xl transition-all duration-300",
-                                isActive ? "bg-[#3E2A1F] text-[#FFD27D] shadow-lg" : "bg-transparent text-[#3E2A1F]/40 hover:text-[#3E2A1F]/70"
-                            )}
-                        >
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">Cycle {c}</span>
-                            <span className="text-[11px] font-mono font-bold">{startYear} — {endYear}</span>
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={c}
+                                onClick={() => setSelectedCycle(c)}
+                                className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-200 whitespace-nowrap",
+                                    isActive
+                                        ? "bg-[#3E2A1F] text-[#FFD27D] shadow-sm font-semibold"
+                                        : "hover:bg-[#3E2A1F]/5 text-[#3E2A1F]/70 font-medium"
+                                )}
+                            >
+                                <span className="text-[10px] uppercase tracking-wider">Cycle {c}</span>
+                                <span className="text-[10px] opacity-60">|</span>
+                                <span className="text-[10px] font-mono opacity-80">{startYear}-{endYear}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="ml-auto hidden sm:flex items-center gap-2">
+                    <h3 className="text-[10px] font-bold text-[#5A3E2B] flex items-center gap-2 uppercase tracking-wider bg-[#F5E6D3]/30 px-2 py-1 rounded-md border border-[#D08C60]/10">
+                        <Milestone className="w-3 h-3 text-[#D08C60]" />
+                        {ERA_NAMES[selectedCycle] || `Cycle ${selectedCycle}`}
+                    </h3>
+                </div>
             </div>
 
-            {/* Era Title */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-[#5A3E2B] flex items-center gap-3 uppercase tracking-widest">
-                    <Milestone className="w-4 h-4 text-[#D08C60]" />
+            <div className="flex items-center justify-end sm:hidden">
+                <h3 className="text-[10px] font-bold text-[#5A3E2B] flex items-center gap-2 uppercase tracking-wider">
+                    <Milestone className="w-3.5 h-3.5 text-[#D08C60]" />
                     {ERA_NAMES[selectedCycle] || `Cycle ${selectedCycle}`}
                 </h3>
-                <div className="text-[9px] font-black uppercase text-[#D08C60]/60 tracking-tighter flex items-center gap-2">
-                    <Info className="w-3 h-3" /> Click row to expand sub-periods
-                </div>
             </div>
 
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full">
-                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[10px] tracking-widest border-b border-[#D08C60]/10">
+                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[9px] tracking-widest border-b border-[#D08C60]/10">
                         <tr>
-                            <th className="px-6 py-4 text-left">Planet</th>
-                            <th className="px-6 py-4 text-left">Start Date</th>
-                            <th className="px-6 py-4 text-left">End Date</th>
-                            <th className="px-6 py-4 text-left">Duration</th>
-                            <th className="px-6 py-4 text-center">Status</th>
+                            <th className="px-3 py-2 text-left">Planet</th>
+                            <th className="px-3 py-2 text-left">Start Date</th>
+                            <th className="px-3 py-2 text-left">End Date</th>
+                            <th className="px-3 py-2 text-left">Duration</th>
+                            <th className="px-3 py-2 text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#D08C60]/10 font-medium">
@@ -126,39 +134,39 @@ export default function TribhagiDasha({ periods }: TribhagiDashaProps) {
                                         )}
                                         onClick={() => setExpandedMahadasha(isExpanded ? null : `${selectedCycle}-${mahadasha.planet}`)}
                                     >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
+                                        <td className="px-3 py-2">
+                                            <div className="flex items-center gap-2">
                                                 <span className={cn(
-                                                    "inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold border shadow-sm",
+                                                    "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border shadow-sm min-w-[60px] justify-center",
                                                     PLANET_COLORS[mahadasha.planet || ''] || "bg-white"
                                                 )}>
                                                     {mahadasha.planet}
                                                 </span>
                                                 {mahadasha.isCurrent && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
-                                                        Current Active
+                                                    <span className="inline-flex items-center px-1.5 py-0 rounded-full text-[8px] font-bold bg-green-100 text-green-700 border border-green-200 animate-pulse uppercase tracking-wider">
+                                                        Current
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-3.5 h-3.5 text-[#8B5A2B]/40" />
+                                        <td className="px-3 py-2 text-xs text-[#3E2A1F] font-mono">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar className="w-3 h-3 text-[#8B5A2B]/40" />
                                                 {formatDateDisplay(mahadasha.startDate)}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-[#3E2A1F] font-mono">{formatDateDisplay(mahadasha.endDate)}</td>
-                                        <td className="px-6 py-4 text-sm text-[#8B5A2B] font-bold">
+                                        <td className="px-3 py-2 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(mahadasha.endDate)}</td>
+                                        <td className="px-3 py-2 text-xs text-[#8B5A2B] font-bold">
                                             {standardizeDuration(mahadasha.raw?.duration_years || mahadasha.raw?.years || 0, mahadasha.raw?.duration_days)}
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 {mahadasha.isCurrent ? (
-                                                    <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200 shadow-sm animate-pulse">ACTIVE</span>
+                                                    <span className="text-[9px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 shadow-sm">ACTIVE</span>
                                                 ) : antardashas.length > 0 ? (
-                                                    isExpanded ? <ChevronUp className="w-4 h-4 text-[#D08C60]" /> : <ChevronDown className="w-4 h-4 text-[#D08C60]" />
+                                                    isExpanded ? <ChevronUp className="w-3 h-3 text-[#D08C60]" /> : <ChevronDown className="w-3 h-3 text-[#D08C60]" />
                                                 ) : (
-                                                    <span className="text-[#D08C60]/40">—</span>
+                                                    <span className="text-[#D08C60]/40 text-xs">—</span>
                                                 )}
                                             </div>
                                         </td>
@@ -167,9 +175,9 @@ export default function TribhagiDasha({ periods }: TribhagiDashaProps) {
                                     {/* Expanded Antardasha Row */}
                                     {isExpanded && antardashas.length > 0 && (
                                         <tr>
-                                            <td colSpan={5} className="bg-[#FAF7F2]/60 px-6 py-4">
-                                                <div className="text-[9px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-3">
-                                                    Antardasha Sub-Periods
+                                            <td colSpan={5} className="bg-[#FAF7F2]/60 px-3 py-2">
+                                                <div className="text-[9px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-2 pl-2 border-l-2 border-[#D08C60]/30 ml-1">
+                                                    Sub-Periods
                                                 </div>
                                                 <table className="w-full">
                                                     <tbody className="divide-y divide-[#D08C60]/10">
@@ -178,22 +186,22 @@ export default function TribhagiDasha({ periods }: TribhagiDashaProps) {
                                                                 "hover:bg-white/50 transition-colors",
                                                                 antar.isCurrent && "bg-green-50/50"
                                                             )}>
-                                                                <td className="px-4 py-2.5">
+                                                                <td className="px-3 py-1.5">
                                                                     <span className={cn(
-                                                                        "inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border",
+                                                                        "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border opacity-90",
                                                                         PLANET_COLORS[antar.planet || ''] || "bg-white"
                                                                     )}>
                                                                         {antar.planet}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.startDate)}</td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.endDate)}</td>
-                                                                <td className="px-4 py-2.5 text-xs text-[#8B5A2B] font-bold">
+                                                                <td className="px-3 py-1.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.startDate)}</td>
+                                                                <td className="px-3 py-1.5 text-xs text-[#3E2A1F] font-mono">{formatDateDisplay(antar.endDate)}</td>
+                                                                <td className="px-3 py-1.5 text-xs text-[#8B5A2B] font-bold">
                                                                     {standardizeDuration(antar.raw?.duration_years || antar.raw?.years || 0, antar.raw?.duration_days)}
                                                                 </td>
-                                                                <td className="px-4 py-2.5 text-center">
+                                                                <td className="px-3 py-1.5 text-center">
                                                                     {antar.isCurrent && (
-                                                                        <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200 animate-pulse">ACTIVE</span>
+                                                                        <span className="text-[9px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 shadow-sm">ACTIVE</span>
                                                                     )}
                                                                 </td>
                                                             </tr>

@@ -489,6 +489,7 @@ export default function VedicDivisionalPage() {
                                                 ascendantSign={ascendant}
                                                 planets={planets}
                                                 className="bg-transparent border-none w-full h-full"
+                                                showDegrees={chartType === 'D1'}
                                             />
                                         )
                                     ) : (

@@ -59,42 +59,33 @@ export default function SudarshanChakraFinal({ data, className }: SudarshanChakr
         // Offset by -90 to start 0 at 12 o'clock
         const rad = (angle - 90) * (Math.PI / 180);
         return {
-            x: 250 + radius * Math.cos(rad),
-            y: 250 + radius * Math.sin(rad)
+            x: 300 + radius * Math.cos(rad),
+            y: 300 + radius * Math.sin(rad)
         };
     };
 
-    // Radius configuration for segments
+    // Radius configuration for segments - Proportioned like the sample
     const ringConfig = [
-        { id: 'surya', data: surya, outerR: 245, innerR: 190, signR: 200, planetR: 228 },
-        { id: 'chandra', data: chandra, outerR: 190, innerR: 135, signR: 145, planetR: 173 },
-        { id: 'lagna', data: lagna, outerR: 135, innerR: 80, signR: 90, planetR: 118 },
+        { id: 'surya', data: surya, outerR: 295, innerR: 220, signR: 235, planetR: 265 },
+        { id: 'chandra', data: chandra, outerR: 220, innerR: 145, signR: 160, planetR: 190 },
+        { id: 'lagna', data: lagna, outerR: 145, innerR: 70, signR: 85, planetR: 115 },
     ];
 
     return (
-        <div className={cn("w-full h-full flex flex-col items-center justify-center p-4", className)}>
-            <div className="mb-6 text-center space-y-1">
-                <h1 className="text-3xl font-serif text-maroon-950 font-black tracking-tight">Sudarshan Chakra</h1>
-                <div className="flex flex-col text-[11px] font-bold text-copper-600/80 space-y-0.5 tracking-wide">
-                    <span>Outer Circle : Surya Chart</span>
-                    <span>Middle Circle : Chandra Chart</span>
-                    <span>Inner Circle : Birth Chart</span>
-                </div>
-            </div>
-
-            <div className="w-full aspect-square relative max-w-[500px]">
-                <svg viewBox="0 0 500 500" className="w-full h-full block overflow-visible">
+        <div className={cn("w-full h-full flex flex-col items-center justify-center p-0", className)}>
+            <div className="w-full aspect-square relative max-w-[550px]">
+                <svg viewBox="0 0 600 600" className="w-full h-full block overflow-visible">
                     {/* Concentric Circles */}
-                    {[80, 135, 190, 245].map(r => (
-                        <circle key={r} cx="250" cy="250" r={r} fill="none" stroke="#000" strokeWidth="1" />
+                    {[70, 145, 220, 295].map(r => (
+                        <circle key={r} cx="300" cy="300" r={r} fill="none" stroke="#000" strokeWidth="1.2" />
                     ))}
 
                     {/* 12 Dividing Lines (Counter-Clockwise Houses) */}
                     {[...Array(12)].map((_, i) => {
                         const angle = -(i * 30 + 15);
-                        const p1 = getCoord(angle, 80);
-                        const p2 = getCoord(angle, 245);
-                        return <line key={i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000" strokeWidth="1" />;
+                        const p1 = getCoord(angle, 70);
+                        const p2 = getCoord(angle, 295);
+                        return <line key={i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000" strokeWidth="1.2" />;
                     })}
 
 
@@ -131,16 +122,19 @@ export default function SudarshanChakraFinal({ data, className }: SudarshanChakr
                                         {/* Planets (Outer Arc) */}
                                         <g>
                                             {planets.map((p: string, pIdx: number) => {
-                                                // Horizontal layout if multiple planets
-                                                const offset = (planets.length > 1) ? (pIdx - (planets.length - 1) / 2) * 16 : 0;
+                                                // Intelligent layout: Stacked/horizontal depending on count
+                                                const spiralOffset = (planets.length > 2 && pIdx >= 3) ? 14 : 0;
+                                                const horizOffset = (planets.length > 1) ? (pIdx % 3 - Math.min(planets.length, 3 - 1) / 2) * 22 : 0;
+                                                const vertOffset = (planets.length > 3 && pIdx >= 3) ? 15 : 0;
+
                                                 return (
                                                     <text
                                                         key={pIdx}
-                                                        x={planetBasePos.x + offset}
-                                                        y={planetBasePos.y}
+                                                        x={planetBasePos.x + horizOffset}
+                                                        y={planetBasePos.y - vertOffset}
                                                         textAnchor="middle"
                                                         dominantBaseline="middle"
-                                                        className="text-[12px] font-serif font-semibold fill-black"
+                                                        className="text-[15px] font-sans font-medium fill-black"
                                                     >
                                                         {getAbbr(p)}
                                                     </text>

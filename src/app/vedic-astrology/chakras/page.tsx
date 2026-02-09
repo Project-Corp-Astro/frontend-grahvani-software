@@ -25,6 +25,21 @@ export default function ChakrasPage() {
     const settings = { ayanamsa, chartStyle, recentClientIds };
     const activeSystem = settings.ayanamsa.toLowerCase();
 
+    const chartContainerRef = React.useRef<HTMLDivElement>(null);
+    const [zoomScale, setZoomScale] = useState(1);
+
+    const handleZoomIn = () => setZoomScale(s => Math.min(s + 0.2, 3));
+    const handleZoomOut = () => setZoomScale(s => Math.max(s - 0.2, 0.5));
+    const handleFullscreen = () => {
+        if (chartContainerRef.current) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                chartContainerRef.current.requestFullscreen();
+            }
+        }
+    };
+
     // Use pre-fetched data from context for instant render
     const { chakraData, loading } = React.useMemo(() => {
         const key = `sudarshana_${activeSystem}`;
@@ -44,22 +59,22 @@ export default function ChakrasPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 bg-copper-50/30 rounded-2xl border border-dashed border-copper-200">
                 <Compass className="w-16 h-16 text-copper-300 mb-4 animate-spin-slow" />
-                <h2 className="text-2xl font-serif text-copper-900 mb-2">No Client Selected</h2>
-                <p className="text-copper-600 max-w-md">Please select a client to view their Sudarshan Chakra and other esoteric diagrams.</p>
+                <h2 className="text-lg font-serif text-copper-900 mb-2">No Client Selected</h2>
+                <p className="text-xs text-copper-600 max-w-md">Please select a client to view their Sudarshan Chakra and other esoteric diagrams.</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen space-y-8 animate-in fade-in duration-700">
+        <div className="min-h-screen space-y-2 animate-in fade-in duration-700">
             {/* Professional Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-copper-200 pb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-copper-200 pb-4">
                 <div className="space-y-1">
-                    <h1 className="text-4xl font-serif text-copper-950 font-black tracking-tighter flex items-center gap-4">
-                        <Hexagon className="w-10 h-10 text-copper-600 fill-copper-50" />
+                    <h1 className="text-lg font-serif text-copper-950 font-bold tracking-tight flex items-center gap-3">
+                        <Hexagon className="w-6 h-6 text-copper-600 fill-copper-50" />
                         Sudarshan Chakra
                     </h1>
-                    <p className="text-copper-600 font-medium tracking-tight">Triple Confluence Analysis for {clientDetails.name}</p>
+                    <p className="text-xs text-copper-600 font-medium tracking-tight">Triple Confluence Analysis for {clientDetails.name}</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -76,7 +91,10 @@ export default function ChakrasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Visualization Column */}
                 <div className="lg:col-span-8 space-y-6">
-                    <div className="relative aspect-square w-full bg-[#fdfcfb] rounded-[3rem] border border-copper-200 shadow-[0_32px_64px_-16px_rgba(139,92,71,0.15)] overflow-hidden flex items-center justify-center p-6 group">
+                    <div
+                        ref={chartContainerRef}
+                        className="relative w-full bg-[#fdfcfb] rounded-[3rem] border border-copper-200 shadow-[0_32px_64px_-16px_rgba(139,92,71,0.15)] overflow-hidden flex items-center justify-center p-2 group overflow-y-auto"
+                    >
                         {/* Parchment Texture Overlay */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-multiply"
                             style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/parchment.png")' }} />
@@ -90,27 +108,34 @@ export default function ChakrasPage() {
                                     <Compass className="w-8 h-8 text-copper-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                                 </div>
                                 <div className="text-center space-y-2">
-                                    <p className="text-copper-900 font-serif text-xl font-bold animate-pulse">Drafting Celestial Map...</p>
-                                    <p className="text-copper-400 text-sm italic">Synchronizing Surya, Chandra, & Birth chart layers</p>
+                                    <p className="text-copper-900 font-serif text-sm font-bold animate-pulse">Drafting Celestial Map...</p>
+                                    <p className="text-copper-400 text-[10px] italic">Synchronizing Surya, Chandra, & Birth chart layers</p>
                                 </div>
                             </div>
                         ) : (
                             <div className="w-full h-full relative z-10 animate-in zoom-in-95 duration-1000 flex items-center justify-center">
-                                <SudarshanChakraFinal
-                                    data={chakraData}
-                                    className="max-w-[100%] max-h-[100%] scale-90 lg:scale-100"
-                                />
+                                <div style={{ transform: `scale(${zoomScale})`, transition: 'transform 0.3s ease-out' }} className="w-full h-full flex items-center justify-center">
+                                    <SudarshanChakraFinal
+                                        data={chakraData}
+                                        className="max-w-[100%] max-h-[100%] scale-100"
+                                    />
+                                </div>
                             </div>
                         )}
 
                         {/* Visual Controls */}
-                        <div className="absolute bottom-10 right-10 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                        <div className="absolute bottom-10 right-10 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0 z-20">
                             {[
-                                { icon: Maximize2, label: 'Fullscreen' },
-                                { icon: ZoomIn, label: 'Zoom In' },
-                                { icon: ZoomOut, label: 'Zoom Out' }
+                                { icon: Maximize2, label: 'Fullscreen', onClick: handleFullscreen },
+                                { icon: ZoomIn, label: 'Zoom In', onClick: handleZoomIn },
+                                { icon: ZoomOut, label: 'Zoom Out', onClick: handleZoomOut }
                             ].map((ctrl, idx) => (
-                                <button key={idx} className="p-4 bg-white/90 backdrop-blur text-copper-600 rounded-2xl border border-copper-100 shadow-xl hover:bg-copper-950 hover:text-white transition-all transform hover:scale-110">
+                                <button
+                                    key={idx}
+                                    onClick={ctrl.onClick}
+                                    title={ctrl.label}
+                                    className="p-4 bg-white/90 backdrop-blur text-copper-600 rounded-2xl border border-copper-100 shadow-xl hover:bg-copper-950 hover:text-white transition-all transform hover:scale-110"
+                                >
                                     <ctrl.icon className="w-5 h-5" />
                                 </button>
                             ))}
@@ -146,47 +171,9 @@ export default function ChakrasPage() {
                         </div>
                     </div>
 
-                    {/* Interpretation Insights */}
-                    <div className="bg-gradient-to-br from-copper-950 to-slate-900 text-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
-                        <Hexagon className="absolute -bottom-12 -right-12 w-48 h-48 text-white/5 rotate-12" />
 
-                        <div className="relative z-10 space-y-6">
-                            <div className="flex items-center gap-3">
-                                <Info className="w-6 h-6 text-amber-400" />
-                                <h3 className="font-serif text-xl font-bold tracking-tight">Technical Summary</h3>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-3xl border border-white/10">
-                                    <div className="text-[10px] text-copper-300 uppercase font-bold tracking-widest mb-1">System</div>
-                                    <div className="text-sm font-black">{settings.ayanamsa.toUpperCase()}</div>
-                                </div>
-                                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-3xl border border-white/10">
-                                    <div className="text-[10px] text-copper-300 uppercase font-bold tracking-widest mb-1">Calculation</div>
-                                    <div className="text-sm font-black">Triple Stream</div>
-                                </div>
-                            </div>
 
-                            <div className="pt-4 border-t border-white/10">
-                                <h4 className="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em] mb-3">Professional Note</h4>
-                                <p className="text-xs text-copper-100/80 leading-relaxed font-medium">
-                                    Sudarshan Chakra acts as an "X-Ray" of destiny. When a planet occupies the same sign in all three charts, its results are considered mathematically certain.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-8 bg-amber-50/50 rounded-3xl border border-amber-100 border-dashed">
-                        <div className="flex items-start gap-4">
-                            <LayoutDashboard className="w-5 h-5 text-amber-600 mt-1" />
-                            <div>
-                                <h4 className="text-sm font-bold text-amber-900 mb-1">Interpretation Guide</h4>
-                                <p className="text-xs text-amber-700/70 leading-relaxed">
-                                    This confluence chart allows you to simultaneously observe how the luminaries (Sun/Moon) and the Lagna interact across all 12 houses.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

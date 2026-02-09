@@ -20,6 +20,7 @@ interface NorthIndianChartProps {
     houseValues?: Record<number, number>; // Map of HouseNumber (1-12) to Value (e.g. Bindus)
     valueType?: 'bindu' | 'none';
     preserveAspectRatio?: string;
+    showDegrees?: boolean; // Show planet degrees - true for D1, false for divisional charts
 }
 
 export default function NorthIndianChart({
@@ -29,7 +30,8 @@ export default function NorthIndianChart({
     onHouseClick,
     houseValues,
     valueType = 'none',
-    preserveAspectRatio
+    preserveAspectRatio,
+    showDegrees = true
 }: NorthIndianChartProps) {
     const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
 
@@ -74,6 +76,22 @@ export default function NorthIndianChart({
         { h: 11, x: 355, y: 105 },// Top Right Triangle (Right-most)
         { h: 12, x: 295, y: 45 }, // Top Right Triangle (Top-most)
     ];
+
+    // Separate positions for sign numbers - placed at corners to avoid overlap with planets
+    const signNumberPositions: Record<number, { x: number; y: number }> = {
+        1: { x: 200, y: 170 },    // Top Diamond - bottom area
+        2: { x: 105, y: 85 },     // Top-left upper triangle - center-right
+        3: { x: 85, y: 105 },     // Top-left lower triangle - center-bottom
+        4: { x: 175, y: 195 },    // Left Diamond - upper area
+        5: { x: 90, y: 295 },     // Bottom-left upper triangle - center-top
+        6: { x: 105, y: 325 },    // Bottom-left lower triangle - center-left
+        7: { x: 200, y: 230 },    // Bottom Diamond - top area
+        8: { x: 295, y: 325 },    // Bottom-right lower triangle - center-right
+        9: { x: 315, y: 295 },    // Bottom-right upper triangle - center-bottom
+        10: { x: 235, y: 205 },   // Right Diamond - lower area
+        11: { x: 315, y: 105 },   // Top-right lower triangle - center-top
+        12: { x: 295, y: 85 },    // Top-right upper triangle - center-left
+    };
 
     // Define clickable polygon regions for each house
     // Houses are numbered 1-12 anti-clockwise starting from H1 (Top Diamond)
@@ -149,11 +167,11 @@ export default function NorthIndianChart({
 
                 return (
                     <g key={pos.h} className={cn("transition-all duration-300", isHovered && "opacity-100")}>
-                        {/* Sign Number - Positioned more centrally in each segment */}
+                        {/* Sign Number - Positioned at corner/edge of each house segment */}
                         <text
-                            x={pos.x}
-                            y={pos.y + (pos.h === 1 || pos.h === 4 || pos.h === 7 || pos.h === 10 ? 35 : pos.h % 2 === 0 ? 30 : -30)}
-                            fontSize="22"
+                            x={signNumberPositions[pos.h].x}
+                            y={signNumberPositions[pos.h].y}
+                            fontSize="18"
                             fontFamily="'Spectral', 'Crimson Pro', serif"
                             fontWeight="700"
                             fill="#4A3F32"
@@ -222,9 +240,11 @@ export default function NorthIndianChart({
                                                 {p.isRetro && (
                                                     <tspan fontSize="10" fontWeight="bold" fill="#DC2626" dx="1">℞</tspan>
                                                 )}
-                                                <tspan fontSize="10" fontWeight="400" fill="#4A3F32" dx="2">
-                                                    {p.degree}
-                                                </tspan>
+                                                {showDegrees && (
+                                                    <tspan fontSize="10" fontWeight="400" fill="#4A3F32" dx="2">
+                                                        {p.degree}
+                                                    </tspan>
+                                                )}
                                             </text>
                                         </g>
                                     );

@@ -53,8 +53,8 @@ const AnalyzeCard = ({ icon, title, desc, color }: { icon: React.ReactNode; titl
         )}>
             {icon}
         </div>
-        <h4 className="text-lg font-serif font-black text-copper-950 mb-2">{title}</h4>
-        <p className="text-xs text-copper-600 leading-relaxed">{desc}</p>
+        <h4 className="text-sm font-serif font-bold text-copper-950 mb-2">{title}</h4>
+        <p className="text-[10px] text-copper-600 leading-relaxed">{desc}</p>
     </div>
 );
 
@@ -108,8 +108,8 @@ export default function AshtakavargaPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 bg-copper-50/30 rounded-2xl border border-dashed border-copper-200">
                 <Shield className="w-16 h-16 text-copper-300 mb-4 animate-pulse" />
-                <h2 className="text-2xl font-serif text-copper-900 mb-2">No Client Selected</h2>
-                <p className="text-copper-600 max-w-md">Please select a client from the workbench to analyze their Ashtakavarga strengths.</p>
+                <h2 className="text-lg font-serif text-copper-900 mb-2">No Client Selected</h2>
+                <p className="text-xs text-copper-600 max-w-md">Please select a client from the workbench to analyze their Ashtakavarga strengths.</p>
             </div>
         );
     }
@@ -174,11 +174,11 @@ export default function AshtakavargaPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-serif text-copper-950 flex items-center gap-3">
-                        <Shield className="w-8 h-8 text-copper-600" />
+                    <h1 className="text-lg font-serif font-bold text-copper-950 flex items-center gap-3">
+                        <Shield className="w-6 h-6 text-copper-600" />
                         Ashtakavarga Systems
                     </h1>
-                    <p className="text-copper-600 mt-1">Numerical strength assessment for {clientDetails.name}</p>
+                    <p className="text-xs text-copper-600 mt-1">Numerical strength assessment for {clientDetails.name}</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -223,10 +223,10 @@ export default function AshtakavargaPage() {
                                 <div className="bg-white rounded-[2rem] border border-copper-200 shadow-2xl shadow-copper-100/50 overflow-hidden">
                                     <div className="p-4 md:p-6 border-b border-copper-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-parchment/30 to-white">
                                         <div>
-                                            <h2 className="text-xl font-serif text-copper-900 font-bold">
+                                            <h2 className="text-sm font-serif text-copper-900 font-bold">
                                                 {activeTab === 'sarva' ? 'Sarvashtakavarga (SAV)' : `Bhinnashtakavarga: ${selectedPlanet}`}
                                             </h2>
-                                            <p className="text-sm text-copper-600 mt-1 italic">
+                                            <p className="text-[10px] text-copper-600 mt-1 italic">
                                                 {activeTab === 'sarva'
                                                     ? 'The collective strength of all planets across the 12 signs/houses.'
                                                     : `Individual contributions to ${selectedPlanet}'s strength in each sign.`}
