@@ -26,6 +26,7 @@ import PlanetaryTable from '@/components/astrology/PlanetaryTable';
 import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 import VimshottariTreeGrid from '@/components/astrology/VimshottariTreeGrid';
 import { processDashaResponse } from '@/lib/dasha-utils';
+import BirthPanchanga from '@/components/astrology/BirthPanchanga';
 
 // Helper for formatting
 const formatDate = (dateStr: string) => {
@@ -133,6 +134,8 @@ export default function VedicOverviewPage() {
             });
     }, [processedCharts]);
 
+    const birthPanchangaData = processedCharts['birth_panchanga_universal']?.chartData;
+
     return (
         <div className="p-2 w-full min-h-screen animate-in fade-in duration-500">
             {/* Header / Client Context - Removed and moved to Profile Card */}
@@ -176,77 +179,92 @@ export default function VedicOverviewPage() {
                 </div>
 
                 {/* RIGHT COLUMN: Divisional Charts, Dasha, Profile */}
-                <div className="col-span-12 lg:col-span-7 grid grid-cols-3 gap-2 content-start">
+                <div className="col-span-12 lg:col-span-7 flex flex-col gap-2">
 
-                    {/* Profile & Info */}
-                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col h-full min-h-[415px]">
-                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
-                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Client Profile</h3>
-                        </div>
-                        <div className="p-3 space-y-3 flex-1 bg-[#FFFCF6]">
-                            {clientDetails && (
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-gold-primary flex items-center justify-center text-white font-serif font-semibold text-lg shrink-0">
-                                            {clientDetails.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div className="font-serif text-md font-medium text-primary leading-tight">{clientDetails.name}</div>
-                                            <div className="font-sans text-xs text-primary leading-compact flex gap-2">
-                                                <span>{formatDate(clientDetails.dateOfBirth)}</span>
-                                                <span>{formatTime(clientDetails.timeOfBirth)}</span>
+                    {/* Top Row: Profile & Dasha */}
+                    <div className="grid grid-cols-12 gap-2 auto-rows-fr">
+                        {/* Profile & Info */}
+                        <div className="col-span-12 md:col-span-5 lg:col-span-4 border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col bg-[#FFFCF6]">
+                            <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                                <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Client Profile</h3>
+                            </div>
+                            <div className="p-2.5 space-y-2.5 flex-1">
+                                {clientDetails && (
+                                    <div className="space-y-2.5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-gold-primary flex items-center justify-center text-white font-serif font-semibold text-lg shrink-0 shadow-sm">
+                                                {clientDetails.name.charAt(0)}
                                             </div>
-                                            <div className="font-sans text-xs text-primary leading-compact truncate max-w-[150px]">{clientDetails.placeOfBirth.city}</div>
+                                            <div className="min-w-0">
+                                                <div className="font-serif text-md font-bold text-primary leading-tight truncate">{clientDetails.name}</div>
+                                                <div className="font-sans text-[10px] text-secondary leading-compact flex flex-wrap gap-x-2 opacity-80 mt-0.5">
+                                                    <span>{formatDate(clientDetails.dateOfBirth)}</span>
+                                                    <span className="text-antique">•</span>
+                                                    <span>{formatTime(clientDetails.timeOfBirth)}</span>
+                                                </div>
+                                                <div className="font-sans text-[10px] text-primary/70 leading-compact truncate mt-0.5 max-w-[150px] italic">{clientDetails.placeOfBirth.city}</div>
+                                            </div>
+                                        </div>
+
+
+
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            <div className="bg-softwhite p-2 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
+                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Lagna</span>
+                                                <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{signIdToName[(d1Data.ascendant || 1) as number]}</span>
+                                            </div>
+                                            <div className="bg-softwhite p-1.5 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
+                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Moon</span>
+                                                <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{
+                                                    d1Data.planets.find(p => p.name === "Mo")
+                                                        ? signIdToName[d1Data.planets.find(p => p.name === "Mo")!.signId]
+                                                        : "-"
+                                                }</span>
+                                            </div>
+                                            <div className="bg-softwhite p-1.5 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
+                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Sun</span>
+                                                <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{
+                                                    d1Data.planets.find(p => p.name === "Su")
+                                                        ? signIdToName[d1Data.planets.find(p => p.name === "Su")!.signId]
+                                                        : "-"
+                                                }</span>
+                                            </div>
+                                        </div>
+
+                                        <hr className="border-antique/40 border-dashed" />
+
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-serif text-[10px] font-bold text-primary/80 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Sparkle className="w-2.5 h-2.5 text-accent-gold animate-pulse" />
+                                                    Birth Panchanga
+                                                </h4>
+                                                <span className="text-[8px] text-muted-refined/60 italic">Standard Time</span>
+                                            </div>
+                                            <BirthPanchanga data={birthPanchangaData} />
                                         </div>
                                     </div>
-                                    <Link href="/vedic-astrology/workbench" className="block w-full text-center py-1.5 bg-gold-primary/10 border border-gold-primary/20 rounded font-sans text-base font-medium text-accent-gold hover:bg-gold-primary hover:text-primary transition-colors">
-                                        Open Workbench
-                                    </Link>
-                                </div>
-                            )}
-                            <hr className="border-antique/50" />
-                            {/* Quick Astrological Info */}
-                            <div className="flex flex-col gap-2">
-                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Lagna</span>
-                                    <span className="font-serif text-sm font-medium text-primary leading-tight">{signIdToName[(d1Data.ascendant || 1) as number]}</span>
-                                </div>
-                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Moon</span>
-                                    <span className="font-serif text-sm font-medium text-primary leading-tight">{
-                                        d1Data.planets.find(p => p.name === "Mo")
-                                            ? signIdToName[d1Data.planets.find(p => p.name === "Mo")!.signId]
-                                            : "-"
-                                    }</span>
-                                </div>
-                                <div className="bg-softwhite p-1.5 rounded border border-antique/30">
-                                    <span className="block font-sans text-xs font-medium text-secondary capitalize tracking-wider leading-compact">Sun</span>
-                                    <span className="font-serif text-sm font-medium text-primary leading-tight">{
-                                        d1Data.planets.find(p => p.name === "Su")
-                                            ? signIdToName[d1Data.planets.find(p => p.name === "Su")!.signId]
-                                            : "-"
-                                    }</span>
-                                </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Vimshottari Dasha */}
+                        <div className="col-span-12 md:col-span-7 lg:col-span-8 border border-antique rounded-lg overflow-hidden shadow-sm flex flex-col bg-[#FFFCF6]">
+                            <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                                <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Vimshottari Dasha</h3>
+                            </div>
+                            <div className="p-0 flex-1">
+                                <VimshottariTreeGrid
+                                    data={dashaData ? processDashaResponse(dashaData) : []}
+                                    isLoading={dashaLoading}
+                                    className="h-full border-none shadow-none rounded-none bg-transparent"
+                                />
                             </div>
                         </div>
                     </div>
 
-                    {/* Vimshottari Dasha */}
-                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm h-full col-span-2 min-h-[340px]">
-                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
-                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Vimshottari Dasha</h3>
-                        </div>
-                        <div className="p-0 h-full bg-[#FFFCF6]">
-                            <VimshottariTreeGrid
-                                data={dashaData ? processDashaResponse(dashaData) : []}
-                                isLoading={dashaLoading}
-                                className="h-full border-none shadow-none rounded-none bg-transparent"
-                            />
-                        </div>
-                    </div>
-
-                    {/* D9 & D10 Row */}
-                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                    {/* Middle Row: D9 & D10 */}
+                    <div className="grid grid-cols-2 gap-2">
                         {/* D9 Navamsha */}
                         <div className="border border-antique rounded-lg overflow-hidden shadow-sm">
                             <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
@@ -274,23 +292,24 @@ export default function VedicOverviewPage() {
                         </div>
                     </div>
 
-                    {/* Yogas / Additional Info */}
-                    <div className="col-span-2 border border-antique rounded-lg overflow-hidden shadow-sm">
+                    {/* Bottom Row: Yogas */}
+                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm bg-[#FFFCF6]">
                         <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
                             <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Combinations</h3>
                         </div>
-                        <div className="p-2 max-h-[150px] overflow-y-auto custom-scrollbar bg-[#FFFCF6]">
+                        <div className="p-3">
                             {yogas && yogas.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                     {yogas.map((yoga, i) => (
-                                        <span key={i} onClick={() => setAnalysisModal({ type: 'yoga', subType: yoga.subType, label: yoga.name })}
-                                            className="inline-flex items-center px-2 py-1 rounded bg-softwhite border border-antique/50 font-sans text-xs font-medium text-primary cursor-pointer hover:bg-gold-primary/10 hover:text-accent-gold transition-colors">
-                                            {yoga.name}
-                                        </span>
+                                        <div key={i} onClick={() => setAnalysisModal({ type: 'yoga', subType: yoga.subType, label: yoga.name })}
+                                            className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-softwhite border border-antique/50 font-sans text-[10px] font-bold text-primary cursor-pointer hover:bg-gold-primary/10 hover:text-accent-gold transition-all shadow-xs group">
+                                            <span className="truncate">{yoga.name}</span>
+                                            <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-all text-accent-gold" />
+                                        </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="font-sans text-sm text-muted-refined italic p-2">No specific yogas identified.</div>
+                                <div className="font-sans text-xs text-muted-refined italic p-2 text-center">No specific yogas identified for this chart.</div>
                             )}
                         </div>
                     </div>
