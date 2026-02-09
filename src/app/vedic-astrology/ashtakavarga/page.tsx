@@ -251,11 +251,11 @@ export default function AshtakavargaPage() {
                                         )}
                                     </div>
 
-                                    <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                                    <div className="p-4 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
                                         {/* Left: Technical Matrix */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
-                                                <Grid3X3 className="w-4 h-4" /> Technical Bindu Matrix
+                                        <div className="space-y-2">
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
+                                                <Grid3X3 className="w-3.5 h-3.5" /> Bindu Matrix
                                             </h3>
                                             <AshtakavargaMatrix
                                                 type={activeTab === 'sarva' ? 'sarva' : 'bhinna'}
@@ -265,30 +265,18 @@ export default function AshtakavargaPage() {
                                                 ) || data?.bhinna?.bhinnashtakavarga?.[selectedPlanet] || data?.bhinna?.bhinnashtakavarga?.[selectedPlanet.toLowerCase()] || data?.bhinna?.[selectedPlanet.toLowerCase()])}
                                                 planet={selectedPlanet}
                                             />
-                                            <div className="p-4 bg-parchment/30 rounded-2xl border border-antique shadow-inner flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-gold-primary/20 flex items-center justify-center flex-shrink-0">
-                                                    <Info className="w-5 h-5 text-gold-dark" />
-                                                </div>
-                                                <p className="text-[11px] text-copper-700 leading-relaxed">
-                                                    Rows indicate contributing elements. Columns indicate Signs 1-12.
-                                                    <span className="font-bold text-ink"> Confluence point</span>: High SAV (30+) intersecting with strong BAV (5+) indicates exceptional manifestation.
-                                                </p>
-                                            </div>
                                         </div>
 
-                                        {/* Right: Visual Chart */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
-                                                <MapIcon className="w-4 h-4" /> Spatial Distribution (D1 Houses)
+                                        {/* Right: Visual Chart - COMPACT */}
+                                        <div className="space-y-2">
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
+                                                <MapIcon className="w-3.5 h-3.5" /> House Distribution
                                             </h3>
-                                            <div className="bg-parchment/20 rounded-[2rem] border border-antique p-4 flex items-center justify-center relative group overflow-hidden">
-                                                <div className="relative w-full max-w-[300px]">
-                                                    <AshtakavargaChart
-                                                        ascendantSign={data?.ascendant || 1}
-                                                        houseValues={houseValues}
-                                                        className="animate-in zoom-in-95 duration-1000"
-                                                    />
-                                                </div>
+                                            <div className="bg-[#FFFEF9] rounded-lg border border-[#D08C60]/30 p-2 flex items-center justify-center">
+                                                <AshtakavargaChart
+                                                    ascendantSign={data?.ascendant || 1}
+                                                    houseValues={houseValues}
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -322,8 +310,8 @@ export default function AshtakavargaPage() {
 
                         </div>
                     ) : (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <ShodashaVargaTable data={data?.shodasha} />
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 min-h-[calc(100vh-220px)]">
+                            <ShodashaVargaTable data={data?.shodasha} className="h-full" />
                         </div>
                     )}
                 </div>
