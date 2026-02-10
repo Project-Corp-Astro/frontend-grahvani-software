@@ -37,6 +37,9 @@ ENV TZ=Asia/Kolkata
 
 WORKDIR /app
 
+# Install curl for Coolify health checks
+RUN apk add --no-cache curl
+
 # Create non-root user
 RUN addgroup --system --gid 1001 grahvani && \
     adduser --system --uid 1001 grahvani
