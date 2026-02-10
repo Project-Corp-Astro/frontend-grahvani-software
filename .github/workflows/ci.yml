@@ -1,0 +1,50 @@
+name: CI & Deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_AUTH_SERVICE_URL: http://placeholder:3001/api/v1
+          NEXT_PUBLIC_USER_SERVICE_URL: http://placeholder:3002/api/v1
+          NEXT_PUBLIC_CLIENT_SERVICE_URL: http://placeholder:3008/api/v1
+
+  deploy:
+    needs: lint-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Frontend
+        run: |
+          curl -s -X POST \
+            "http://147.93.30.201:8000/api/v1/applications/${{ secrets.COOLIFY_FRONTEND_UUID }}/restart" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            -H "Content-Type: application/json"
+          echo "Triggered frontend deploy"
