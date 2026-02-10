@@ -1,182 +1,370 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Gem,
     Sparkles,
     HandHeart,
     Scroll,
-    CheckCircle2,
-    Clock,
-    Flame
+    Flame,
+    Shield,
+    BookOpen,
+    Loader2,
+    AlertTriangle,
+    ArrowLeft,
+    RefreshCw,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useVedicClient } from '@/context/VedicClientContext';
+import { useAstrologerStore } from '@/store/useAstrologerStore';
+import { clientApi } from '@/lib/api';
 import { cn } from "@/lib/utils";
 
-// Mock Prescription Data
-const RX_GEMSTONES = [
-    { name: "Yellow Sapphire (Pukhraj)", weight: "5.25 Ratti", metal: "Gold", finger: "Index Finger", day: "Thursday Morning", planet: "Jupiter" },
-    { name: "Red Coral (Moonga)", weight: "6.00 Ratti", metal: "Copper/Gold", finger: "Ring Finger", day: "Tuesday Morning", planet: "Mars" }
-];
+// ============================================================================
+// Remedy Type Definitions (Lahiri-Exclusive — 5 Endpoints)
+// ============================================================================
 
-const RX_MANTRAS = [
+interface RemedyTab {
+    id: string;
+    apiType: string; // What to pass to generateChart
+    name: string;
+    sanskrit: string;
+    description: string;
+    icon: React.ReactNode;
+}
+
+const REMEDY_TABS: RemedyTab[] = [
     {
-        name: "Brihaspati Beej Mantra",
-        sanskrit: "ॐ ग्रां ग्रीं ग्रौं सः गुरवे नमः ||",
-        transliteration: "Om Gram Grim Grom Sah Gurave Namah",
-        count: "19,000 times",
-        rosary: "Tulsi or Haldi",
-        planet: "Jupiter"
+        id: 'gemstone',
+        apiType: 'remedy:gemstone',
+        name: 'Gemstones',
+        sanskrit: 'रत्न चिकित्सा',
+        description: 'Planetary gemstone prescriptions for strengthening weak planets',
+        icon: <Gem className="w-4 h-4" />
     },
     {
-        name: "Mars Gayatri",
-        sanskrit: "ॐ अंगारकाय विद्महे शक्तिहस्ताय धीमहि तन्नो भौमः प्रचोदयात् ||",
-        transliteration: "Om Angarakaya Vidmahe Shaktihastaya Dhimahi Tanno Bhaumah Prachodayat",
-        count: "108 Daily",
-        rosary: "Red Sandalwood",
-        planet: "Mars"
+        id: 'mantra',
+        apiType: 'remedy:mantra',
+        name: 'Mantras',
+        sanskrit: 'मंत्र साधना',
+        description: 'Sacred syllables for planetary propitiation',
+        icon: <Flame className="w-4 h-4" />
+    },
+    {
+        id: 'yantra',
+        apiType: 'remedy:yantra',
+        name: 'Yantra',
+        sanskrit: 'यंत्र',
+        description: 'Sacred geometric diagrams for cosmic alignment',
+        icon: <Shield className="w-4 h-4" />
+    },
+    {
+        id: 'vedic_remedies',
+        apiType: 'remedy:vedic_remedies',
+        name: 'Vedic Remedies',
+        sanskrit: 'वैदिक उपाय',
+        description: 'Traditional Vedic remedial prescriptions and rituals',
+        icon: <BookOpen className="w-4 h-4" />
+    },
+    {
+        id: 'lal_kitab',
+        apiType: 'remedy:lal_kitab',
+        name: 'Lal Kitab',
+        sanskrit: 'लाल कितब',
+        description: 'Unique remedies from the Lal Kitab tradition',
+        icon: <Scroll className="w-4 h-4" />
+    },
+];
+
+// ============================================================================
+// Generic Remedy Data Renderer
+// ============================================================================
+function RemedyDataView({ data, type }: { data: any; type: string }) {
+    if (!data) {
+        return (
+            <div className="p-8 text-center">
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                <p className="text-sm text-muted">No remedy data available for this type.</p>
+            </div>
+        );
     }
-];
 
-const RX_DONATIONS = [
-    { item: "Yellow Gram (Chana Dal)", day: "Thursday", recipient: "Temple Priest or Brahmin", planet: "Jupiter", completed: false },
-    { item: "Red Lentils (Masoor Dal)", day: "Tuesday", recipient: "Young Brahmacharis", planet: "Mars", completed: true }
-];
+    // Try to extract the actual remedy content from various response formats
+    const remedyContent = data.data || data.remedies || data;
 
+    // If it's an object with named keys (common pattern from astro engine)
+    if (typeof remedyContent === 'object' && !Array.isArray(remedyContent)) {
+        return (
+            <div className="space-y-4">
+                {Object.entries(remedyContent).map(([key, value]: [string, any]) => {
+                    // Skip metadata keys
+                    if (['ayanamsa', 'system', 'cached', 'chart_type', 'birth_details'].includes(key)) return null;
+
+                    return (
+                        <div key={key} className="bg-white border border-antique rounded-2xl p-5 hover:shadow-md transition-shadow">
+                            <h3 className="font-serif font-bold text-ink text-base capitalize mb-3 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-gold-primary" />
+                                {key.replace(/_/g, ' ')}
+                            </h3>
+                            {typeof value === 'string' ? (
+                                <p className="text-sm text-muted leading-relaxed">{value}</p>
+                            ) : typeof value === 'object' && value !== null ? (
+                                <div className="space-y-2">
+                                    {Array.isArray(value) ? (
+                                        value.map((item: any, i: number) => (
+                                            <div key={i} className="bg-parchment/50 rounded-xl p-4 border border-antique/50">
+                                                {typeof item === 'string' ? (
+                                                    <p className="text-sm text-ink">{item}</p>
+                                                ) : typeof item === 'object' ? (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {Object.entries(item).map(([k, v]) => (
+                                                            <div key={k} className="text-sm">
+                                                                <span className="text-muted text-xs uppercase tracking-wider">{k.replace(/_/g, ' ')}: </span>
+                                                                <span className="text-ink font-medium">{String(v)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-ink">{String(item)}</p>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        Object.entries(value).map(([k, v]) => (
+                                            <div key={k} className="flex items-start gap-2 text-sm bg-parchment/30 rounded-lg p-3">
+                                                <span className="text-muted min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
+                                                <span className="text-ink">{typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-ink">{String(value)}</p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    // If it's an array
+    if (Array.isArray(remedyContent)) {
+        return (
+            <div className="space-y-3">
+                {remedyContent.map((item: any, i: number) => (
+                    <div key={i} className="bg-white border border-antique rounded-2xl p-5">
+                        {typeof item === 'string' ? (
+                            <p className="text-sm text-ink">{item}</p>
+                        ) : typeof item === 'object' ? (
+                            <div className="space-y-2">
+                                {Object.entries(item).map(([k, v]) => (
+                                    <div key={k} className="flex items-start gap-2 text-sm">
+                                        <span className="text-muted min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
+                                        <span className="text-ink">{String(v)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    // Fallback: render as formatted JSON
+    return (
+        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+            <pre className="text-xs text-slate-700 whitespace-pre-wrap overflow-auto max-h-96">
+                {JSON.stringify(remedyContent, null, 2)}
+            </pre>
+        </div>
+    );
+}
+
+// ============================================================================
+// Main Remedies Page (Upaya)
+// ============================================================================
 export default function RemediesPage() {
     const { clientDetails } = useVedicClient();
+    const { ayanamsa } = useAstrologerStore();
+    const [activeTab, setActiveTab] = useState('gemstone');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [remedyData, setRemedyData] = useState<Record<string, any>>({});
+
+    const clientId = clientDetails?.id || '';
+    const activeRemedyTab = REMEDY_TABS.find(t => t.id === activeTab)!;
+
+    // Fetch remedy data when tab changes
+    useEffect(() => {
+        if (!clientId || !activeRemedyTab) return;
+
+        // Skip if already fetched
+        if (remedyData[activeTab]) return;
+
+        const fetchRemedy = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const result = await clientApi.generateChart(
+                    clientId,
+                    activeRemedyTab.apiType,
+                    'lahiri'
+                );
+                setRemedyData(prev => ({
+                    ...prev,
+                    [activeTab]: result.data || result.chartData || result
+                }));
+            } catch (err: any) {
+                console.error(`[Remedies] Error fetching ${activeTab}:`, err);
+                setError(err.message || `Failed to fetch ${activeRemedyTab.name} data`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRemedy();
+    }, [clientId, activeTab, activeRemedyTab]);
+
+    const handleRefresh = async () => {
+        if (!clientId || !activeRemedyTab) return;
+
+        // Clear cached data for this tab and re-fetch
+        setRemedyData(prev => {
+            const updated = { ...prev };
+            delete updated[activeTab];
+            return updated;
+        });
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await clientApi.generateChart(
+                clientId,
+                activeRemedyTab.apiType,
+                'lahiri'
+            );
+            setRemedyData(prev => ({
+                ...prev,
+                [activeTab]: result.data || result.chartData || result
+            }));
+        } catch (err: any) {
+            setError(err.message || `Failed to fetch ${activeRemedyTab.name} data`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // System check — Remedies are Lahiri-exclusive
+    if (ayanamsa !== 'Lahiri') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <Gem className="w-12 h-12 text-muted mb-4" />
+                <h2 className="text-xl font-serif font-bold text-ink mb-2">Upaya — Lahiri Only</h2>
+                <p className="text-muted text-sm max-w-md">
+                    Remedial prescriptions are currently available exclusively with the <strong>Lahiri Ayanamsa</strong>.
+                    Please switch to Lahiri from the header dropdown to access remedies.
+                </p>
+            </div>
+        );
+    }
 
     if (!clientDetails) return null;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#D08C60]/20 pb-4">
-                <div>
-                    <h1 className="text-3xl font-serif text-[#3E2A1F] font-black tracking-tight mb-1 flex items-center gap-3">
-                        <Scroll className="w-8 h-8 text-[#D08C60]" />
-                        Karmic Prescription
-                    </h1>
-                    <p className="text-[#8B5A2B] font-serif text-sm">Remedial measures to balance planetary energies.</p>
+            <div>
+                <div className="flex items-center gap-2 text-muted text-sm mb-1">
+                    <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
+                        <ArrowLeft className="w-3 h-3" />
+                        Kundali
+                    </Link>
+                    <span>/</span>
+                    <span>Upaya (Remedies)</span>
                 </div>
-                <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-[#8B5A2B]/60 tracking-widest">Prescription ID</p>
-                    <p className="font-mono text-[#3E2A1F] font-bold">RX-{new Date().getFullYear()}-001</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-serif font-bold text-ink flex items-center gap-3">
+                            <Scroll className="w-7 h-7 text-gold-primary" />
+                            Upaya — Karmic Prescriptions
+                        </h1>
+                        <p className="text-sm text-muted mt-1">
+                            Remedial measures for <span className="font-medium">{clientDetails.name}</span> based on planetary analysis
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleRefresh}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-antique rounded-xl text-sm text-muted hover:text-ink hover:border-gold-primary/30 transition-all disabled:opacity-50"
+                    >
+                        <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+                        Refresh
+                    </button>
                 </div>
             </div>
 
-            {/* SECTION 1: GEMSTONES (Ratna) */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2 text-[#D08C60]">
-                    <Gem className="w-5 h-5" />
-                    <h2 className="text-lg font-serif font-bold text-[#3E2A1F] uppercase tracking-wide">Gemstone Therapy (Ratna)</h2>
+            {/* Remedy Type Tabs */}
+            <div className="flex flex-wrap gap-2 p-1 bg-parchment rounded-xl border border-antique">
+                {REMEDY_TABS.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-serif font-medium transition-all",
+                            activeTab === tab.id
+                                ? "bg-gradient-to-r from-gold-primary to-gold-dark text-white shadow-md"
+                                : "text-muted hover:text-ink hover:bg-white/50"
+                        )}
+                    >
+                        {tab.icon}
+                        <span>{tab.name}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Active Tab Description */}
+            <div className="bg-gold-primary/5 border border-gold-primary/15 rounded-xl px-5 py-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gold-primary/10 rounded-lg flex items-center justify-center text-gold-dark">
+                        {activeRemedyTab.icon}
+                    </div>
+                    <div>
+                        <h3 className="font-serif font-bold text-ink text-sm">{activeRemedyTab.name}</h3>
+                        <p className="text-[10px] text-gold-dark/60 font-medium">{activeRemedyTab.sanskrit}</p>
+                        <p className="text-xs text-muted mt-0.5">{activeRemedyTab.description}</p>
+                    </div>
                 </div>
+            </div>
 
-                <div className="overflow-hidden bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl shadow-sm">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-[#D08C60]/10 text-[#5A3E2B] font-bold uppercase text-[10px] tracking-widest">
-                            <tr>
-                                <th className="px-6 py-3">Gemstone</th>
-                                <th className="px-6 py-3">Weight</th>
-                                <th className="px-6 py-3">Metal</th>
-                                <th className="px-6 py-3">Wearing Method</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#D08C60]/10">
-                            {RX_GEMSTONES.map((gem, i) => (
-                                <tr key={i} className="hover:bg-[#3E2A1F]/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <span className="block font-bold text-[#3E2A1F] text-lg font-serif">{gem.name}</span>
-                                        <span className="text-xs text-[#8B5A2B] font-medium uppercase tracking-wider">For {gem.planet}</span>
-                                    </td>
-                                    <td className="px-6 py-4 font-mono text-[#5A3E2B]">{gem.weight}</td>
-                                    <td className="px-6 py-4 text-[#5A3E2B]">{gem.metal}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="font-bold text-[#3E2A1F]">{gem.finger}</span>
-                                            <span className="text-xs text-[#8B5A2B] flex items-center gap-1">
-                                                <Clock className="w-3 h-3" /> {gem.day}
-                                            </span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            {/* SECTION 2: MANTRAS (Japa) */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2 text-[#D08C60]">
-                    <Flame className="w-5 h-5" />
-                    <h2 className="text-lg font-serif font-bold text-[#3E2A1F] uppercase tracking-wide">Mantra Sadhana</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {RX_MANTRAS.map((mantra, i) => (
-                        <div key={i} className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#D08C60]/50 transition-all">
-                            {/* Decorative Background Char */}
-                            <div className="absolute -right-4 -bottom-4 text-9xl font-serif text-[#D08C60]/5 rotate-12 pointer-events-none">
-                                ॐ
-                            </div>
-
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 className="font-bold text-[#3E2A1F] text-lg font-serif group-hover:text-[#D08C60] transition-colors">{mantra.name}</h3>
-                                    <p className="text-[10px] uppercase font-bold text-[#8B5A2B]/60 tracking-widest">{mantra.planet} Propitiation</p>
-                                </div>
-                                <div className="bg-[#D08C60]/10 px-3 py-1 rounded-full text-xs font-bold text-[#8B5A2B] border border-[#D08C60]/20">
-                                    {mantra.count}
-                                </div>
-                            </div>
-
-                            <div className="bg-[#3E2A1F]/5 rounded-xl p-4 mb-4 border border-[#3E2A1F]/5">
-                                <p className="text-xl font-serif text-[#3E2A1F] text-center mb-2 leading-relaxed">{mantra.sanskrit}</p>
-                                <p className="text-xs text-center text-[#5A3E2B]/70 italic">{mantra.transliteration}</p>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-[#8B5A2B] font-medium">
-                                <Sparkles className="w-4 h-4" />
-                                <span>Rosary: {mantra.rosary}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* SECTION 3: DONATIONS (Daan) */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2 text-[#D08C60]">
-                    <HandHeart className="w-5 h-5" />
-                    <h2 className="text-lg font-serif font-bold text-[#3E2A1F] uppercase tracking-wide">Charity & Daan</h2>
-                </div>
-
-                <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-2xl p-2">
-                    {RX_DONATIONS.map((daan, i) => (
-                        <div key={i} className={cn(
-                            "flex items-center justify-between p-4 rounded-xl transition-all",
-                            daan.completed ? "opacity-50 grayscale" : "hover:bg-[#D08C60]/5"
-                        )}>
-                            <div className="flex items-center gap-4">
-                                <div className={cn(
-                                    "w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors",
-                                    daan.completed ? "bg-[#D08C60] border-[#D08C60] text-white" : "border-[#D08C60]/40 text-transparent hover:border-[#D08C60]"
-                                )}>
-                                    <CheckCircle2 className="w-4 h-4" />
-                                </div>
-                                <div>
-                                    <h4 className={cn("font-bold text-[#3E2A1F] font-serif", daan.completed && "line-through")}>{daan.item}</h4>
-                                    <p className="text-xs text-[#8B5A2B]">Donate to {daan.recipient} on {daan.day}</p>
-                                </div>
-                            </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#D08C60]/60 border border-[#D08C60]/20 px-2 py-1 rounded">
-                                {daan.planet}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            {/* Content Area */}
+            <div className="min-h-[300px]">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-16 bg-parchment/30 rounded-2xl border border-antique">
+                        <Loader2 className="w-8 h-8 text-gold-primary animate-spin mb-4" />
+                        <p className="text-sm font-serif text-muted italic">Consulting planetary prescriptions...</p>
+                    </div>
+                ) : error ? (
+                    <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+                        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+                        <h3 className="text-red-900 font-bold font-serif mb-1">Prescription Unavailable</h3>
+                        <p className="text-xs text-red-600 max-w-md mx-auto">{error}</p>
+                        <button
+                            onClick={handleRefresh}
+                            className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                ) : remedyData[activeTab] ? (
+                    <RemedyDataView data={remedyData[activeTab]} type={activeTab} />
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 bg-parchment/30 rounded-2xl border border-antique">
+                        <Gem className="w-8 h-8 text-muted mb-3" />
+                        <p className="text-sm text-muted">Select a remedy type to view prescriptions</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

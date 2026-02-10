@@ -50,6 +50,7 @@ export interface SystemCapabilities {
     features: {
         dasha: string[];
         ashtakavarga: string[];
+        shadbala: string[];
         compatibility: string[];
         numerology: string[];
     };
@@ -90,6 +91,7 @@ export const CHART_METADATA: Record<string, { name: string; desc: string; catego
     'equal_bhava': { name: 'Equal Bhava', desc: 'Equal House System', category: 'lagna' },
     'karkamsha_d1': { name: 'Karkamsha D1', desc: 'Atmakaraka in Navamsha to D1', category: 'lagna' },
     'karkamsha_d9': { name: 'Karkamsha D9', desc: 'Atmakaraka in Navamsha', category: 'lagna' },
+    'shadbala': { name: 'Shadbala', desc: 'Six-fold Planetary Strength Analysis', category: 'special' },
 };
 
 // Dasha system metadata for display
@@ -449,6 +451,20 @@ export const clientApi = {
         apiFetch(`${CLIENT_URL}/clients/${clientId}/dosha/${doshaType}?ayanamsa=${ayanamsa}`),
 
     /**
+     * Get Shadbala Analysis (Lahiri exclusive)
+     */
+    getShadbala: (clientId: string): Promise<any> => {
+        console.log(`[api.ts] getShadbala requested for: ${clientId}`);
+        return apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({ chartType: 'shadbala', ayanamsa: 'lahiri' }),
+        }).then(res => {
+            console.log(`[api.ts] getShadbala response:`, res);
+            return res;
+        });
+    },
+
+    /**
      * Get system capabilities - which chart types are available per ayanamsa
      * SYNCED with backend endpoint-availability.ts (2026-01-21)
      */
@@ -464,6 +480,7 @@ export const clientApi = {
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
                     ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    shadbala: ['shadbala'],
                     compatibility: ['synastry', 'composite', 'progressed'],
                     numerology: ['chaldean', 'lo_shu']
                 },
@@ -483,6 +500,7 @@ export const clientApi = {
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
                     ashtakavarga: ['bhinna', 'sarva', 'shodasha_varga'],
+                    shadbala: [],
                     compatibility: [],
                     numerology: []
                 },
@@ -502,6 +520,7 @@ export const clientApi = {
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
                     ashtakavarga: [],
+                    shadbala: [],
                     compatibility: [],
                     numerology: []
                 },
@@ -520,6 +539,7 @@ export const clientApi = {
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana', 'tribhagi', 'yogini'],
                     ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    shadbala: [],
                     compatibility: [],
                     numerology: []
                 },
@@ -772,5 +792,14 @@ export const kpApi = {
         apiFetch(`${CLIENT_URL}/clients/${clientId}/kp/horary`, {
             method: 'POST',
             body: JSON.stringify({ horaryNumber, question }),
+        }),
+
+    /**
+     * Get Shadbala (Planetary Strength) for a client
+     */
+    getShadbala: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({ chartType: 'shadbala', ayanamsa: 'lahiri' }),
         }),
 };

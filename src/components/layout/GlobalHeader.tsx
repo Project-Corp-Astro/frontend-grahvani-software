@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Settings, Clock, User, Bell, ChevronDown } from "lucide-react";
 import GoldenButton from "@/components/GoldenButton";
 import { useAstrologerStore } from "@/store/useAstrologerStore";
@@ -11,6 +11,7 @@ import { LogOut } from "lucide-react";
 
 export default function GlobalHeader() {
     const pathname = usePathname();
+    const router = useRouter();
     const { ayanamsa, chartStyle, recentClientIds, updateSettings } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
     const { user, logout } = useAuth();
@@ -174,7 +175,7 @@ export default function GlobalHeader() {
             </div>
 
             {/* Global Settings Modal */}
-            <GlobalSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+            <GlobalSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} router={router} />
 
 
         </header>
@@ -207,7 +208,7 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
     );
 }
 
-function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function GlobalSettingsModal({ isOpen, onClose, router }: { isOpen: boolean; onClose: () => void; router: any }) {
     const { ayanamsa, chartStyle, recentClientIds, updateSettings } = useAstrologerStore();
 
     // Fix: Memoize settings object to prevent infinite useEffect loop
@@ -230,9 +231,15 @@ function GlobalSettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         setIsSaving(true);
         // Simulate a brief delay for "processing" feel
         setTimeout(() => {
+            const systemChanged = tempSettings.ayanamsa !== settings.ayanamsa;
             updateSettings(tempSettings);
             setIsSaving(false);
             onClose();
+
+            // Redirect to Kundali (Overview) page if system changed
+            if (systemChanged) {
+                router.push('/vedic-astrology/overview');
+            }
         }, 600);
     };
 
