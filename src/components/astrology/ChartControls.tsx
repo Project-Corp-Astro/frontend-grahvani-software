@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Eye, Settings } from 'lucide-react';
 import ParchmentSelect from "@/components/ui/ParchmentSelect";
 import GoldenButton from "@/components/GoldenButton";
@@ -8,9 +9,16 @@ import { clientApi, CHART_METADATA } from '@/lib/api';
 
 
 export default function ChartControls() {
+    const router = useRouter();
     const { ayanamsa, chartStyle, recentClientIds, setAyanamsa } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
-    const updateAyanamsa = setAyanamsa;
+
+    const updateAyanamsa = (newAyanamsa: any) => {
+        setAyanamsa(newAyanamsa);
+        // Redirect to Kundali (Overview) page if system changed
+        router.push('/vedic-astrology/overview');
+    };
+
     const [showAdvanced, setShowAdvanced] = React.useState(false);
 
     // Get dynamic chart options based on selected Ayanamsa system

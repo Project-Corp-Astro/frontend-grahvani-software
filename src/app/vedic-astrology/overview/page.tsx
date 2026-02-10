@@ -295,8 +295,11 @@ export default function VedicOverviewPage() {
 
                     {/* Bottom Row: Yogas */}
                     <div className="border border-antique rounded-lg overflow-hidden shadow-sm bg-[#FFFCF6]">
-                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique">
+                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
                             <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Combinations</h3>
+                            <Link href="/vedic-astrology/yoga-dosha" className="text-secondary hover:text-accent-gold transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
+                                Detailed Analysis <ArrowRight className="w-3 h-3" />
+                            </Link>
                         </div>
                         <div className="p-3">
                             {yogas && yogas.length > 0 ? (
