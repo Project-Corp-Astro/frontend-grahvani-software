@@ -30,23 +30,6 @@ import {
     Heart
 } from "lucide-react";
 
-<<<<<<< Updated upstream
-// Unified Professional Navigation for the Consultation Workspace
-const VEDIC_NAV_ITEMS: SidebarItem[] = [
-    { name: "Overview", path: "/overview", icon: LayoutTemplate },
-    { name: "Analytical Workbench", path: "/workbench", icon: LayoutDashboard },
-    { name: "KP System", path: "/kp", icon: Sparkles },
-    { name: "Planetary Details", path: "/planets", icon: Compass },
-    { name: "Divisional Charts", path: "/divisional", icon: Map },
-    { name: "Ashtakavarga", path: "/ashtakavarga", icon: Shield },
-    { name: "Dasha Systems", path: "/dashas", icon: History },
-    { name: "Chakras", path: "/chakras", icon: Layers },
-    { name: "Transits", path: "/transits", icon: Globe },
-    { name: "Report Lab", path: "/reports", icon: FileText },
-    { name: "Remedies", path: "/remedies", icon: Gem },
-    { name: "Notes History", path: "/notes", icon: NotebookPen },
-    { name: "Comparison", path: "/comparison", icon: GitCompare },
-=======
 // ============================================================================
 // Navigation Items with Jyotish Terminology + System Compatibility
 // ============================================================================
@@ -80,7 +63,6 @@ const VEDIC_NAV_ITEMS: NavItem[] = [
     { name: "Compatibility", path: "/comparison", icon: Heart, isOverflow: true },
     { name: "Phala Jyotish", path: "/reports", icon: FileText, isOverflow: true },
     { name: "Notes", path: "/notes", icon: NotebookPen, isOverflow: true },
->>>>>>> Stashed changes
 ];
 
 // ============================================================================
