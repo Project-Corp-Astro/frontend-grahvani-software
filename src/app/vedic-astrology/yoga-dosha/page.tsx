@@ -49,8 +49,8 @@ const YOGA_TYPES: YogaItem[] = [
     { id: 'chandra_mangal', name: 'Chandra Mangal', sanskrit: 'चन्द्र मंगल', description: 'Moon-Mars conjunction — emotional strength & wealth', category: 'benefic', icon: <Moon className="w-4 h-4" /> },
     { id: 'raj_yoga', name: 'Raja Yoga', sanskrit: 'राजयोग', description: 'Kendra-Trikona lord conjunction — power & authority', category: 'benefic', icon: <Star className="w-4 h-4" /> },
     { id: 'pancha_mahapurusha', name: 'Pancha Mahapurusha', sanskrit: 'पंच महापुरुष', description: 'Planets in own/exalted sign in Kendra — exceptional personality', category: 'benefic', icon: <Star className="w-4 h-4" /> },
-    { id: 'dhan_yoga', name: 'Dhana Yoga', sanskrit: 'धनयोग', description: 'Wealth combinations from 2nd, 5th, 9th, 11th lords', category: 'benefic', icon: <Star className="w-4 h-4" /> },
-    { id: 'shubh_yoga', name: 'Shubha Yoga', sanskrit: 'शुभयोग', description: 'Benefic planetary combinations for auspicious results', category: 'benefic', icon: <Star className="w-4 h-4" /> },
+    { id: 'dhan', name: 'Dhana Yoga', sanskrit: 'धनयोग', description: 'Wealth combinations from 2nd, 5th, 9th, 11th lords', category: 'benefic', icon: <Star className="w-4 h-4" /> },
+    { id: 'shubh', name: 'Shubha Yoga', sanskrit: 'शुभयोग', description: 'Benefic planetary combinations for auspicious results', category: 'benefic', icon: <Star className="w-4 h-4" /> },
     { id: 'kalpadruma', name: 'Kalpadruma', sanskrit: 'कल्पद्रुम', description: 'Wish-fulfilling tree yoga — rare prosperity combination', category: 'benefic', icon: <Star className="w-4 h-4" /> },
     { id: 'spiritual', name: 'Spiritual Yoga', sanskrit: 'आध्यात्मिक योग', description: 'Combinations indicating spiritual inclination & moksha', category: 'benefic', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'viparitha_raja', name: 'Viparitha Raja', sanskrit: 'विपरीत राजयोग', description: 'Dusthana lords in dusthana — adversity creating fortune', category: 'benefic', icon: <Star className="w-4 h-4" /> },
@@ -58,7 +58,7 @@ const YOGA_TYPES: YogaItem[] = [
     // Challenging Yogas
     { id: 'daridra', name: 'Daridra Yoga', sanskrit: 'दरिद्रयोग', description: 'Poverty combinations — 11th lord in 6th/8th/12th', category: 'challenging', icon: <AlertTriangle className="w-4 h-4" /> },
     { id: 'malefic', name: 'Malefic Yogas', sanskrit: 'पापयोग', description: 'Harmful planetary combinations requiring remedies', category: 'challenging', icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: 'kala_sarpa_yoga', name: 'Kala Sarpa Yoga', sanskrit: 'कालसर्पयोग', description: 'All planets hemmed between Rahu-Ketu axis', category: 'challenging', icon: <Flame className="w-4 h-4" /> },
+    { id: 'kala_sarpa', name: 'Kala Sarpa Yoga', sanskrit: 'कालसर्पयोग', description: 'All planets hemmed between Rahu-Ketu axis', category: 'challenging', icon: <Flame className="w-4 h-4" /> },
     { id: 'special', name: 'Special Yogas', sanskrit: 'विशेषयोग', description: 'Rare and unique planetary combinations', category: 'benefic', icon: <Sparkles className="w-4 h-4" /> },
 ];
 
