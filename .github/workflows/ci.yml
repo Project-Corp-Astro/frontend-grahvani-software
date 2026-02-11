@@ -10,8 +10,8 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Coolify auto-deploys on push to main via its own GitHub webhook.
-# This workflow gates PRs — merge is blocked until CI passes.
+# CI gates PRs with lint/typecheck/build. On push to main, deploys via Coolify API.
+# Auto-deploy is disabled in Coolify — only this workflow triggers deploys.
 
 jobs:
   lint-and-build:
@@ -39,3 +39,16 @@ jobs:
           NEXT_PUBLIC_AUTH_SERVICE_URL: http://placeholder:3001/api/v1
           NEXT_PUBLIC_USER_SERVICE_URL: http://placeholder:3002/api/v1
           NEXT_PUBLIC_CLIENT_SERVICE_URL: http://placeholder:3008/api/v1
+
+  deploy:
+    needs: lint-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Frontend
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "http://147.93.30.201:8000/api/v1/applications/${{ secrets.COOLIFY_FRONTEND_UUID }}/restart" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}")
+          echo "Deploy frontend: HTTP $response"
+          [ "$response" = "200" ] || exit 1
