@@ -329,10 +329,22 @@ export default function VedicDivisionalPage() {
                         };
 
                         return (
-                            <div key={`${chartType}-${idx}`} className={cn(
-                                "bg-[#FFFFFa] border border-[#D08C60]/20 rounded-xl p-3 relative group transition-all hover:border-[#D08C60]/50 shadow-sm",
-                                maximizedChart === chartType && "col-span-full max-w-2xl mx-auto"
-                            )}>
+                            <div
+                                key={`${chartType}-${idx}`}
+                                className={cn(
+                                    "bg-[#FFFFFa] border border-[#D08C60]/20 rounded-xl p-3 relative group transition-all hover:border-[#D08C60]/50 shadow-sm w-full",
+                                    maximizedChart === chartType ? "col-span-full mx-auto" : "mx-auto"
+                                )}
+                                style={{
+                                    maxWidth: maximizedChart
+                                        ? 'min(64rem, calc(100vh - 200px))'
+                                        : columnCount === 1
+                                            ? 'min(42rem, calc(100vh - 320px))'
+                                            : columnCount === 2
+                                                ? 'min(36rem, calc(100vh - 320px))'
+                                                : undefined
+                                }}
+                            >
                                 {/* Header */}
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex-1 min-w-0">

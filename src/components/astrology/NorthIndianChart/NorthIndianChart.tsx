@@ -210,7 +210,7 @@ export default function NorthIndianChart({
                                     // Planet color mapping
                                     const planetColors: Record<string, string> = {
                                         'Su': '#D97706', 'Sun': '#D97706',       // Amber
-                                        'Mo': '#6B7280', 'Moon': '#6B7280',       // Gray
+                                        'Mo': '#334155', 'Moon': '#334155',       // Slate 700 (Darker Gray)
                                         'Ma': '#DC2626', 'Mars': '#DC2626',       // Red
                                         'Me': '#059669', 'Mercury': '#059669',    // Green
                                         'Ju': '#CA8A04', 'Jupiter': '#CA8A04',    // Yellow
@@ -238,7 +238,7 @@ export default function NorthIndianChart({
                                             >
                                                 {p.name}
                                                 {p.isRetro && (
-                                                    <tspan fontSize="10" fontWeight="bold" fill="#DC2626" dx="1">℞</tspan>
+                                                    <tspan fontSize="12" fontWeight="bold" fill="#DC2626" dx="1">R</tspan>
                                                 )}
                                                 {showDegrees && (
                                                     <tspan fontSize="10" fontWeight="400" fill="#4A3F32" dx="2">

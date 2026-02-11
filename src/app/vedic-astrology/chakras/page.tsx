@@ -77,15 +77,7 @@ export default function ChakrasPage() {
                     <p className="text-xs text-copper-600 font-medium tracking-tight">Triple Confluence Analysis for {clientDetails.name}</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => fetchChakraData()}
-                        className="p-3 bg-white text-copper-600 hover:bg-copper-50 rounded-2xl border border-copper-200 shadow-sm transition-all active:scale-95"
-                        title="Recalculate Diagram"
-                    >
-                        <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
-                    </button>
-                </div>
+
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -146,7 +138,7 @@ export default function ChakrasPage() {
                 {/* Technical Side Panel Column */}
                 <div className="lg:col-span-4 space-y-8">
                     {/* Dynamic Legend Card */}
-                    <div className="bg-white rounded-3xl border border-copper-200 p-8 shadow-sm space-y-6">
+                    <div className=" rounded-3xl border border-copper-200 p-8 shadow-sm space-y-6">
                         <div className="border-b border-copper-100 pb-4">
                             <h3 className="text-[11px] font-black text-copper-400 uppercase tracking-[0.2em]">Chart Legend</h3>
                         </div>

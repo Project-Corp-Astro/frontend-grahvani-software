@@ -198,12 +198,12 @@ export default function VedicOverviewPage() {
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="font-serif text-md font-bold text-primary leading-tight truncate">{clientDetails.name}</div>
-                                                <div className="font-sans text-[10px] text-secondary leading-compact flex flex-wrap gap-x-2 opacity-80 mt-0.5">
+                                                <div className="font-sans text-[10px] text-primary leading-compact flex flex-wrap gap-x-2 mt-0.5">
                                                     <span>{formatDate(clientDetails.dateOfBirth)}</span>
                                                     <span className="text-antique">•</span>
                                                     <span>{formatTime(clientDetails.timeOfBirth)}</span>
                                                 </div>
-                                                <div className="font-sans text-[10px] text-primary/70 leading-compact truncate mt-0.5 max-w-[150px] italic">{clientDetails.placeOfBirth.city}</div>
+                                                <div className="font-sans text-[10px] text-primary leading-compact truncate mt-0.5 max-w-[150px] italic">{clientDetails.placeOfBirth.city}</div>
                                             </div>
                                         </div>
 
@@ -211,11 +211,11 @@ export default function VedicOverviewPage() {
 
                                         <div className="grid grid-cols-3 gap-1.5">
                                             <div className="bg-softwhite p-2 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
-                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Lagna</span>
+                                                <span className="block font-sans text-[9px] font-bold text-primary/60 mb-1">Lagna</span>
                                                 <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{signIdToName[(d1Data.ascendant || 1) as number]}</span>
                                             </div>
                                             <div className="bg-softwhite p-1.5 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
-                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Moon</span>
+                                                <span className="block font-sans text-[9px] font-bold text-primary/60 mb-1">Moon</span>
                                                 <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{
                                                     d1Data.planets.find(p => p.name === "Mo")
                                                         ? signIdToName[d1Data.planets.find(p => p.name === "Mo")!.signId]
@@ -223,7 +223,7 @@ export default function VedicOverviewPage() {
                                                 }</span>
                                             </div>
                                             <div className="bg-softwhite p-1.5 rounded-lg border border-antique/30 shadow-sm group hover:border-gold-primary/30 transition-colors">
-                                                <span className="block font-sans text-[9px] font-bold text-secondary/60 uppercase tracking-tighter mb-1">Sun</span>
+                                                <span className="block font-sans text-[9px] font-bold text-primary/60 mb-1">Sun</span>
                                                 <span className="font-serif text-sm font-bold text-primary group-hover:text-accent-gold transition-colors">{
                                                     d1Data.planets.find(p => p.name === "Su")
                                                         ? signIdToName[d1Data.planets.find(p => p.name === "Su")!.signId]
@@ -236,11 +236,11 @@ export default function VedicOverviewPage() {
 
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="font-serif text-[10px] font-bold text-primary/80 uppercase tracking-wider flex items-center gap-1.5">
+                                                <h4 className="font-serif text-[10px] font-bold text-primary tracking-wider flex items-center gap-1.5">
                                                     <Sparkle className="w-2.5 h-2.5 text-accent-gold animate-pulse" />
                                                     Birth Panchanga
                                                 </h4>
-                                                <span className="text-[8px] text-muted-refined/60 italic">Standard Time</span>
+                                                <span className="text-[8px] text-primary ">Standard Time</span>
                                             </div>
                                             <BirthPanchanga data={birthPanchangaData} />
                                         </div>

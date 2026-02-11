@@ -84,7 +84,7 @@ function RemedyDataView({ data, type }: { data: any; type: string }) {
         return (
             <div className="p-8 text-center">
                 <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-                <p className="text-sm text-muted">No remedy data available for this type.</p>
+                <p className="text-sm text-primary">No remedy data available for this type.</p>
             </div>
         );
     }
@@ -102,44 +102,44 @@ function RemedyDataView({ data, type }: { data: any; type: string }) {
 
                     return (
                         <div key={key} className="bg-white border border-antique rounded-2xl p-5 hover:shadow-md transition-shadow">
-                            <h3 className="font-serif font-bold text-ink text-base capitalize mb-3 flex items-center gap-2">
+                            <h3 className="font-serif font-bold text-primary text-base capitalize mb-3 flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-gold-primary" />
                                 {key.replace(/_/g, ' ')}
                             </h3>
                             {typeof value === 'string' ? (
-                                <p className="text-sm text-muted leading-relaxed">{value}</p>
+                                <p className="text-sm text-primary leading-relaxed">{value}</p>
                             ) : typeof value === 'object' && value !== null ? (
                                 <div className="space-y-2">
                                     {Array.isArray(value) ? (
                                         value.map((item: any, i: number) => (
                                             <div key={i} className="bg-parchment/50 rounded-xl p-4 border border-antique/50">
                                                 {typeof item === 'string' ? (
-                                                    <p className="text-sm text-ink">{item}</p>
+                                                    <p className="text-sm text-primary">{item}</p>
                                                 ) : typeof item === 'object' ? (
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {Object.entries(item).map(([k, v]) => (
                                                             <div key={k} className="text-sm">
-                                                                <span className="text-muted text-xs uppercase tracking-wider">{k.replace(/_/g, ' ')}: </span>
-                                                                <span className="text-ink font-medium">{String(v)}</span>
+                                                                <span className="text-primary text-xs uppercase tracking-wider">{k.replace(/_/g, ' ')}: </span>
+                                                                <span className="text-primary font-medium">{String(v)}</span>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm text-ink">{String(item)}</p>
+                                                    <p className="text-sm text-primary">{String(item)}</p>
                                                 )}
                                             </div>
                                         ))
                                     ) : (
                                         Object.entries(value).map(([k, v]) => (
                                             <div key={k} className="flex items-start gap-2 text-sm bg-parchment/30 rounded-lg p-3">
-                                                <span className="text-muted min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
-                                                <span className="text-ink">{typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}</span>
+                                                <span className="text-primary min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
+                                                <span className="text-primary">{typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}</span>
                                             </div>
                                         ))
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-sm text-ink">{String(value)}</p>
+                                <p className="text-sm text-primary">{String(value)}</p>
                             )}
                         </div>
                     );
@@ -155,13 +155,13 @@ function RemedyDataView({ data, type }: { data: any; type: string }) {
                 {remedyContent.map((item: any, i: number) => (
                     <div key={i} className="bg-white border border-antique rounded-2xl p-5">
                         {typeof item === 'string' ? (
-                            <p className="text-sm text-ink">{item}</p>
+                            <p className="text-sm text-primary">{item}</p>
                         ) : typeof item === 'object' ? (
                             <div className="space-y-2">
                                 {Object.entries(item).map(([k, v]) => (
                                     <div key={k} className="flex items-start gap-2 text-sm">
-                                        <span className="text-muted min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
-                                        <span className="text-ink">{String(v)}</span>
+                                        <span className="text-primary min-w-[120px] text-xs uppercase tracking-wider font-medium">{k.replace(/_/g, ' ')}</span>
+                                        <span className="text-primary">{String(v)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -259,9 +259,9 @@ export default function RemediesPage() {
     if (ayanamsa !== 'Lahiri') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <Gem className="w-12 h-12 text-muted mb-4" />
-                <h2 className="text-xl font-serif font-bold text-ink mb-2">Upaya — Lahiri Only</h2>
-                <p className="text-muted text-sm max-w-md">
+                <Gem className="w-12 h-12 text-primary mb-4" />
+                <h2 className="text-xl font-serif font-bold text-primary mb-2">Upaya — Lahiri Only</h2>
+                <p className="text-primary text-sm max-w-md">
                     Remedial prescriptions are currently available exclusively with the <strong>Lahiri Ayanamsa</strong>.
                     Please switch to Lahiri from the header dropdown to access remedies.
                 </p>
@@ -275,7 +275,7 @@ export default function RemediesPage() {
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Header */}
             <div>
-                <div className="flex items-center gap-2 text-muted text-sm mb-1">
+                <div className="flex items-center gap-2 text-primary text-sm mb-1">
                     <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
                         <ArrowLeft className="w-3 h-3" />
                         Kundali
@@ -285,11 +285,11 @@ export default function RemediesPage() {
                 </div>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-serif font-bold text-ink flex items-center gap-3">
+                        <h1 className="text-2xl font-serif font-bold text-primary flex items-center gap-3">
                             <Scroll className="w-7 h-7 text-gold-primary" />
                             Upaya — Karmic Prescriptions
                         </h1>
-                        <p className="text-sm text-muted mt-1">
+                        <p className="text-sm text-primary mt-1">
                             Remedial measures for <span className="font-medium">{clientDetails.name}</span> based on planetary analysis
                         </p>
                     </div>
@@ -314,7 +314,7 @@ export default function RemediesPage() {
                             "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-serif font-medium transition-all",
                             activeTab === tab.id
                                 ? "bg-gradient-to-r from-gold-primary to-gold-dark text-white shadow-md"
-                                : "text-muted hover:text-ink hover:bg-white/50"
+                                : "text-primary hover:text-primary hover:bg-white/50"
                         )}
                     >
                         {tab.icon}
@@ -330,9 +330,9 @@ export default function RemediesPage() {
                         {activeRemedyTab.icon}
                     </div>
                     <div>
-                        <h3 className="font-serif font-bold text-ink text-sm">{activeRemedyTab.name}</h3>
+                        <h3 className="font-serif font-bold text-primary text-sm">{activeRemedyTab.name}</h3>
                         <p className="text-[10px] text-gold-dark/60 font-medium">{activeRemedyTab.sanskrit}</p>
-                        <p className="text-xs text-muted mt-0.5">{activeRemedyTab.description}</p>
+                        <p className="text-xs text-primary mt-0.5">{activeRemedyTab.description}</p>
                     </div>
                 </div>
             </div>
@@ -360,8 +360,8 @@ export default function RemediesPage() {
                     <RemedyDataView data={remedyData[activeTab]} type={activeTab} />
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 bg-parchment/30 rounded-2xl border border-antique">
-                        <Gem className="w-8 h-8 text-muted mb-3" />
-                        <p className="text-sm text-muted">Select a remedy type to view prescriptions</p>
+                        <Gem className="w-8 h-8 text-primary mb-3" />
+                        <p className="text-sm text-primary">Select a remedy type to view prescriptions</p>
                     </div>
                 )}
             </div>

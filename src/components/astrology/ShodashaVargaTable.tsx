@@ -62,7 +62,7 @@ const DIGNITY_STYLE: Record<string, string> = {
     exalted: 'text-emerald-700 font-bold',
     own: 'text-green-600 font-semibold',
     debilitated: 'text-red-500',
-    neutral: 'text-[#5C4033]'
+    neutral: 'text-primary'
 };
 
 export default function ShodashaVargaTable({ data, className }: ShodashaVargaTableProps) {
@@ -99,73 +99,74 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
     const weakestPlanet = dignityScores.reduce((a, b) => a.score < b.score ? a : b);
 
     return (
-        <div className={cn("w-full", className)}>
+        <div className={cn("w-full bg-softwhite rounded-xl border border-antique shadow-card p-4", className)}>
             {/* Header with Legend */}
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-base font-serif font-black text-[#3E2A1F]">Shodashvarga Summary</h2>
-                <div className="flex gap-2 text-[9px] font-medium">
-                    <span className="text-emerald-700">● Exalted</span>
-                    <span className="text-green-600">● Own</span>
-                    <span className="text-red-500">● Debilitated</span>
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-serif font-bold text-primary">Shodashvarga Summary</h2>
+                <div className="flex gap-3 text-xs font-medium font-sans">
+                    <span className="text-primary flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>Exalted</span>
+                    <span className="text-primary flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Own</span>
+                    <span className="text-primary flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>Debilitated</span>
                 </div>
             </div>
 
-            {/* Table */}
-            <table className="w-full border-collapse">
-                <thead>
-                    <tr className="border-b-2 border-[#D08C60]">
-                        <th className="py-1.5 px-2 text-left text-[9px] font-black text-[#3E2A1F] uppercase w-28">Varga</th>
-                        <th className="py-1.5 px-1 text-center text-[8px] font-bold text-[#8B5A2B]">Asc</th>
-                        {PLANETS.map(p => (
-                            <th key={p} className="py-1.5 px-0.5 text-center text-[8px] font-bold text-[#8B5A2B]">
-                                {p.substring(0, 3)}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {VARGA_ORDER.map((v, i) => (
-                        <tr key={v.key} className={cn("border-b border-[#E8DDD0]", i % 2 === 1 && "bg-[#FAF8F5]")}>
-                            <td className="py-1 px-2">
-                                <span className="text-[#D08C60] font-bold text-[10px] mr-1">{v.key}</span>
-                                <span className="text-[10px] text-[#3E2A1F]">{v.name}</span>
-                            </td>
-                            <td className="py-1 text-center text-[10px] text-[#5C4033]">
-                                {SIGN_ABBR[getSign('Ascendant', v.key).charAt(0).toUpperCase() + getSign('Ascendant', v.key).slice(1).toLowerCase()] || getSign('Ascendant', v.key).substring(0, 2)}
-                            </td>
-                            {PLANETS.map(p => {
-                                const sign = getSign(p, v.key);
-                                const abbr = SIGN_ABBR[sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase()] || sign.substring(0, 2);
-                                const dignity = getDignity(p, sign);
-                                return (
-                                    <td key={p} className="py-1 text-center">
-                                        <span className={cn("text-[10px]", DIGNITY_STYLE[dignity])}>
-                                            {sign === '-' ? '-' : abbr}
-                                        </span>
-                                    </td>
-                                );
-                            })}
+            <div className="overflow-x-auto rounded-xl border border-antique max-w-7xl mx-auto">
+                <table className="w-full border-collapse text-xs">
+                    <thead>
+                        <tr className="bg-amber-50/30 border-b border-antique">
+                            <th className="py-2 px-3 text-left font-semibold text-primary font-sans uppercase border-r border-antique w-28">Varga</th>
+                            <th className="py-2 px-1 text-center font-semibold text-primary font-sans border-r border-antique">Asc</th>
+                            {PLANETS.map(p => (
+                                <th key={p} className="py-2 px-1 text-center font-semibold text-primary font-sans border-r border-antique">
+                                    {p.substring(0, 3)}
+                                </th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {VARGA_ORDER.map((v, i) => (
+                            <tr key={v.key} className={cn("border-b border-antique font-sans", i % 2 === 1 && "bg-parchment/30")}>
+                                <td className="py-1.5 px-3 border-r border-antique">
+                                    <span className="text-primary font-bold mr-1.5">{v.key}</span>
+                                    <span className="text-primary">{v.name}</span>
+                                </td>
+                                <td className="py-1.5 text-center text-primary border-r border-antique">
+                                    {SIGN_ABBR[getSign('Ascendant', v.key).charAt(0).toUpperCase() + getSign('Ascendant', v.key).slice(1).toLowerCase()] || getSign('Ascendant', v.key).substring(0, 2)}
+                                </td>
+                                {PLANETS.map(p => {
+                                    const sign = getSign(p, v.key);
+                                    const abbr = SIGN_ABBR[sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase()] || sign.substring(0, 2);
+                                    const dignity = getDignity(p, sign);
+                                    return (
+                                        <td key={p} className="py-1.5 text-center border-r border-antique">
+                                            <span className={cn("font-medium", DIGNITY_STYLE[dignity])}>
+                                                {sign === '-' ? '-' : abbr}
+                                            </span>
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             {/* 🌟 NEW: Dignity Score Cards */}
-            <div className="mt-3">
-                <div className="text-[10px] font-bold text-[#3E2A1F] uppercase mb-1">Planetary Dignity Score (across 16 Vargas)</div>
-                <div className="grid grid-cols-9 gap-1">
+            <div className="mt-6">
+                <div className="text-xs font-bold text-primary uppercase mb-2 font-sans">Planetary Dignity Score (across 16 Vargas)</div>
+                <div className="grid grid-cols-9 gap-2">
                     {dignityScores.map(ps => (
                         <div key={ps.planet} className={cn(
-                            "rounded-lg p-1.5 text-center border",
+                            "rounded-lg p-2 text-center border",
                             ps.score > 3 ? "bg-green-50 border-green-200" :
                                 ps.score < 0 ? "bg-red-50 border-red-200" :
-                                    "bg-[#FAF8F5] border-[#E8DDD0]"
+                                    "bg-softwhite border-antique"
                         )}>
-                            <div className="text-[9px] font-bold text-[#3E2A1F]">{ps.planet.substring(0, 3)}</div>
-                            <div className="text-lg font-black text-[#3E2A1F]">{ps.score}</div>
-                            <div className="flex justify-center gap-1 text-[7px]">
+                            <div className="text-2xs font-bold text-primary font-sans uppercase">{ps.planet.substring(0, 3)}</div>
+                            <div className="text-lg font-bold text-primary font-sans">{ps.score}</div>
+                            <div className="flex justify-center gap-1 text-[9px] font-medium font-sans">
                                 {ps.exalted > 0 && <span className="text-emerald-600">{ps.exalted}E</span>}
-                                {ps.own > 0 && <span className="text-green-500">{ps.own}O</span>}
+                                {ps.own > 0 && <span className="text-green-600">{ps.own}O</span>}
                                 {ps.debilitated > 0 && <span className="text-red-500">{ps.debilitated}D</span>}
                             </div>
                         </div>
@@ -174,8 +175,8 @@ export default function ShodashaVargaTable({ data, className }: ShodashaVargaTab
             </div>
 
             {/* Summary */}
-            <div className="flex justify-between mt-2 text-[10px] font-semibold">
-                <span className="text-green-700">⭐ Strongest: {strongestPlanet.planet} (Score: {strongestPlanet.score})</span>
+            <div className="flex justify-between mt-3 text-xs font-medium font-sans">
+                <span className="text-emerald-700">⭐ Strongest: {strongestPlanet.planet} (Score: {strongestPlanet.score})</span>
                 <span className="text-red-600">⚠ Weakest: {weakestPlanet.planet} (Score: {weakestPlanet.score})</span>
             </div>
         </div>

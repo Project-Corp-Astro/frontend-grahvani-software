@@ -4,23 +4,32 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface AshtakavargaChartProps {
+    type: 'sarva' | 'bhinna';
     ascendantSign: number;
     houseValues: Record<number, number>;
     className?: string;
 }
 
-const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+// Minimal indicator dot for values (adaptive to type)
+const getValueBadge = (val: number, type: 'sarva' | 'bhinna', isMax: boolean, isMin: boolean) => {
+    if (isMax) return <span className="w-1.5 h-1.5 rounded-full bg-green-600" />;
+    if (isMin) return <span className="w-1.5 h-1.5 rounded-full bg-red-500" />;
 
-const getColor = (val: number, isMax: boolean, isMin: boolean) => {
-    if (isMax) return '#166534'; // Dark green
-    if (isMin) return '#DC2626'; // Red
-    if (val < 22) return '#DC2626';
-    if (val < 26) return '#D97706';
-    if (val >= 30) return '#166534';
-    return '#3E2A1F';
+    // Sarva thresholds (0-48 range)
+    if (type === 'sarva') {
+        if (val >= 30) return <span className="w-1 h-1 rounded-full bg-green-600" />;
+        if (val < 22) return <span className="w-1 h-1 rounded-full bg-red-500" />;
+    }
+    // Bhinna thresholds (0-8 range)
+    else {
+        if (val >= 5) return <span className="w-1 h-1 rounded-full bg-green-600" />;
+        if (val < 4) return <span className="w-1 h-1 rounded-full bg-red-500" />;
+    }
+
+    return null;
 };
 
-export default function AshtakavargaChart({ ascendantSign, houseValues, className = "" }: AshtakavargaChartProps) {
+export default function AshtakavargaChart({ type = 'sarva', ascendantSign, houseValues, className = "" }: AshtakavargaChartProps) {
     // Find max/min
     let maxH = 1, minH = 1, maxV = 0, minV = 999;
     Object.entries(houseValues).forEach(([h, v]) => {
@@ -64,32 +73,35 @@ export default function AshtakavargaChart({ ascendantSign, houseValues, classNam
                 {/* Values */}
                 {pos.map(p => {
                     const signIdx = ((ascendantSign + p.h - 2) % 12);
-                    const signAbbr = SIGNS[signIdx].substring(0, 2);
                     const v = houseValues[p.h] || 0;
                     const isMax = p.h === maxH;
                     const isMin = p.h === minH;
-                    const col = getColor(v, isMax, isMin);
 
                     return (
                         <g key={p.h}>
-                            {/* Highlight circle for max/min */}
-                            {(isMax || isMin) && (
-                                <circle cx={p.x} cy={p.y} r="18" fill={isMax ? '#BBF7D0' : '#FECACA'} opacity="0.6" />
-                            )}
-
                             {/* ASC label */}
                             {p.h === 1 && (
-                                <text x={p.x} y={p.y - 22} fontSize="8" fontWeight="bold" fill="#D08C60" textAnchor="middle">ASC</text>
+                                <text x={p.x} y={p.y - 20} fontSize="9" fontWeight="600" fill="var(--text-accent-gold)" textAnchor="middle">ASC</text>
                             )}
 
                             {/* Value */}
-                            <text x={p.x} y={p.y + 2} fontSize="22" fontFamily="Georgia, serif" fontWeight="700" fill={col} textAnchor="middle" dominantBaseline="middle">
+                            <text x={p.x} y={p.y + 2} fontSize="18" fontFamily="var(--font-family-sans)" fontWeight="600" fill="var(--text-primary)" textAnchor="middle" dominantBaseline="middle">
                                 {v}
                             </text>
 
-                            {/* Sign */}
-                            <text x={p.x} y={p.y + 16} fontSize="8" fill="#8B5A2B" textAnchor="middle">
-                                {signAbbr}
+                            {/* Indicator badge */}
+                            {(isMax || isMin || (type === 'sarva' ? (v >= 30 || v < 22) : (v >= 5 || v < 4))) && (
+                                <circle
+                                    cx={p.x + 12}
+                                    cy={p.y - 8}
+                                    r="2"
+                                    fill={isMax || (type === 'sarva' ? v >= 30 : v >= 5) ? '#16a34a' : '#ef4444'}
+                                />
+                            )}
+
+                            {/* Sign Number */}
+                            <text x={p.x} y={p.y + 25} fontSize="18" fontWeight="600" fontFamily="var(--font-family-sans)" fill="var(--text-primary)" textAnchor="middle">
+                                {signIdx + 1}
                             </text>
                         </g>
                     );
@@ -97,15 +109,19 @@ export default function AshtakavargaChart({ ascendantSign, houseValues, classNam
             </svg>
 
             {/* Legend */}
-            <div className="mt-2 flex flex-col gap-1 text-[9px] text-center">
-                <div className="flex items-center justify-center gap-3">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600"></span>30+ Strong</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>22-29</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span>&lt;22 Weak</span>
+            <div className="mt-2 flex flex-col gap-1 text-xs text-center font-sans">
+                <div className="flex items-center justify-center gap-3 text-secondary">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600"></span>{type === 'sarva' ? '30+ Strong' : '5+ Strong'}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>{type === 'sarva' ? '22-29' : '4 Avg'}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span>{type === 'sarva' ? '<22 Weak' : '<4 Weak'}</span>
                 </div>
-                <div className="flex items-center justify-center gap-4 font-semibold">
-                    <span className="text-green-700">↑ Best: H{maxH} ({maxV})</span>
-                    <span className="text-red-600">↓ Weak: H{minH} ({minV})</span>
+                <div className="flex items-center justify-center gap-4 font-medium">
+                    <span className="text-secondary inline-flex items-center gap-1">
+                        ↑ Best: H{maxH} <span className="font-semibold text-primary">({maxV})</span>
+                    </span>
+                    <span className="text-secondary inline-flex items-center gap-1">
+                        ↓ Weak: H{minH} <span className="font-semibold text-primary">({minV})</span>
+                    </span>
                 </div>
             </div>
         </div>

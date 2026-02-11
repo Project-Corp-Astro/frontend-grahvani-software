@@ -22,23 +22,11 @@ const HOUSE_GROUPS = {
     moksha: { houses: [4, 8, 12], name: 'Moksha', desc: 'Liberation', color: 'bg-blue-100 text-blue-800' }
 };
 
-const getBinduColor = (val: number) => {
-    if (val === 0) return 'text-gray-300';
-    if (val === 1) return 'text-red-500';
-    if (val === 2) return 'text-orange-500';
-    if (val === 3) return 'text-amber-500';
-    if (val === 4) return 'text-lime-500';
-    if (val === 5) return 'text-green-500 font-semibold';
-    if (val === 6) return 'text-green-600 font-bold';
-    if (val === 7) return 'text-emerald-600 font-bold';
-    return 'text-emerald-700 font-black';
-};
-
-const getSavStyle = (val: number) => {
-    if (val < 22) return 'bg-red-400 text-red-950 font-bold';
-    if (val < 26) return 'bg-amber-300 text-amber-950 font-bold';
-    if (val < 30) return 'bg-amber-100 text-amber-900 font-semibold';
-    return 'bg-green-400 text-green-950 font-bold';
+// Minimal badge indicator for SAV values only (no colored text)
+const getSavBadge = (val: number) => {
+    if (val >= 30) return <span className="w-1.5 h-1.5 rounded-full bg-green-600" />;
+    if (val < 22) return <span className="w-1.5 h-1.5 rounded-full bg-red-500" />;
+    return null;
 };
 
 export default function AshtakavargaMatrix({ type, planet, data, className }: MatrixProps) {
@@ -85,103 +73,95 @@ export default function AshtakavargaMatrix({ type, planet, data, className }: Ma
     });
 
     return (
-        <div className={cn("w-full", className)}>
-            {/* Legend */}
-            <div className="flex items-center justify-between mb-2 text-[10px]">
-                <div className="flex items-center gap-1 text-[#8B5A2B] font-medium">
-                    <span className="uppercase font-bold">Bindu:</span>
-                    <span className="text-gray-400">0</span>
-                    <span className="text-red-500">1-2</span>
-                    <span className="text-amber-500">3-4</span>
-                    <span className="text-green-600 font-bold">5-8</span>
-                </div>
-                <div className="flex items-center gap-1 text-[#8B5A2B] font-medium">
-                    <span className="uppercase font-bold">SAV:</span>
-                    <span className="px-1.5 py-0.5 rounded bg-red-400 text-red-950 text-[8px]">&lt;22</span>
-                    <span className="px-1.5 py-0.5 rounded bg-amber-300 text-amber-950 text-[8px]">22-25</span>
-                    <span className="px-1.5 py-0.5 rounded bg-green-400 text-green-950 text-[8px]">30+</span>
-                </div>
-            </div>
+        <div className={className}>
+            <div className="overflow-x-auto rounded-xl border border-antique">
 
-            {/* Table */}
-            <table className="w-full border-collapse">
-                <thead>
-                    <tr className="border-b-2 border-[#D08C60]">
-                        <th className="py-2 px-2 text-left text-[10px] font-black text-[#3E2A1F] uppercase w-14">
-                            {isSarva ? 'Planet' : planet?.substring(0, 4)}
-                        </th>
-                        {SIGNS.map(s => (
-                            <th key={s} className="py-2 px-0 text-center text-[10px] font-bold text-[#8B5A2B] w-7">{s}</th>
-                        ))}
-                        <th className="py-2 px-1 text-center text-[10px] font-black text-[#3E2A1F] bg-[#F5EDE3] w-9">Tot</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((p: string, idx: number) => {
-                        let rd: any = {};
-                        if (contribs) {
-                            const c = contribs.find((x: any) => x.contributor === p);
-                            if (c?.bindus) c.bindus.forEach((v: number, i: number) => { rd[i + 1] = v; });
-                        } else {
-                            rd = payload[p] || payload[p.toLowerCase()] || {};
-                        }
-                        let rowTot = 0;
-                        SIGNS.forEach(s => { rowTot += getVal(rd, s); });
+                {/* Table */}
+                <table className="w-full border-collapse text-sm">
+                    <thead>
+                        <tr className="bg-amber-50/30 border-b border-antique">
+                            <th className="py-2 px-2 text-left font-semibold text-primary font-sans uppercase w-16 border-r border-antique">
+                                {isSarva ? 'Planet' : planet?.substring(0, 4)}
+                            </th>
+                            {SIGNS.map(s => (
+                                <th key={s} className="py-2 px-1 text-center font-semibold text-secondary font-sans w-8 border-r border-antique">{s}</th>
+                            ))}
+                            <th className="py-2 px-1.5 text-center font-semibold text-primary font-sans bg-softwhite w-10">Tot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((p: string, idx: number) => {
+                            let rd: any = {};
+                            if (contribs) {
+                                const c = contribs.find((x: any) => x.contributor === p);
+                                if (c?.bindus) c.bindus.forEach((v: number, i: number) => { rd[i + 1] = v; });
+                            } else {
+                                rd = payload[p] || payload[p.toLowerCase()] || {};
+                            }
+                            let rowTot = 0;
+                            SIGNS.forEach(s => { rowTot += getVal(rd, s); });
 
-                        return (
-                            <tr key={p} className={cn("border-b border-[#E8DDD0]", idx % 2 === 1 && "bg-[#FAF8F5]")}>
-                                <td className="py-1 px-2 text-[11px] font-semibold text-[#3E2A1F]">{p.substring(0, 3)}</td>
-                                {SIGNS.map(s => (
-                                    <td key={s} className={cn("py-1 text-center text-[11px]", getBinduColor(getVal(rd, s)))}>{getVal(rd, s)}</td>
-                                ))}
-                                <td className="py-1 text-center text-[11px] font-bold text-[#3E2A1F] bg-[#F5EDE3]">{rowTot}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-                <tfoot>
-                    <tr className="bg-[#3E2A1F]">
-                        <td className="py-2 px-2 text-[10px] font-black text-amber-100 uppercase">SAV</td>
-                        {SIGNS.map(s => {
-                            const v = sav[s];
                             return (
-                                <td key={s} className="py-1.5 px-0.5 text-center">
-                                    <span className={cn(
-                                        "inline-block w-6 py-0.5 rounded text-[11px]",
-                                        getSavStyle(v),
-                                        v === maxS && "ring-2 ring-green-300",
-                                        v === minS && "ring-2 ring-red-300"
-                                    )}>{v}</span>
-                                </td>
+                                <tr key={p} className={cn("border-b border-antique", idx % 2 === 1 && "bg-parchment/30")}>
+                                    <td className="py-1.5 px-2 font-medium text-primary font-sans border-r border-antique">{p.substring(0, 3)}</td>
+                                    {SIGNS.map(s => (
+                                        <td key={s} className="py-1.5 px-1 text-center font-sans text-primary border-r border-antique">{getVal(rd, s)}</td>
+                                    ))}
+                                    <td className="py-1.5 px-1.5 text-center font-semibold text-primary font-sans bg-softwhite">{rowTot}</td>
+                                </tr>
                             );
                         })}
-                        <td className="py-2 text-center text-[11px] font-black text-amber-100 bg-[#D08C60]">
-                            {Object.values(sav).reduce((a, b) => a + b, 0)}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </tbody>
+                    <tfoot>
+                        <tr className="bg-softwhite border-t border-b border-antique">
+                            <td className="py-2 px-2 font-semibold text-primary font-sans uppercase text-xs border-r border-antique">SAV</td>
+                            {SIGNS.map(s => {
+                                const v = sav[s];
+                                return (
+                                    <td key={s} className="py-2 px-1 text-center border-r border-antique">
+                                        <div className="flex flex-col items-center justify-center leading-none">
+                                            <span className="font-semibold text-primary font-sans text-sm">{v}</span>
+                                        </div>
+                                    </td>
+                                );
+                            })}
+                            <td className="py-2 px-1.5 text-center font-bold text-primary font-sans bg-amber-50/50">
+                                {Object.values(sav).reduce((a, b) => a + b, 0)}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
-            {/* 🌟 NEW: House Group Analysis Cards */}
-            <div className="mt-3 grid grid-cols-4 gap-2">
-                {groupTotals.map(g => (
-                    <div key={g.key} className={cn("rounded-lg p-2 text-center", g.color)}>
-                        <div className="text-[9px] font-bold uppercase tracking-wide">{g.name}</div>
-                        <div className="text-[8px] opacity-75">{g.houses.join('-')}</div>
-                        <div className="text-lg font-black">{g.total}</div>
-                        <div className="text-[8px]">{g.desc}</div>
-                    </div>
-                ))}
+            {/* House Group Analysis Cards */}
+            <div className="mt-6 grid grid-cols-4 gap-3">
+                {groupTotals.map(g => {
+                    const borderColor = g.key === 'dharma' ? 'border-purple-400' :
+                        g.key === 'artha' ? 'border-amber-400' :
+                            g.key === 'kama' ? 'border-pink-400' : 'border-blue-400';
+                    return (
+                        <div key={g.key} className={cn("rounded-lg p-2 border-l-2 bg-softwhite text-center", borderColor)}>
+                            <div className="text-xs font-semibold uppercase text-secondary font-sans">{g.name}</div>
+                            <div className="text-2xs text-muted-refined font-sans">{g.houses.join('-')}</div>
+                            <div className="text-base font-bold text-primary font-sans">{g.total}</div>
+                            <div className="text-2xs text-muted-refined font-sans">{g.desc}</div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Quick Summary */}
-            <div className="flex justify-between mt-2 text-[10px] font-semibold">
-                <span className="text-[#8B5A2B]">
-                    Strongest: <span className="text-purple-700">{groupTotals.sort((a, b) => b.total - a.total)[0].name}</span>
+            <div className="flex justify-between mt-2 text-xs font-medium font-sans">
+                <span className="text-secondary">
+                    Strongest: <span className="text-primary font-semibold">{groupTotals.sort((a, b) => b.total - a.total)[0].name}</span>
                 </span>
                 <div className="flex gap-4">
-                    <span className="text-green-700">↑ Best: Sign {SIGNS.find(s => sav[s] === maxS)} ({maxS})</span>
-                    <span className="text-red-600">↓ Weak: Sign {SIGNS.find(s => sav[s] === minS)} ({minS})</span>
+                    <span className="text-secondary inline-flex items-center gap-1">
+                        ↑ Best: Sign {SIGNS.find(s => sav[s] === maxS)} <span className="font-semibold text-primary">({maxS})</span>
+                    </span>
+                    <span className="text-secondary inline-flex items-center gap-1">
+                        ↓ Weak: Sign {SIGNS.find(s => sav[s] === minS)} <span className="font-semibold text-primary">({minS})</span>
+                    </span>
                 </div>
             </div>
         </div>

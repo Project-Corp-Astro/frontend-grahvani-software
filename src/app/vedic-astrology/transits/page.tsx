@@ -109,7 +109,7 @@ export default function TransitsPage() {
     if (!clientDetails) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-                <p className="font-serif text-xl text-[#8B5A2B]">Please select a client to view transit analysis</p>
+                <p className="font-serif text-xl text-primary">Please select a client to view transit analysis</p>
             </div>
         );
     }
@@ -119,12 +119,12 @@ export default function TransitsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-serif text-[#3E2A1F] font-black tracking-tight flex items-center gap-2">
+                    <h1 className="text-xl font-serif text-primary font-black tracking-tight flex items-center gap-2">
                         <RefreshCcw className="w-5 h-5 text-[#D08C60]" />
                         Transit Impact Analysis
                     </h1>
                     <div className="flex items-center gap-2">
-                        <p className="text-[#8B5A2B] font-serif text-sm">Gochar positions for {clientDetails.name}</p>
+                        <p className="text-primary font-serif text-sm">Gochar positions for {clientDetails.name}</p>
                         <span className="px-2 py-0.5 bg-[#D08C60]/10 text-[#D08C60] text-[10px] font-bold uppercase rounded-full border border-[#D08C60]/30">
                             {settings.ayanamsa}
                         </span>
@@ -161,7 +161,7 @@ export default function TransitsPage() {
             {isLoadingCharts && Object.keys(processedCharts).length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16">
                     <Loader2 className="w-8 h-8 text-[#D08C60] animate-spin mb-3" />
-                    <p className="font-serif text-[#8B5A2B]">Calculating transit positions...</p>
+                    <p className="font-serif text-primary">Calculating transit positions...</p>
                 </div>
             )}
 
@@ -169,9 +169,9 @@ export default function TransitsPage() {
             {/* No Data State */}
             {!isLoadingCharts && transitData.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Info className="w-12 h-12 text-[#8B5A2B]/30 mb-3" />
-                    <p className="font-serif text-[#8B5A2B] text-lg mb-2">Transit data unavailable</p>
-                    <p className="text-sm text-[#8B5A2B]/60 mb-4">Charts are being generated for this client</p>
+                    <Info className="w-12 h-12 text-primary/30 mb-3" />
+                    <p className="font-serif text-primary text-lg mb-2">Transit data unavailable</p>
+                    <p className="text-sm text-primary/60 mb-4">Charts are being generated for this client</p>
                     <button
                         onClick={refreshCharts}
                         className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
@@ -200,12 +200,12 @@ export default function TransitsPage() {
                         )}
 
                         <div className="bg-[#D08C60]/10 border border-[#D08C60]/30 rounded-xl p-3 flex items-start gap-3">
-                            <div className="p-1.5 bg-[#D08C60]/20 rounded-lg text-[#8B5A2B]">
+                            <div className="p-1.5 bg-[#D08C60]/20 rounded-lg text-primary">
                                 <ShieldAlert className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-[#5A3E2B] font-serif">Transit Summary</h3>
-                                <p className="text-xs text-[#5A3E2B]/80 mt-0.5">
+                                <h3 className="font-bold text-primary font-serif">Transit Summary</h3>
+                                <p className="text-xs text-primary/80 mt-0.5">
                                     {debilitatedPlanets.length > 0
                                         ? `${debilitatedPlanets.map(p => p.planet).join(', ')} in challenging positions.`
                                         : 'No major planetary afflictions.'}
@@ -216,8 +216,8 @@ export default function TransitsPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {/* Transit Chart */}
-                        <div className="bg-[#FFFFFa] border border-[#D08C60]/20 rounded-xl p-4">
-                            <h3 className="font-serif font-bold text-[#3E2A1F] text-sm text-center mb-3">Gochar Chart</h3>
+                        <div className="bg-[#FFFFFa] border border-antique rounded-xl p-4">
+                            <h3 className="font-serif font-bold text-primary text-sm text-center mb-3">Gochar Chart</h3>
                             <div className="aspect-square bg-[#FDFBF7] rounded-lg border border-[#D08C60]/10 p-3 flex items-center justify-center">
                                 <NorthIndianChart
                                     ascendantSign={natalAscendant}
@@ -226,23 +226,23 @@ export default function TransitsPage() {
                                     showDegrees={false}
                                 />
                             </div>
-                            <p className="text-[10px] text-center text-[#8B5A2B] mt-2">
+                            <p className="text-[10px] text-center text-primary mt-2">
                                 Natal Ascendant: {signIdToName[natalAscendant]}
                             </p>
                         </div>
 
                         {/* Transit Table */}
-                        <div className="lg:col-span-2 bg-[#FFFFFa] border border-[#D08C60]/20 rounded-xl overflow-hidden">
+                        <div className="lg:col-span-2 bg-[#FFFFFa] border border-antique rounded-xl overflow-hidden">
                             <div className="p-3 border-b border-[#D08C60]/10 bg-[#FAF7F2] flex justify-between items-center">
-                                <h3 className="font-serif font-bold text-[#3E2A1F] text-sm">Transit Positions</h3>
-                                <div className="flex items-center gap-1 text-[10px] text-[#8B5A2B]">
+                                <h3 className="font-serif font-bold text-primary text-sm">Transit Positions</h3>
+                                <div className="flex items-center gap-1 text-[10px] text-primary">
                                     <Calendar className="w-3 h-3" />
                                     {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-xs">
-                                    <thead className="bg-[#3E2A1F]/5 text-[#5A3E2B]/70 font-black uppercase text-[9px] tracking-wider">
+                                    <thead className="bg-[#3E2A1F]/5 text-primary/70 font-black uppercase text-[9px] tracking-wider">
                                         <tr>
                                             <th className="px-3 py-2 text-left">Planet</th>
                                             <th className="px-3 py-2 text-left">Sign</th>
@@ -254,7 +254,7 @@ export default function TransitsPage() {
                                     <tbody className="divide-y divide-[#D08C60]/10">
                                         {transitData.map((row, i) => (
                                             <tr key={i} className="hover:bg-[#3E2A1F]/5 transition-colors">
-                                                <td className="px-3 py-2 font-bold text-[#3E2A1F]">
+                                                <td className="px-3 py-2 font-bold text-primary">
                                                     <span className="flex items-center gap-1.5">
                                                         {row.planet}
                                                         {row.isRetro && (
@@ -262,10 +262,10 @@ export default function TransitsPage() {
                                                         )}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-2 font-serif text-[#3E2A1F]">{row.sign}</td>
-                                                <td className="px-3 py-2 font-mono text-[#3E2A1F]">{row.degree}</td>
-                                                <td className="px-3 py-2 text-[#8B5A2B]">{row.nakshatra}</td>
-                                                <td className="px-3 py-2 text-center font-bold text-[#3E2A1F]">{row.house}</td>
+                                                <td className="px-3 py-2 font-serif text-primary">{row.sign}</td>
+                                                <td className="px-3 py-2 font-mono text-primary">{row.degree}</td>
+                                                <td className="px-3 py-2 text-primary">{row.nakshatra}</td>
+                                                <td className="px-3 py-2 text-center font-bold text-primary">{row.house}</td>
                                             </tr>
                                         ))}
                                     </tbody>

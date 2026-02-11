@@ -171,39 +171,34 @@ export default function AshtakavargaPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-lg font-serif font-bold text-copper-950 flex items-center gap-3">
-                        <Shield className="w-6 h-6 text-copper-600" />
+                    <h1 className="text-lg font-serif font-semibold text-primary flex items-center gap-3">
+                        <Shield className="w-6 h-6 text-secondary" />
                         Ashtakavarga Systems
                     </h1>
-                    <p className="text-xs text-copper-600 mt-1">Numerical strength assessment for {clientDetails.name}</p>
+                    <p className="text-xs text-secondary font-sans mt-1">Numerical strength assessment for {clientDetails.name}</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-white/50 p-1 rounded-xl border border-copper-200">
+                    <div className="flex bg-softwhite p-1 rounded-xl border border-antique">
                         {(['sarva', 'bhinna', 'shodasha'] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
-                                    "px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all",
+                                    "px-3 py-1 rounded-lg text-sm font-semibold font-sans capitalize transition-all",
                                     activeTab === tab
-                                        ? "bg-gold-primary text-ink shadow-md shadow-gold-primary/20 scale-[1.02]"
-                                        : "text-ink/60 hover:bg-gold-primary/10 hover:text-ink"
+                                        ? "bg-gold-primary text-primary shadow-sm scale-[1.02]"
+                                        : "text-secondary hover:bg-gold-primary/10 hover:text-primary"
                                 )}
                             >
                                 {tab === 'sarva' ? 'Sarvashtakavarga' : tab === 'bhinna' ? 'Bhinnashtakavarga' : 'Shodasha'}
                             </button>
                         ))}
                     </div>
-                    <button
-                        onClick={() => queryClient.invalidateQueries({ queryKey: ['ashtakavarga'] })}
-                        className="p-2 text-copper-600 hover:bg-copper-100 rounded-lg border border-copper-200 transition-all"
-                    >
-                        <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
-                    </button>
+
                 </div>
             </div>
 
@@ -215,18 +210,18 @@ export default function AshtakavargaPage() {
                     </div>
                 </div>
             ) : (
-                <div className="space-y-12">
+                <div className="space-y-4">
                     {activeTab !== 'shodasha' ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                             {/* Main Content Area: Table + Chart Side by Side */}
-                            <div className="lg:col-span-12 space-y-8">
-                                <div className="bg-white rounded-[2rem] border border-copper-200 shadow-2xl shadow-copper-100/50 overflow-hidden">
-                                    <div className="p-4 md:p-6 border-b border-copper-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-parchment/30 to-white">
+                            <div className="lg:col-span-12 space-y-4">
+                                <div className="bg-softwhite rounded-xl border border-antique shadow-card overflow-hidden">
+                                    <div className="p-3 border-b border-antique flex flex-col md:flex-row md:items-center justify-between gap-3 bg-parchment/30">
                                         <div>
-                                            <h2 className="text-sm font-serif text-copper-900 font-bold">
+                                            <h2 className="text-md font-serif text-primary font-semibold">
                                                 {activeTab === 'sarva' ? 'Sarvashtakavarga (SAV)' : `Bhinnashtakavarga: ${selectedPlanet}`}
                                             </h2>
-                                            <p className="text-[10px] text-copper-600 mt-1 italic">
+                                            <p className="text-xs text-secondary font-sans mt-0.5">
                                                 {activeTab === 'sarva'
                                                     ? 'The collective strength of all planets across the 12 signs/houses.'
                                                     : `Individual contributions to ${selectedPlanet}'s strength in each sign.`}
@@ -234,14 +229,14 @@ export default function AshtakavargaPage() {
                                         </div>
 
                                         {activeTab === 'bhinna' && (
-                                            <div className="flex gap-1.5 bg-copper-50/50 p-1 rounded-xl border border-copper-200 overflow-x-auto">
+                                            <div className="flex gap-1.5 bg-parchment/50 p-1 rounded-xl border border-antique overflow-x-auto">
                                                 {PLANETS.map(p => (
                                                     <button
                                                         key={p}
                                                         onClick={() => setSelectedPlanet(p)}
                                                         className={cn(
-                                                            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap",
-                                                            selectedPlanet === p ? "bg-gold-primary text-ink shadow-sm scale-105" : "text-ink/60 hover:bg-gold-primary/10 hover:text-ink"
+                                                            "px-3 py-1 text-sm font-semibold font-sans rounded-lg transition-all whitespace-nowrap",
+                                                            selectedPlanet === p ? "bg-gold-primary text-primary shadow-sm scale-105" : "text-secondary hover:bg-gold-primary/10 hover:text-primary"
                                                         )}
                                                     >
                                                         {p}
@@ -251,10 +246,10 @@ export default function AshtakavargaPage() {
                                         )}
                                     </div>
 
-                                    <div className="p-4 grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
+                                    <div className="p-4 grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-4 items-start">
                                         {/* Left: Technical Matrix */}
                                         <div className="space-y-2">
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary font-sans flex items-center gap-2">
                                                 <Grid3X3 className="w-3.5 h-3.5" /> Bindu Matrix
                                             </h3>
                                             <AshtakavargaMatrix
@@ -269,11 +264,12 @@ export default function AshtakavargaPage() {
 
                                         {/* Right: Visual Chart - COMPACT */}
                                         <div className="space-y-2">
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-copper-400 flex items-center gap-2">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary font-sans flex items-center gap-2">
                                                 <MapIcon className="w-3.5 h-3.5" /> House Distribution
                                             </h3>
-                                            <div className="bg-[#FFFEF9] rounded-lg border border-[#D08C60]/30 p-2 flex items-center justify-center">
+                                            <div className="bg-softwhite rounded-lg border border-antique p-2 flex items-center justify-center">
                                                 <AshtakavargaChart
+                                                    type={activeTab === 'sarva' ? 'sarva' : 'bhinna'}
                                                     ascendantSign={data?.ascendant || 1}
                                                     houseValues={houseValues}
                                                 />
@@ -282,29 +278,7 @@ export default function AshtakavargaPage() {
                                     </div>
                                 </div>
 
-                                {/* Secondary Analytics: Chancha Chakra / Transits Summary */}
-                                {activeTab === 'sarva' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <AnalyzeCard
-                                            icon={<Zap className="w-5 h-5" />}
-                                            title="Transit Hotspots"
-                                            desc="Signs with 32+ bindus are ideal for starting new ventures when major planets visit."
-                                            color="amber"
-                                        />
-                                        <AnalyzeCard
-                                            icon={<RefreshCw className="w-5 h-5" />}
-                                            title="Karmic Filters"
-                                            desc="Signs below 20 bindus indicate areas requiring remedial measures (Upayas) or caution."
-                                            color="rose"
-                                        />
-                                        <AnalyzeCard
-                                            icon={<LayoutGrid className="w-5 h-5" />}
-                                            title="Savra Chancha"
-                                            desc="The unified transit score of 337 bindus reveals the individual's global life potential."
-                                            color="copper"
-                                        />
-                                    </div>
-                                )}
+                                {/* Secondary Analytics Removed */}
                             </div>
 
 

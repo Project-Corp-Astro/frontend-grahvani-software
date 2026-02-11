@@ -47,19 +47,18 @@ interface NavItem extends SidebarItem {
 const VEDIC_NAV_ITEMS: NavItem[] = [
     // ── Primary Navigation (always visible, system-filtered) ──
     { name: "Kundali", path: "/overview", icon: LayoutTemplate },
-    { name: "Graha Sthiti", path: "/planets", icon: Compass },
-    { name: "Varga Charts", path: "/divisional", icon: Map, systemFilter: ['Lahiri', 'Raman', 'Yukteswar'] },
-    { name: "Dasha", path: "/dashas", icon: History },
-    { name: "Yoga & Dosha", path: "/yoga-dosha", icon: Sparkles, systemFilter: ['Lahiri'] },
-    { name: "Ashtakavarga", path: "/ashtakavarga", icon: Shield, systemFilter: ['Lahiri', 'Raman', 'Yukteswar'] },
+    { name: "Work Bench", path: "/workbench", icon: LayoutDashboard },
+    { name: "Divisional Charts", path: "/divisional", icon: Map, systemFilter: ['Lahiri', 'Raman', 'Yukteswar'] },
+    { name: "Dashas", path: "/dashas", icon: History },
+    { name: "Yogas & Doshas", path: "/yoga-dosha", icon: Sparkles, systemFilter: ['Lahiri'] },
+    { name: "Ashtakavargas", path: "/ashtakavarga", icon: Shield, systemFilter: ['Lahiri', 'Raman', 'Yukteswar'] },
     { name: "Shadbala", path: "/shadbala", icon: Orbit, systemFilter: ['Lahiri'] },
     { name: "Gochar", path: "/transits", icon: Globe },
     { name: "Upaya", path: "/remedies", icon: Gem, systemFilter: ['Lahiri'] },
+    { name: "Sudarshan Chakra", path: "/chakras", icon: Layers },
     { name: "KP System", path: "/kp", icon: FlaskConical, systemFilter: ['KP'] },
-    { name: "Workbench", path: "/workbench", icon: LayoutDashboard },
 
     // ── Overflow Navigation (inside "More" dropdown) ──
-    { name: "Sudarshan Chakra", path: "/chakras", icon: Layers, isOverflow: true },
     { name: "Compatibility", path: "/comparison", icon: Heart, isOverflow: true },
     { name: "Phala Jyotish", path: "/reports", icon: FileText, isOverflow: true },
     { name: "Notes", path: "/notes", icon: NotebookPen, isOverflow: true },
@@ -150,7 +149,7 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
                             "flex items-center gap-1 px-3 py-2 transition-all duration-300 font-serif text-sm font-medium tracking-wide",
                             isMoreOpen
                                 ? "text-[#FFD27D]"
-                                : "text-white/70 hover:text-[#FFD27D]"
+                                : "text-white hover:text-[#FFD27D]"
                         )}
                     >
                         <span>More</span>
@@ -158,7 +157,7 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
                     </button>
 
                     {isMoreOpen && (
-                        <div className="absolute top-full right-0 mt-0 w-48 bg-[#1E1410] border border-[#D08C60]/30 rounded-xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute top-full right-0 mt-0 w-48 bg-[#FFFCF6] border border-[#D08C60]/30 rounded-xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                             {filteredOverflowItems.map((item) => {
                                 const href = `/vedic-astrology${item.path}`;
                                 const isActive = pathname === href;
@@ -171,11 +170,11 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
                                         className={cn(
                                             "flex items-center gap-3 px-4 py-3 text-sm font-serif transition-all",
                                             isActive
-                                                ? "text-[#FFD27D] bg-[#FFD27D]/10"
-                                                : "text-white/80 hover:text-[#FFD27D] hover:bg-white/5"
+                                                ? "text-[#D08C60] bg-[#D08C60]/10 font-bold"
+                                                : "text-[#4A3F32] hover:text-[#D08C60] hover:bg-[#D08C60]/5"
                                         )}
                                     >
-                                        {Icon && <Icon className="w-4 h-4 opacity-60" />}
+                                        {Icon && <Icon className="w-4 h-4 opacity-70" />}
                                         <span>{item.name}</span>
                                     </Link>
                                 );
