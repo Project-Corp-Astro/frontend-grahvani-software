@@ -80,6 +80,10 @@ export default function DoshaAnalysis({ clientId, doshaType, ayanamsa = 'lahiri'
         return <SadeSatiView data={data} className={className} />;
     }
 
+    if (doshaType === 'dhaiya') {
+        return <DhaiyaView data={data} className={className} />;
+    }
+
     // Fallback for types not yet fully implemented with custom views
     return (
         <div className="space-y-6 p-6">
@@ -275,6 +279,65 @@ function SadeSatiView({ data, className }: { data: any; className?: string }) {
             </div>
 
             <DebugConsole title="Sade Sati Raw Data" data={data} />
+        </div>
+    );
+}
+
+/**
+ * DHAIYA VIEW
+ */
+function DhaiyaView({ data, className }: { data: any; className?: string }) {
+    if (!data.has_dhaiya) {
+        return (
+            <div className="space-y-4">
+                <div className={cn("bg-green-50 border border-green-100 rounded-2xl p-6 text-center", className)}>
+                    <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto mb-3" />
+                    <h3 className="text-green-900 font-serif font-bold text-lg">No Dhaiya</h3>
+                    <p className="text-sm text-green-700 mt-1">Saturn is not currently in the 4th or 8th house from your Natal Moon.</p>
+                </div>
+                <DebugConsole title="Dhaiya Raw Data (Inactive)" data={data} />
+            </div>
+        );
+    }
+
+    return (
+        <div className={cn("space-y-6", className)}>
+            <div className="bg-slate-900 text-white border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-slate-300">
+                        <Moon className="w-8 h-8" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-serif font-bold">Kantaka Shani (Dhaiya)</h2>
+                        <p className="text-sm text-slate-300 font-medium">{data.dhaiya_type} from Moon</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="bg-softwhite border border-antique rounded-2xl p-5">
+                    <h3 className="font-serif font-bold text-ink mb-4 flex items-center gap-2 text-sm uppercase">
+                        <Info className="w-4 h-4 text-slate-600" /> Effects
+                    </h3>
+                    <p className="text-[11px] text-muted leading-relaxed">{data.effects}</p>
+                </div>
+                <div className="bg-softwhite border border-antique rounded-2xl p-5">
+                    <h3 className="font-serif font-bold text-ink mb-4 flex items-center gap-2 text-sm uppercase">
+                        <Hammer className="w-4 h-4 text-gold-primary" /> Remedies
+                    </h3>
+                    <ul className="space-y-2">
+                        {data.remedies?.map((rec: string, i: number) => (
+                            <li key={i} className="text-[11px] text-muted flex items-start gap-2 leading-tight">
+                                <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                {rec}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+
+            <DebugConsole title="Dhaiya Raw Data" data={data} />
         </div>
     );
 }

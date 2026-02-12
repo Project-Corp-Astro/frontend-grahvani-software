@@ -27,6 +27,7 @@ import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 import VimshottariTreeGrid from '@/components/astrology/VimshottariTreeGrid';
 import { processDashaResponse } from '@/lib/dasha-utils';
 import BirthPanchanga from '@/components/astrology/BirthPanchanga';
+import AvakhadaChakraView from '@/components/astrology/AvakhadaChakraView';
 
 // Helper for formatting
 const formatDate = (dateStr: string) => {
@@ -77,6 +78,7 @@ export default function VedicOverviewPage() {
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
     const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
+    const [showAvakhada, setShowAvakhada] = useState(false);
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 
@@ -124,13 +126,23 @@ export default function VedicOverviewPage() {
 
     const isLoading = isGeneratingCharts || (isLoadingCharts && Object.keys(processedCharts).length === 0);
 
-    const yogas = React.useMemo(() => {
+    const analysisItems = React.useMemo(() => {
         return Object.values(processedCharts)
-            .filter((c: any) => c.chartType?.startsWith('yoga_'))
+            .filter((c: any) => c.chartType?.startsWith('yoga_') || c.chartType?.startsWith('dosha_') || c.chartType === 'sade_sati' || c.chartType === 'dhaiya')
             .map((c: any) => {
-                const subType = c.chartType.replace('yoga_', '');
+                const isYoga = c.chartType.startsWith('yoga_');
+                // Normalize type for display and modal
+                let subType = c.chartType;
+                if (subType.startsWith('yoga_')) subType = subType.replace('yoga_', '');
+                if (subType.startsWith('dosha_')) subType = subType.replace('dosha_', '');
+
                 const label = subType.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-                return { name: label, subType: subType };
+
+                return {
+                    name: label,
+                    subType: subType,
+                    type: isYoga ? 'yoga' : 'dosha'
+                };
             });
     }, [processedCharts]);
 
@@ -240,7 +252,12 @@ export default function VedicOverviewPage() {
                                                     <Sparkle className="w-2.5 h-2.5 text-accent-gold animate-pulse" />
                                                     Birth Panchanga
                                                 </h4>
-                                                <span className="text-[8px] text-primary ">Standard Time</span>
+                                                <button
+                                                    onClick={() => setShowAvakhada(true)}
+                                                    className="px-2 py-0.5 rounded-md bg-gold-primary/10 text-[9px] font-bold text-[#D08C60] hover:bg-[#D08C60] hover:text-white transition-all flex items-center gap-1"
+                                                >
+                                                    More <ArrowRight className="w-2 h-2" />
+                                                </button>
                                             </div>
                                             <BirthPanchanga data={birthPanchangaData} />
                                         </div>
@@ -293,27 +310,27 @@ export default function VedicOverviewPage() {
                         </div>
                     </div>
 
-                    {/* Bottom Row: Yogas */}
+                    {/* Bottom Row: Yogas & Doshas */}
                     <div className="border border-antique rounded-lg overflow-hidden shadow-sm bg-[#FFFCF6]">
                         <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
-                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Combinations</h3>
+                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Doshas</h3>
                             <Link href="/vedic-astrology/yoga-dosha" className="text-secondary hover:text-accent-gold transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
                                 Detailed Analysis <ArrowRight className="w-3 h-3" />
                             </Link>
                         </div>
                         <div className="p-3">
-                            {yogas && yogas.length > 0 ? (
+                            {analysisItems && analysisItems.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                    {yogas.map((yoga, i) => (
-                                        <div key={i} onClick={() => setAnalysisModal({ type: 'yoga', subType: yoga.subType, label: yoga.name })}
+                                    {analysisItems.map((item, i) => (
+                                        <div key={i} onClick={() => setAnalysisModal({ type: item.type as 'yoga' | 'dosha', subType: item.subType, label: item.name })}
                                             className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-softwhite border border-antique/50 font-sans text-[10px] font-bold text-primary cursor-pointer hover:bg-gold-primary/10 hover:text-accent-gold transition-all shadow-xs group">
-                                            <span className="truncate">{yoga.name}</span>
+                                            <span className="truncate">{item.name}</span>
                                             <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-all text-accent-gold" />
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="font-sans text-xs text-muted-refined italic p-2 text-center">No specific yogas identified for this chart.</div>
+                                <div className="font-sans text-xs text-muted-refined italic p-2 text-center">No specific yogas or doshas identified for this chart.</div>
                             )}
                         </div>
                     </div>
@@ -353,6 +370,15 @@ export default function VedicOverviewPage() {
                         ) : (
                             <DoshaAnalysis clientId={clientDetails?.id || ""} doshaType={analysisModal.subType as any} ayanamsa={settings.ayanamsa} />
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* AVAKHADA MODAL */}
+            {showAvakhada && (
+                <div className="fixed inset-0 z-[2200] flex items-start justify-center pt-32 px-4 pb-4 backdrop-blur-xl bg-ink/80 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="bg-parchment border border-antique rounded-[2rem] max-w-[90vw] w-full h-[85vh] overflow-hidden relative shadow-2xl border-b-8 border-gold-primary flex flex-col">
+                        <AvakhadaChakraView clientId={clientDetails?.id || ""} onClose={() => setShowAvakhada(false)} />
                     </div>
                 </div>
             )}
@@ -402,3 +428,4 @@ const DashaRow = ({ planet, start, ends, duration, active }: { planet: string, s
         </div>
     );
 };
+
