@@ -338,6 +338,22 @@ export const clientApi = {
         }),
 
     /**
+     * Fetch Daily Transit data (Lahiri-only, live/dynamic, not stored)
+     * @param startDate - YYYY-MM-DD format
+     * @param endDate - YYYY-MM-DD format
+     */
+    generateDailyTransit: (clientId: string, startDate: string, endDate: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({
+                chartType: 'daily_transit',
+                ayanamsa: 'lahiri',
+                transitStartDate: startDate,
+                transitEndDate: endDate,
+            }),
+        }),
+
+    /**
      * Trigger bulk core chart generation (D1, D9 for all systems)
      */
     generateCoreCharts: (clientId: string): Promise<{ success: boolean; count: number }> =>
