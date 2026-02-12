@@ -58,10 +58,10 @@ function getDateRange(tab: DurationTab): { start: string; end: string } {
     const today = new Date();
     const end = new Date(today);
     switch (tab) {
-        case 'day': end.setDate(end.getDate() + 1); break;
-        case 'week': end.setDate(end.getDate() + 7); break;
-        case 'month': end.setDate(end.getDate() + 30); break;
-        case 'year': end.setDate(end.getDate() + 365); break;
+        case 'day': end.setDate(end.getDate()); break; // Today only (1 day)
+        case 'week': end.setDate(end.getDate() + 6); break; // 7 days inclusive
+        case 'month': end.setDate(end.getDate() + 29); break; // 30 days inclusive
+        case 'year': end.setDate(end.getDate() + 364); break; // 365 days inclusive
     }
     return {
         start: today.toISOString().split('T')[0],
@@ -151,8 +151,18 @@ function DailyTransitView({ clientId }: { clientId: string }) {
     // Detection Logic: Transit Shifts (Planets moving house/sign)
     const getTransitInsights = () => {
         if (!currentEntry || !nextEntry) return [];
-        const shifts: { planet: string; type: 'house' | 'sign'; from: string | number; to: string | number }[] = [];
 
+        interface TransitEvent {
+            planet: string;
+            type: 'sign' | 'house' | 'nakshatra' | 'retro';
+            from: string | number;
+            to: string | number;
+            description: string;
+            severity: 'high' | 'medium' | 'low';
+            time?: string; // Future proofing for when time is available
+        }
+
+        const events: TransitEvent[] = [];
         const currPlanets = currentEntry.planetary_positions || {};
         const nextPlanets = nextEntry.planetary_positions || {};
 
@@ -161,14 +171,64 @@ function DailyTransitView({ clientId }: { clientId: string }) {
             const next = nextPlanets[pName];
             if (!curr || !next) return;
 
-            if (curr.house !== next.house) {
-                shifts.push({ planet: pName, type: 'house', from: curr.house, to: next.house });
-            }
+            // 1. Sign Change (High Impact)
             if (curr.sign !== next.sign) {
-                shifts.push({ planet: pName, type: 'sign', from: curr.sign, to: next.sign });
+                events.push({
+                    planet: pName,
+                    type: 'sign',
+                    from: curr.sign,
+                    to: next.sign,
+                    description: `${pName} enters ${next.sign}`,
+                    severity: 'high'
+                });
+            }
+
+            // 2. House Change (Medium Impact)
+            if (curr.house !== next.house) {
+                events.push({
+                    planet: pName,
+                    type: 'house',
+                    from: curr.house,
+                    to: next.house,
+                    description: `${pName} moves into House ${next.house}`,
+                    severity: 'medium'
+                });
+            }
+
+            // 3. Nakshatra Change (Low/Detail Impact)
+            // Handle both 'nakshatra' and 'star' keys just in case
+            const currNak = curr.nakshatra || curr.star;
+            const nextNak = next.nakshatra || next.star;
+            if (currNak && nextNak && currNak !== nextNak) {
+                events.push({
+                    planet: pName,
+                    type: 'nakshatra',
+                    from: currNak,
+                    to: nextNak,
+                    description: `${pName} transits to ${nextNak}`,
+                    severity: 'low'
+                });
+            }
+
+            // 4. Retrograde Status Change (High Impact)
+            const currRetro = !!(curr.retrograde === 'R' || curr.retrograde === true);
+            const nextRetro = !!(next.retrograde === 'R' || next.retrograde === true);
+            if (currRetro !== nextRetro) {
+                const status = nextRetro ? 'Retrograde' : 'Direct';
+                events.push({
+                    planet: pName,
+                    type: 'retro',
+                    from: currRetro ? 'Rx' : 'D',
+                    to: nextRetro ? 'Rx' : 'D',
+                    description: `${pName} turns ${status}`,
+                    severity: 'high'
+                });
             }
         });
-        return shifts;
+
+        // Sort events by severity (High first)
+        const severityOrder = { high: 0, medium: 1, low: 2 };
+        return events.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
     };
 
     const insights = getTransitInsights();
@@ -203,9 +263,9 @@ function DailyTransitView({ clientId }: { clientId: string }) {
     ];
 
     return (
-        <div className="flex flex-col h-[740px] bg-antique/30 rounded-2xl border border-antique overflow-hidden">
+        <div className="flex flex-col min-h-[740px] h-auto bg-antique/30 rounded-2xl border border-antique">
             {/* 1. Header & Duration Selection */}
-            <div className="px-6 py-4 bg-white/80 border-b border-antique flex items-center justify-between gap-4 shrink-0">
+            <div className="px-6 py-4 bg-white/80 border-b border-antique flex items-center justify-between gap-4 shrink-0 rounded-t-2xl">
                 <div className="flex items-center gap-1.5 bg-antique/50 p-1 rounded-xl border border-antique/20">
                     {DURATION_TABS.map(tab => (
                         <button
@@ -268,10 +328,10 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                 </div>
             )}
 
-            {/* 3. Main Dashboard Body (Fixed Height, No Scroll) */}
-            <div className="flex-1 flex overflow-hidden">
+            {/* 3. Main Dashboard Body (Flexible Height) */}
+            <div className="flex-1 flex flex-col lg:flex-row">
                 {loading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center">
+                    <div className="flex-1 flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-12 h-12 text-[#D08C60] animate-spin mb-4" />
                         <h3 className="font-serif text-2xl text-primary font-bold">Projecting Transits</h3>
                         <p className="text-primary/40 text-sm mt-2">Calculating planetary motions for {durationTab}...</p>
@@ -279,7 +339,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                 ) : data.length > 0 ? (
                     <>
                         {/* Column 1: Gochar Chart (Visual) */}
-                        <div className="w-[380px] border-r border-antique flex flex-col p-6 bg-white shrink-0">
+                        <div className="lg:w-[380px] w-full border-r border-antique flex flex-col p-6 bg-white shrink-0">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em]">Gochar Chart</h3>
                                 <div className="px-2 py-0.5 bg-[#D08C60]/10 rounded border border-[#D08C60]/20">
@@ -287,7 +347,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                 </div>
                             </div>
 
-                            <div className="flex-1 relative aspect-square max-w-[340px] mx-auto">
+                            <div className="flex-1 relative aspect-square max-w-[340px] mx-auto min-h-[300px]">
                                 {chartData && (
                                     <NorthIndianChart
                                         planets={chartData.planets}
@@ -314,13 +374,13 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                         </div>
 
                         {/* Column 2: Positions Table (High Density) */}
-                        <div className="flex-1 bg-white/60 flex flex-col overflow-hidden">
+                        <div className="flex-1 bg-white/60 flex flex-col border-b lg:border-b-0">
                             <div className="px-6 py-4 border-b border-antique flex items-center justify-between shrink-0">
                                 <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em]">Planetary Coordinates</h3>
                                 <button onClick={() => setShowDebug(!showDebug)} className="text-[9px] text-[#D08C60] font-black uppercase hover:underline">Debug Data</button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto scrollbar-hide">
+                            <div className="flex-1">
                                 <table className="w-full border-collapse">
                                     <thead className="sticky top-0 bg-[#FAF7F2] z-10 shadow-sm">
                                         <tr>
@@ -369,8 +429,8 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                             </div>
                         </div>
 
-                        {/* Column 3: Insights & Shifts */}
-                        <div className="w-[300px] border-l border-antique bg-white p-6 flex flex-col shrink-0">
+                        {/* Column 3: Insights & Shifts (Log) */}
+                        <div className="lg:w-[320px] w-full border-l border-antique bg-white p-6 flex flex-col shrink-0">
                             <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em] mb-6">Daily Insights</h3>
 
                             {/* Lagna Box */}
@@ -383,29 +443,67 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                 <p className="text-[10px] text-primary/40 mt-1">Starting point of planetary influence today.</p>
                             </div>
 
-                            {/* Transit Shifts */}
-                            <div className="flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-black text-primary/30 uppercase tracking-widest">Active Shifts</h4>
-                                    <span className="text-[9px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-black">{insights.length} EVENTS</span>
+                            {/* Daily Planetary Log */}
+                            <div className="flex-1 flex flex-col min-h-0">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-[10px] font-black text-primary/30 uppercase tracking-widest">Daily Planetary Log</h4>
+                                    <span className="text-[9px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-black border border-green-100">{insights.length} EVENTS</span>
                                 </div>
 
-                                <div className="space-y-3 overflow-y-auto pr-1">
+                                {/* Date Header */}
+                                <div className="flex items-center gap-2 mb-4 px-1">
+                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary/60 border border-antique/20">
+                                        {formatDateLabel(currentEntry.date || currentEntry.transit_date).day} {formatDateLabel(currentEntry.date || currentEntry.transit_date).monthYear}
+                                    </div>
+                                    <span className="text-primary/20">→</span>
+                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary/60 border border-antique/20">
+                                        {formatDateLabel(nextEntry?.date || nextEntry?.transit_date || '').day} {formatDateLabel(nextEntry?.date || nextEntry?.transit_date || '').monthYear}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
                                     {insights.length > 0 ? (
-                                        insights.map((sh, k) => (
-                                            <div key={k} className="p-3 bg-antique/10 border border-antique/20 rounded-xl group hover:border-[#D08C60]/30 transition-all">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-sm">{PLANET_SYMBOLS[sh.planet]}</span>
-                                                    <span className="text-xs font-bold text-primary">{sh.planet}</span>
+                                        insights.map((event, k) => (
+                                            <div key={k} className="p-3 bg-white border border-antique/30 rounded-lg group hover:border-[#D08C60]/40 transition-all shadow-sm">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm" title={event.planet}>{PLANET_SYMBOLS[event.planet]}</span>
+                                                        <span className={cn(
+                                                            "text-xs font-bold",
+                                                            event.severity === 'high' ? "text-[#D08C60]" : "text-primary"
+                                                        )}>
+                                                            {event.planet}
+                                                        </span>
+                                                    </div>
+                                                    <span className={cn(
+                                                        "text-[9px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider",
+                                                        event.type === 'sign' ? "bg-purple-50 text-purple-700" :
+                                                            event.type === 'house' ? "bg-blue-50 text-blue-700" :
+                                                                event.type === 'retro' ? "bg-red-50 text-red-700" :
+                                                                    "bg-gray-50 text-gray-600"
+                                                    )}>
+                                                        {event.type}
+                                                    </span>
                                                 </div>
-                                                <p className="text-[10px] text-primary/60 leading-tight">
-                                                    Moving to <span className="text-[#D08C60] font-black">{sh.type === 'house' ? `House ${sh.to}` : sh.to}</span> tomorrow.
+
+                                                <p className="text-[11px] font-mono text-primary/80 leading-snug border-l-2 border-antique/20 pl-2 mb-1">
+                                                    {event.description}
                                                 </p>
+
+                                                <div className="flex items-center gap-2 mt-1 pl-2">
+                                                    <span className="text-[9px] text-primary/40">
+                                                        {event.from} <span className="text-primary/20">→</span> <span className="font-bold text-primary/60">{event.to}</span>
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-8 text-center text-primary/30 italic">
-                                            <p className="text-[10px]">No major planetary shifts detected for tomorrow.</p>
+                                        <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                                            <div className="w-12 h-12 rounded-full bg-antique/20 flex items-center justify-center mb-2">
+                                                <span className="text-lg">—</span>
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest">No Transits</p>
+                                            <p className="text-[9px] font-serif italic mt-1">Stable planetary energies today.</p>
                                         </div>
                                     )}
                                 </div>
