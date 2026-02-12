@@ -53,14 +53,14 @@ export default function DoshaAnalysis({ clientId, doshaType, ayanamsa = 'lahiri'
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-parchment/30 rounded-2xl border border-antique">
                 <Loader2 className="w-8 h-8 text-gold-primary animate-spin mb-4" />
-                <p className="text-sm font-serif text-muted italic">Consulting Stellar records...</p>
+                <p className="text-sm font-serif text-secondary italic">Consulting Stellar records...</p>
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
                 <div className="p-6 bg-red-50 border border-red-100 rounded-2xl text-center">
                     <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-3" />
                     <h3 className="text-red-900 font-bold font-serif mb-1">Analysis Unavailable</h3>
@@ -82,15 +82,15 @@ export default function DoshaAnalysis({ clientId, doshaType, ayanamsa = 'lahiri'
 
     // Fallback for types not yet fully implemented with custom views
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             <div className="bg-softwhite border border-antique rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-gold-primary/10 rounded-lg">
-                        <Zap className="w-5 h-5 text-gold-dark" />
+                        <Zap className="w-5 h-5 text-accent-gold" />
                     </div>
                     <h2 className="text-xl font-serif font-bold text-ink capitalize">{doshaType.replace('_', ' ')} Analysis</h2>
                 </div>
-                <p className="text-sm text-muted">Detailed report for {doshaType} is being prepared by the engine.</p>
+                <p className="text-sm text-secondary">Detailed report for {doshaType} is being prepared by the engine.</p>
                 <DebugConsole title={`Dosha Analysis: ${doshaType}`} data={data} className="mt-6" />
             </div>
         </div>
@@ -103,7 +103,7 @@ export default function DoshaAnalysis({ clientId, doshaType, ayanamsa = 'lahiri'
 function AngarakDoshaView({ data, className }: { data: any; className?: string }) {
     if (!data.has_angarak_dosha) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
                 <div className={cn("bg-green-50 border border-green-100 rounded-2xl p-6 text-center", className)}>
                     <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto mb-3" />
                     <h3 className="text-green-900 font-serif font-bold text-lg">Dosha Absent</h3>
@@ -117,7 +117,7 @@ function AngarakDoshaView({ data, className }: { data: any; className?: string }
     const { conjunction_details, overall_severity, house_effects, cancellation_factors } = data;
 
     return (
-        <div className={cn("space-y-6", className)}>
+        <div className={cn("space-y-6 p-6", className)}>
             {/* 1. Header & Severity */}
             <div className="bg-softwhite border border-antique rounded-2xl p-6 shadow-sm overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
@@ -135,7 +135,7 @@ function AngarakDoshaView({ data, className }: { data: any; className?: string }
 
                     <div className="flex items-center gap-5">
                         <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Overall Severity</p>
+                            <p className="text-[10px] uppercase tracking-widest text-muted-refined font-bold mb-1">Overall Severity</p>
                             <span className={cn(
                                 "px-4 py-1.5 rounded-full text-xs font-bold border",
                                 overall_severity?.includes('Very High') ? "bg-red-500 text-white border-red-600" :
@@ -169,7 +169,7 @@ function AngarakDoshaView({ data, className }: { data: any; className?: string }
                     </h3>
                     <ul className="space-y-2">
                         {house_effects?.effects?.map((effect: string, i: number) => (
-                            <li key={i} className="text-[11px] text-muted flex items-start gap-2 leading-tight">
+                            <li key={i} className="text-[11px] text-secondary flex items-start gap-2 leading-tight">
                                 <div className="w-1 h-1 rounded-full bg-red-400 mt-1.5 shrink-0" />
                                 {effect}
                             </li>
@@ -221,7 +221,7 @@ function AngarakDoshaView({ data, className }: { data: any; className?: string }
 function SadeSatiView({ data, className }: { data: any; className?: string }) {
     if (!data.active) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
                 <div className={cn("bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center", className)}>
                     <CheckCircle2 className="w-10 h-10 text-blue-500 mx-auto mb-3" />
                     <h3 className="text-blue-900 font-serif font-bold text-lg">Sade Sati Inactive</h3>
@@ -233,7 +233,7 @@ function SadeSatiView({ data, className }: { data: any; className?: string }) {
     }
 
     return (
-        <div className={cn("space-y-6", className)}>
+        <div className={cn("space-y-6 p-6", className)}>
             <div className="bg-indigo-950 text-white border border-indigo-900 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
                 <div className="flex items-center gap-4 relative z-10">
@@ -257,7 +257,7 @@ function SadeSatiView({ data, className }: { data: any; className?: string }) {
                     <h3 className="font-serif font-bold text-ink mb-4 flex items-center gap-2 text-sm uppercase">
                         <Info className="w-4 h-4 text-indigo-600" /> Details
                     </h3>
-                    <p className="text-[11px] text-muted leading-relaxed">{data.description}</p>
+                    <p className="text-[11px] text-secondary leading-relaxed">{data.description}</p>
                 </div>
                 <div className="bg-softwhite border border-antique rounded-2xl p-5">
                     <h3 className="font-serif font-bold text-ink mb-4 flex items-center gap-2 text-sm uppercase">
@@ -265,7 +265,7 @@ function SadeSatiView({ data, className }: { data: any; className?: string }) {
                     </h3>
                     <ul className="space-y-2">
                         {data.recommendations?.slice(0, 4).map((rec: string, i: number) => (
-                            <li key={i} className="text-[11px] text-muted flex items-start gap-2 leading-tight">
+                            <li key={i} className="text-[11px] text-secondary flex items-start gap-2 leading-tight">
                                 <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
                                 {rec.replace(/[🕉️🙏📿💖🪔👴⏸️]/g, '')}
                             </li>

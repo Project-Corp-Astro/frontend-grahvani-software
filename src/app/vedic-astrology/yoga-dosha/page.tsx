@@ -16,14 +16,22 @@ import {
     Sun,
     Moon,
     Flame,
+    LayoutDashboard
 } from 'lucide-react';
+import ActiveYogasLayout from '@/components/astrology/yoga-dosha/ActiveYogasLayout';
+import { Planet } from '@/components/astrology/NorthIndianChart/NorthIndianChart';
+import NorthIndianChart from '@/components/astrology/NorthIndianChart/NorthIndianChart';
 import Link from 'next/link';
+import { useDasha } from '@/hooks/queries/useCalculations';
+import { parseChartData } from '@/lib/chart-helpers';
+import { findActiveDashaPath } from '@/lib/dasha-utils';
+import { useMemo } from 'react';
 
 // ============================================================================
 // Yoga & Dosha Type Definitions (Lahiri-Exclusive Features)
 // ============================================================================
 
-interface YogaItem {
+export interface YogaItem {
     id: string;
     name: string;
     sanskrit: string;
@@ -74,18 +82,92 @@ const DOSHA_TYPES: DoshaItem[] = [
 type MainTab = 'yogas' | 'doshas';
 type YogaCategory = 'all' | 'benefic' | 'challenging';
 
-// ============================================================================
 // Main Page Component
 // ============================================================================
 export default function YogaDoshaPage() {
-    const { clientDetails } = useVedicClient();
+    const { clientDetails, processedCharts, isRefreshingCharts, isGeneratingCharts, isLoadingCharts } = useVedicClient();
     const { ayanamsa } = useAstrologerStore();
     const [mainTab, setMainTab] = useState<MainTab>('yogas');
     const [yogaCategory, setYogaCategory] = useState<YogaCategory>('all');
     const [selectedYoga, setSelectedYoga] = useState<string | null>(null);
     const [selectedDosha, setSelectedDosha] = useState<string | null>(null);
 
+    const activeAyanamsa = ayanamsa.toLowerCase();
     const clientId = clientDetails?.id || '';
+
+    // 1. Fetch D1 Chart Data
+    const d1Data = useMemo(() => {
+        const key = `D1_${activeAyanamsa}`;
+        return parseChartData(processedCharts[key]?.chartData);
+    }, [processedCharts, activeAyanamsa]);
+
+    // 2. Extract Active Yogas from processedCharts
+    const activeYogas = useMemo(() => {
+        // Priority map for "Senior Astrologer" view
+        const YOGA_PRIORITY: Record<string, number> = {
+            'gaja_kesari': 100,
+            'hamsa': 95,
+            'malavya': 95,
+            'bhadra': 95,
+            'ruchi': 95,
+            'sasa': 95,
+            'pancha_mahapurusha': 90,
+            'lakshmi': 85,
+            'saraswati': 85,
+            'raj_yoga': 80,
+            'neecha_bhanga': 75,
+            'adhi_yoga': 70,
+            'dhan_yoga': 65,
+            'viparitha_raja': 60,
+            'chandra_mangal': 55,
+            'budha_aditya': 50
+        };
+
+        const list = Object.values(processedCharts)
+            .filter((c: any) => c.chartType?.startsWith('yoga_'))
+            .map((c: any) => {
+                const subType = c.chartType.replace('yoga_', '');
+                const label = subType.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+
+                // Try to get a benefit/description from the chart metadata if available
+                const benefit = c.metadata?.benefit || (subType.includes('kesari') ? 'Wisdom & Fame' : 'Celestial Influence');
+                const description = c.metadata?.description || `A powerful alignment centered around ${label}.`;
+
+                return {
+                    id: c.id || subType,
+                    name: label,
+                    benefit,
+                    description,
+                    type: subType,
+                    priority: YOGA_PRIORITY[subType] || 0
+                };
+            });
+
+        // Sort by priority (highest first)
+        return list.sort((a, b) => b.priority - a.priority);
+    }, [processedCharts]);
+
+    // 3. Fetch Dasha Data
+    const { data: dashaResponse, isLoading: dashaLoading } = useDasha(
+        clientId,
+        'mahadasha',
+        activeAyanamsa
+    );
+
+    // 4. Calculate Current Dasha Progress
+    const dashaProgress = useMemo(() => {
+        if (!dashaResponse) return { planet: 'Loading...', subPlanet: '...', percentage: 0 };
+        const activePath = findActiveDashaPath(dashaResponse);
+        const nodes = activePath.nodes;
+        const currentPlanet = nodes.length > 0 ? nodes[0].planet : 'Unknown';
+        const currentSubPlanet = nodes.length > 1 ? nodes[1].planet : '...';
+
+        return {
+            planet: currentPlanet,
+            subPlanet: currentSubPlanet,
+            percentage: activePath.progress
+        };
+    }, [dashaResponse]);
 
     // Filter yogas by category
     const filteredYogas = yogaCategory === 'all'
@@ -96,9 +178,9 @@ export default function YogaDoshaPage() {
     if (ayanamsa !== 'Lahiri') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <Sparkles className="w-12 h-12 text-muted mb-4" />
+                <Sparkles className="w-12 h-12 text-primary mb-4" />
                 <h2 className="text-xl font-serif font-bold text-ink mb-2">Yoga & Dosha — Lahiri Only</h2>
-                <p className="text-muted text-sm max-w-md">
+                <p className="text-primary text-sm max-w-md">
                     Yoga and Dosha analysis is currently available exclusively with the <strong>Lahiri Ayanamsa</strong>.
                     Please switch to Lahiri from the header dropdown to access these features.
                 </p>
@@ -115,144 +197,90 @@ export default function YogaDoshaPage() {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Breadcrumb + Title */}
-            <div>
-                <div className="flex items-center gap-2 text-muted text-sm mb-1">
-                    <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
-                        <ArrowLeft className="w-3 h-3" />
-                        Kundali
-                    </Link>
-                    <span>/</span>
-                    <span>Yoga & Dosha</span>
+        <div className="space-y-4 animate-in fade-in duration-500">
+            {/* Header: Title + Tabs */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 text-muted-refined text-[11px] mb-1 uppercase tracking-wider font-bold">
+                        <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
+                            <ArrowLeft className="w-3 h-3" />
+                            Kundali
+                        </Link>
+                        <span>/</span>
+                        <span>Yoga & Dosha</span>
+                    </div>
+                    <h1 className="text-xl font-serif font-black text-ink tracking-tight">Yoga & Dosha Analysis</h1>
+                    <p className="text-[11px] text-secondary mt-0.5 font-medium italic">
+                        Comprehensive planetary combinations for <span className="text-primary font-bold not-italic">{clientDetails.name}</span>
+                    </p>
                 </div>
-                <h1 className="text-2xl font-serif font-bold text-ink">Yoga & Dosha Analysis</h1>
-                <p className="text-sm text-muted mt-1">
-                    Comprehensive planetary combinations for <span className="font-medium">{clientDetails.name}</span>
-                </p>
-            </div>
 
-            {/* Main Tabs: Yogas / Doshas */}
-            <div className="flex gap-2 p-1 bg-parchment rounded-xl border border-antique">
-                <button
-                    onClick={() => { setMainTab('yogas'); setSelectedDosha(null); }}
-                    className={cn(
-                        "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-serif font-medium transition-all",
-                        mainTab === 'yogas'
-                            ? "bg-gradient-to-r from-gold-primary to-gold-dark text-white shadow-md"
-                            : "text-muted hover:text-ink hover:bg-white/50"
-                    )}
-                >
-                    <Sparkles className="w-4 h-4" />
-                    Yogas ({YOGA_TYPES.length})
-                </button>
-                <button
-                    onClick={() => { setMainTab('doshas'); setSelectedYoga(null); }}
-                    className={cn(
-                        "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-serif font-medium transition-all",
-                        mainTab === 'doshas'
-                            ? "bg-gradient-to-r from-red-500 to-red-700 text-white shadow-md"
-                            : "text-muted hover:text-ink hover:bg-white/50"
-                    )}
-                >
-                    <Shield className="w-4 h-4" />
-                    Doshas ({DOSHA_TYPES.length})
-                </button>
+                {/* Main Tabs: Yogas / Doshas */}
+                <div className="flex gap-1.5 p-1 bg-parchment rounded-full border border-antique shadow-sm w-full md:w-auto">
+                    <button
+                        onClick={() => { setMainTab('yogas'); setSelectedDosha(null); }}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-serif font-bold transition-all whitespace-nowrap",
+                            mainTab === 'yogas'
+                                ? "bg-gradient-to-r from-gold-primary to-gold-dark text-white shadow-md"
+                                : "text-secondary hover:text-primary hover:bg-white/50"
+                        )}
+                    >
+                        <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                        <span>Yogas ({activeYogas.length})</span>
+                    </button>
+                    <button
+                        onClick={() => { setMainTab('doshas'); setSelectedYoga(null); }}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-serif font-bold transition-all whitespace-nowrap",
+                            mainTab === 'doshas'
+                                ? "bg-gradient-to-r from-red-500 to-red-700 text-white shadow-md"
+                                : "text-secondary hover:text-primary hover:bg-white/50"
+                        )}
+                    >
+                        <Shield className="w-3.5 h-3.5 shrink-0" />
+                        <span>Doshas ({DOSHA_TYPES.length})</span>
+                    </button>
+                </div>
             </div>
 
             {/* ═══════════════ YOGAS TAB ═══════════════ */}
             {mainTab === 'yogas' && (
-                <div className="space-y-4">
-                    {/* Category Filter */}
-                    <div className="flex gap-2">
-                        {[
-                            { id: 'all' as YogaCategory, label: 'All Yogas', count: YOGA_TYPES.length },
-                            { id: 'benefic' as YogaCategory, label: 'Benefic (Shubh)', count: YOGA_TYPES.filter(y => y.category === 'benefic').length },
-                            { id: 'challenging' as YogaCategory, label: 'Challenging (Ashubh)', count: YOGA_TYPES.filter(y => y.category === 'challenging').length },
-                        ].map(cat => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setYogaCategory(cat.id)}
-                                className={cn(
-                                    "px-4 py-2 rounded-lg text-xs font-medium transition-all border",
-                                    yogaCategory === cat.id
-                                        ? "bg-gold-primary/10 border-gold-primary/30 text-gold-dark font-bold"
-                                        : "bg-white border-antique text-muted hover:border-gold-primary/20"
-                                )}
-                            >
-                                {cat.label} ({cat.count})
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Yoga Selection Grid */}
-                    {!selectedYoga ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {filteredYogas.map(yoga => (
-                                <button
-                                    key={yoga.id}
-                                    onClick={() => setSelectedYoga(yoga.id)}
-                                    className={cn(
-                                        "group text-left p-4 rounded-2xl border transition-all duration-300 hover:shadow-lg",
-                                        yoga.category === 'benefic'
-                                            ? "bg-white border-antique hover:border-gold-primary/40 hover:bg-gold-primary/5"
-                                            : "bg-white border-red-100 hover:border-red-300 hover:bg-red-50/30"
-                                    )}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                                            yoga.category === 'benefic'
-                                                ? "bg-gold-primary/10 text-gold-dark"
-                                                : "bg-red-50 text-red-500"
-                                        )}>
-                                            {yoga.icon}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h3 className="font-serif font-bold text-ink text-sm group-hover:text-gold-dark transition-colors">
-                                                {yoga.name}
-                                            </h3>
-                                            <p className="text-[10px] text-gold-dark/60 font-medium mb-1">{yoga.sanskrit}</p>
-                                            <p className="text-[11px] text-muted leading-relaxed line-clamp-2">{yoga.description}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
+                <div className="-mx-4 -mb-4">
+                    {isLoadingCharts || isGeneratingCharts ? (
+                        <div className="flex flex-col items-center justify-center min-h-[300px] bg-white/50 rounded-2xl m-4 border border-antique border-dashed animate-pulse">
+                            <Sparkles className="w-6 h-6 text-gold-primary mb-3 animate-spin" />
+                            <p className="font-serif italic text-secondary text-xs">Synthesizing Client Dashboard...</p>
                         </div>
                     ) : (
-                        /* Selected Yoga Detail View */
-                        <div className="space-y-4">
-                            <button
-                                onClick={() => setSelectedYoga(null)}
-                                className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to all yogas
-                            </button>
-                            <YogaAnalysisView
-                                clientId={clientId}
-                                yogaType={selectedYoga}
-                                ayanamsa="lahiri"
-                            />
-                        </div>
+                        <ActiveYogasLayout
+                            clientId={clientId}
+                            planets={d1Data.planets}
+                            ascendantSign={d1Data.ascendant}
+                            activeYogas={activeYogas}
+                            allYogas={YOGA_TYPES}
+                            currentDasha={dashaProgress}
+                            ayanamsa={activeAyanamsa}
+                            className="bg-transparent"
+                        />
                     )}
                 </div>
             )}
 
             {/* ═══════════════ DOSHAS TAB ═══════════════ */}
             {mainTab === 'doshas' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {!selectedDosha ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {DOSHA_TYPES.map(dosha => (
                                 <button
                                     key={dosha.id}
                                     onClick={() => setSelectedDosha(dosha.id)}
-                                    className="group text-left p-5 rounded-2xl bg-white border border-red-100 hover:border-red-300 hover:bg-red-50/20 transition-all duration-300 hover:shadow-lg"
+                                    className="group text-left p-4 rounded-xl bg-white border border-red-100 hover:border-red-300 hover:bg-red-50/20 transition-all duration-300 hover:shadow-lg"
                                 >
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex items-start gap-3.5">
                                         <div className={cn(
-                                            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                                            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                                             dosha.severity === 'high'
                                                 ? "bg-red-100 text-red-600"
                                                 : dosha.severity === 'medium'
@@ -262,12 +290,12 @@ export default function YogaDoshaPage() {
                                             {dosha.icon}
                                         </div>
                                         <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="font-serif font-bold text-ink text-base group-hover:text-red-700 transition-colors">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <h3 className="font-serif font-bold text-ink text-sm group-hover:text-red-700 transition-colors">
                                                     {dosha.name}
                                                 </h3>
                                                 <span className={cn(
-                                                    "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                                                    "px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider",
                                                     dosha.severity === 'high'
                                                         ? "bg-red-100 text-red-700"
                                                         : dosha.severity === 'medium'
@@ -277,8 +305,8 @@ export default function YogaDoshaPage() {
                                                     {dosha.severity}
                                                 </span>
                                             </div>
-                                            <p className="text-[10px] text-gold-dark/60 font-medium mb-1">{dosha.sanskrit}</p>
-                                            <p className="text-xs text-muted leading-relaxed">{dosha.description}</p>
+                                            <p className="text-[9px] text-accent-gold/60 font-black uppercase tracking-tighter mb-1">{dosha.sanskrit}</p>
+                                            <p className="text-[11px] text-secondary leading-relaxed line-clamp-2">{dosha.description}</p>
                                         </div>
                                     </div>
                                 </button>
@@ -289,7 +317,7 @@ export default function YogaDoshaPage() {
                         <div className="space-y-4">
                             <button
                                 onClick={() => setSelectedDosha(null)}
-                                className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors"
+                                className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors"
                             >
                                 <ArrowLeft className="w-4 h-4" />
                                 Back to all doshas
