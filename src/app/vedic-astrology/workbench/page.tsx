@@ -249,8 +249,8 @@ export default function AnalyticalWorkbenchPage() {
                     </div>
 
                     <Link href="/vedic-astrology/dashas" className="flex items-center justify-between p-4 bg-copper-900 text-amber-50 rounded-2xl hover:shadow-xl transition-all">
-                        <div className="flex items-center gap-3"><TrendingUp className="w-5 h-5 text-amber-400" /> <span className="font-bold">Dasha Timeline</span></div>
-                        <ArrowRight className="w-4 h-4" />
+                        <div className="flex items-center gap-3"><TrendingUp className="w-5 h-5 text-primary" /> <span className="text-primary font-bold">Dasha Timeline</span></div>
+                        <ArrowRight className="text-primary w-4 h-4" />
                     </Link>
 
                     <div className="bg-softwhite border border-antique rounded-2xl p-5">

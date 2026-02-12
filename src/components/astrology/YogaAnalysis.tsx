@@ -19,7 +19,8 @@ import {
     Clock,
     AlertCircle,
     User,
-    Compass
+    Compass,
+    X
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { clientApi } from '@/lib/api';
@@ -31,9 +32,10 @@ interface YogaAnalysisProps {
     yogaType: string;
     ayanamsa?: string;
     className?: string;
+    onClose?: () => void;
 }
 
-export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahiri', className }: YogaAnalysisProps) {
+export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahiri', className, onClose }: YogaAnalysisProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<any | null>(null);
@@ -63,7 +65,7 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
         return (
             <div className="flex flex-col items-center justify-center p-8 bg-parchment/30 rounded-2xl border border-antique">
                 <Loader2 className="w-6 h-6 text-gold-primary animate-spin mb-3" />
-                <p className="text-xs font-serif text-muted italic">Analyzing celestial alignments...</p>
+                <p className="text-xs font-serif text-secondary italic">Analyzing celestial alignments...</p>
             </div>
         );
     }
@@ -83,16 +85,16 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
 
     // Specialized Gaja Kesari View
     if (yogaType === 'gaja_kesari' || yogaType === 'gajakesari' || data.comprehensive_gaja_kesari_analysis) {
-        return <GajaKesariView data={data} className={className} />;
+        return <GajaKesariView data={data} className={className} onClose={onClose} />;
     }
 
     if (!data.yoga_present) {
         return (
             <div className="space-y-4">
                 <div className={cn("bg-parchment/50 border border-antique rounded-2xl p-6 text-center opacity-60", className)}>
-                    <Info className="w-8 h-8 text-muted mx-auto mb-2" />
-                    <h3 className="text-muted font-serif font-bold text-lg capitalize">{yogaType.replace('_', ' ')} Absent</h3>
-                    <p className="text-xs text-muted mt-1">Planetary conditions for this specific yoga are not fully met in the natal chart.</p>
+                    <Info className="w-8 h-8 text-secondary mx-auto mb-2" />
+                    <h3 className="text-secondary font-serif font-bold text-lg capitalize">{yogaType.replace('_', ' ')} Absent</h3>
+                    <p className="text-xs text-secondary mt-1">Planetary conditions for this specific yoga are not fully met in the natal chart.</p>
                 </div>
                 <DebugConsole title={`Yoga Analysis (Absent): ${yogaType}`} data={data} />
             </div>
@@ -100,7 +102,7 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
     }
 
     return (
-        <div className={cn("space-y-6", className)}>
+        <div className={cn("space-y-6 relative p-6", className)}>
             {/* 1. Header & Grandeur */}
             <div className="bg-white border border-antique rounded-3xl p-6 shadow-sm overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-gold-primary/5 rounded-full -mr-20 -mt-20 blur-3xl" />
@@ -112,18 +114,18 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
                         </div>
                         <div>
                             <h2 className="text-2xl font-serif font-bold text-ink">{data.yoga_type}</h2>
-                            <p className="text-sm text-gold-dark font-medium">{data.house_relationship}</p>
+                            <p className="text-sm text-secondary font-medium">{data.house_relationship}</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-5">
                         <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Manifestation Strength</p>
+                            <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-1">Manifestation Strength</p>
                             <span className={cn(
                                 "px-4 py-1.5 rounded-full text-xs font-bold border",
                                 data.yoga_strength?.includes('Exceptional') ? "bg-amber-600 text-white border-amber-700" :
-                                    data.yoga_strength?.includes('Strong') ? "bg-gold-primary text-ink border-gold-dark" :
-                                        "bg-parchment text-muted border-antique"
+                                    data.yoga_strength?.includes('Strong') ? "bg-gold-primary text-ink border-primary" :
+                                        "bg-parchment text-secondary border-antique"
                             )}>
                                 {data.yoga_strength}
                             </span>
@@ -151,10 +153,10 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
                     <div className="space-y-3">
                         {data.comprehensive_effects?.specific_effects?.map((effect: any, i: number) => (
                             <div key={i} className="flex gap-3 items-start group">
-                                <div className="p-1 px-1.5 bg-gold-primary/20 text-gold-dark rounded-md text-[10px] font-bold mt-0.5 group-hover:bg-gold-primary group-hover:text-white transition-colors">
+                                <div className="p-1 px-1.5 bg-gold-primary/20 text-secondary rounded-md text-[10px] font-bold mt-0.5 group-hover:bg-gold-primary group-hover:text-white transition-colors">
                                     0{i + 1}
                                 </div>
-                                <p className="text-xs text-body leading-relaxed">{effect}</p>
+                                <p className="text-xs text-primary leading-relaxed">{effect}</p>
                             </div>
                         ))}
                     </div>
@@ -186,13 +188,13 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
                     <div className="space-y-4">
                         <div className="relative pl-6 border-l-2 border-gold-primary/20">
                             <div className="absolute w-3 h-3 bg-gold-primary rounded-full -left-[7px] top-1 border-2 border-softwhite shadow-sm" />
-                            <h4 className="text-[10px] font-bold text-gold-dark uppercase mb-1">Primary Dasha Periods</h4>
-                            <p className="text-xs text-muted leading-relaxed">{data.timing_analysis?.best_periods}</p>
+                            <h4 className="text-[10px] font-bold text-muted-refined uppercase mb-1">Primary Dasha Periods</h4>
+                            <p className="text-xs text-secondary leading-relaxed">{data.timing_analysis?.best_periods}</p>
                         </div>
                         <div className="relative pl-6 border-l-2 border-gold-primary/20">
                             <div className="absolute w-3 h-3 bg-gold-primary/60 rounded-full -left-[7px] top-1 border-2 border-softwhite" />
-                            <h4 className="text-[10px] font-bold text-gold-dark uppercase mb-1">Transit Triggers</h4>
-                            <p className="text-xs text-muted leading-relaxed">{data.timing_analysis?.activation_transits}</p>
+                            <h4 className="text-[10px] font-bold text-muted-refined uppercase mb-1">Transit Triggers</h4>
+                            <p className="text-xs text-secondary leading-relaxed">{data.timing_analysis?.activation_transits}</p>
                         </div>
                     </div>
 
@@ -218,7 +220,7 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
                     {data.remedial_suggestions?.map((suggestion: any, i: number) => (
                         <div key={i} className="flex items-center gap-2 px-4 py-2 bg-white border border-antique rounded-xl shadow-sm hover:border-gold-primary transition-colors cursor-default">
                             <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                            <span className="text-xs font-medium text-body">{suggestion}</span>
+                            <span className="text-xs font-medium text-primary">{suggestion}</span>
                         </div>
                     ))}
                 </div>
@@ -235,7 +237,7 @@ export default function YogaAnalysisView({ clientId, yogaType, ayanamsa = 'lahir
  * 
  * Designed to be "Above the Fold" with high information density.
  */
-function GajaKesariView({ data, className }: { data: any, className?: string }) {
+function GajaKesariView({ data, className, onClose }: { data: any, className?: string, onClose?: () => void }) {
     // Correctly handle the case where data might be double-nested
     const rawData = data?.data || data;
     const analysis = rawData.comprehensive_gaja_kesari_analysis || {};
@@ -251,8 +253,7 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
     const houseGap = (jHouse && mHouse) ? Math.abs(mHouse - jHouse) : NaN;
 
     return (
-        <div className={cn("space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500", className)}>
-
+        <div className={cn("space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 relative p-6", className)}>
             {/* 1. COMPACT HEADER BAR */}
             <div className="bg-white border border-gold-primary/30 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-full bg-gold-primary/5 -skew-x-12 translate-x-10" />
@@ -263,7 +264,7 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                         <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-serif font-black text-ink leading-none">Gaja Kesari <span className="text-gold-dark">Yoga</span></h2>
+                        <h2 className="text-xl font-serif font-black text-ink leading-none">Gaja Kesari <span className="text-secondary">Yoga</span></h2>
                         <div className="flex items-center gap-2 mt-1">
                             <span className={cn(
                                 "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
@@ -273,7 +274,7 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                             )}>
                                 {analysis.yoga_present ? "Active" : "Inactive"}
                             </span>
-                            <span className="text-[10px] text-muted-foreground font-medium">{notes.analysis_type}</span>
+                            <span className="text-[10px] text-muted-refined font-medium">{notes.analysis_type}</span>
                         </div>
                     </div>
                 </div>
@@ -281,21 +282,21 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                 {/* Compact Identity Strip */}
                 <div className="flex items-center gap-6 text-xs z-10 bg-parchment/30 px-4 py-2 rounded-lg border border-antique/50">
                     <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-gold-dark" />
+                        <User className="w-3.5 h-3.5 text-secondary" />
                         <span className="font-bold text-ink">{rawData.user_name}</span>
                     </div>
                     <div className="w-px h-3 bg-antique/50" />
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-secondary">
                         <Calendar className="w-3 h-3" /> {birth.birth_date}
                     </div>
                     <div className="w-px h-3 bg-antique/50" />
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-secondary">
                         <Clock className="w-3 h-3" /> {birth.birth_time}
                     </div>
                     <div className="w-px h-3 bg-antique/50" />
                     <div className="flex items-center gap-2">
-                        <Compass className="w-3 h-3 text-gold-dark" />
-                        <span className="font-serif font-bold text-gold-primary">{birth.ascendant?.sign}</span>
+                        <Compass className="w-3 h-3 text-secondary" />
+                        <span className="font-serif font-bold text-secondary">{birth.ascendant?.sign}</span>
                     </div>
                 </div>
             </div>
@@ -326,7 +327,7 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
 
                             {/* Gap Pill */}
                             <div className="relative z-10 bg-white border border-antique shadow-sm px-4 py-1.5 rounded-full flex flex-col items-center">
-                                <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Angle</span>
+                                <span className="text-[9px] text-muted-refined font-bold uppercase tracking-widest">Angle</span>
                                 <span className={cn("text-xl font-serif font-black leading-none", analysis.yoga_present ? "text-emerald-600" : "text-orange-500")}>
                                     {isNaN(houseGap) ? '?' : houseGap}
                                 </span>
@@ -338,20 +339,22 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                                     <Zap className="w-6 h-6 text-gold-primary" />
                                 </div>
                                 <div className="text-center bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md border border-white/50">
-                                    <p className="text-[10px] font-black text-gold-dark uppercase tracking-wider">Jupiter</p>
+                                    <p className="text-[10px] font-black text-secondary uppercase tracking-wider">Jupiter</p>
                                     <p className="text-sm font-serif font-black text-ink leading-none mt-0.5">H{jupiter.house}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div >
 
                     {/* Status Banner */}
-                    <div className={cn(
-                        "rounded-xl border px-5 py-3 flex items-start gap-4 transition-colors",
-                        analysis.yoga_present
-                            ? "bg-emerald-50/50 border-emerald-100"
-                            : "bg-orange-50/50 border-orange-100"
-                    )}>
+                    < div className={
+                        cn(
+                            "rounded-xl border px-5 py-3 flex items-start gap-4 transition-colors",
+                            analysis.yoga_present
+                                ? "bg-emerald-50/50 border-emerald-100"
+                                : "bg-orange-50/50 border-orange-100"
+                        )
+                    } >
                         <div className={cn(
                             "p-1.5 rounded-lg shrink-0 mt-0.5",
                             analysis.yoga_present ? "bg-emerald-200 text-emerald-800" : "bg-orange-200 text-orange-800"
@@ -362,15 +365,15 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                             <h4 className={cn("text-sm font-serif font-bold", analysis.yoga_present ? "text-emerald-900" : "text-orange-900")}>
                                 {analysis.yoga_present ? "Yoga Formed" : "Conditions Not Met"}
                             </h4>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                            <p className="text-xs text-secondary mt-0.5 leading-snug">
                                 {analysis.reason}
                             </p>
                         </div>
-                    </div>
-                </div>
+                    </div >
+                </div >
 
                 {/* RIGHT: TECHNICAL PANEL (Dense) */}
-                <div className="lg:col-span-4 bg-zinc-900 rounded-2xl p-5 text-zinc-300 flex flex-col border border-zinc-800">
+                < div className="lg:col-span-4 bg-zinc-900 rounded-2xl p-5 text-zinc-300 flex flex-col border border-zinc-800" >
                     <h3 className="text-[10px] font-black text-gold-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Activity className="w-3 h-3" /> Analysis Engine
                     </h3>
@@ -405,7 +408,7 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
             <div className="bg-white border border-antique rounded-xl p-3 shadow-none">
                 <div className="flex items-center gap-2 mb-2 px-1">
                     <LayoutGrid className="w-3.5 h-3.5 text-gold-primary" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Chart Positions</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-refined">Chart Positions</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-9 gap-2">
@@ -422,8 +425,8 @@ function GajaKesariView({ data, className }: { data: any, className?: string }) 
                                 {planet.substring(0, 2).toUpperCase()}
                             </div>
                             <div className="flex flex-col leading-none">
-                                <span className="text-[9px] font-bold text-ink truncate w-full">{details.sign}</span>
-                                <span className="text-[8px] text-muted-foreground font-mono">{details.house}H</span>
+                                <span className="text-[9px] font-bold text-primary truncate w-full">{details.sign}</span>
+                                <span className="text-[8px] text-secondary font-mono">{details.house}H</span>
                             </div>
                         </div>
                     ))}
