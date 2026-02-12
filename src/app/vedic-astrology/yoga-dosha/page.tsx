@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
-import YogaAnalysisView from '@/components/astrology/YogaAnalysis';
+import { YogaModal } from '@/components/astrology/yoga-modal/index';
+import { YogaItem, DoshaItem } from '@/types/yoga-ui.types';
 import DoshaAnalysis from '@/components/astrology/DoshaAnalysis';
 import {
     Sparkles,
@@ -31,23 +32,6 @@ import { useMemo } from 'react';
 // Yoga & Dosha Type Definitions (Lahiri-Exclusive Features)
 // ============================================================================
 
-export interface YogaItem {
-    id: string;
-    name: string;
-    sanskrit: string;
-    description: string;
-    category: 'benefic' | 'challenging';
-    icon: React.ReactNode;
-}
-
-interface DoshaItem {
-    id: string;
-    name: string;
-    sanskrit: string;
-    description: string;
-    severity: 'high' | 'medium' | 'low';
-    icon: React.ReactNode;
-}
 
 const YOGA_TYPES: YogaItem[] = [
     // Benefic Yogas

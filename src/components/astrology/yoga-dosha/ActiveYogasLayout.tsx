@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart/NorthIndianChart';
 import { ChartWithPopup } from "@/components/astrology/NorthIndianChart";
 import { Modal } from '@/components/ui/Modal';
-import { YogaModal } from '@/components/astrology/yoga-modal';
-import { YogaItem } from '@/app/vedic-astrology/yoga-dosha/page';
+import { YogaModal } from '@/components/astrology/yoga-modal/index';
+import { YogaItem } from '@/types/yoga-ui.types';
 
 interface Yoga {
     id: string;
