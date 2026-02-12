@@ -481,6 +481,16 @@ export const clientApi = {
     },
 
     /**
+     * Get Avakhada Chakra
+     * Universal endpoint
+     */
+    getAvakhadaChakra: (clientId: string): Promise<any> =>
+        apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({ chartType: 'avakhada_chakra', ayanamsa: 'universal' }), // Explicit universal
+        }),
+
+    /**
      * Get system capabilities - which chart types are available per ayanamsa
      * SYNCED with backend endpoint-availability.ts (2026-01-21)
      */

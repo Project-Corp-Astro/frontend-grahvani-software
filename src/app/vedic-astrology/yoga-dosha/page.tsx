@@ -60,6 +60,7 @@ const DOSHA_TYPES: DoshaItem[] = [
     { id: 'guru_chandal', name: 'Guru Chandal Dosha', sanskrit: 'गुरु चण्डाल दोष', description: 'Jupiter-Rahu conjunction — misguided wisdom', severity: 'medium', icon: <AlertTriangle className="w-4 h-4" /> },
     { id: 'shrapit', name: 'Shrapit Dosha', sanskrit: 'श्रापित दोष', description: 'Saturn-Rahu conjunction — past-life curse patterns', severity: 'high', icon: <Shield className="w-4 h-4" /> },
     { id: 'sade_sati', name: 'Sade Sati', sanskrit: 'साढ़े साती', description: "Saturn's 7.5 year transit over natal Moon — karmic tests", severity: 'medium', icon: <Moon className="w-4 h-4" /> },
+    { id: 'dhaiya', name: 'Dhaiya (Kantaka Shani)', sanskrit: 'ढैया', description: 'Saturn 4th/8th from Moon — challenging period', severity: 'medium', icon: <Moon className="w-4 h-4" /> },
     { id: 'pitra', name: 'Pitra Dosha', sanskrit: 'पितृ दोष', description: 'Sun-Rahu/Saturn affliction — ancestral karmic debt', severity: 'medium', icon: <Sun className="w-4 h-4" /> },
 ];
 
