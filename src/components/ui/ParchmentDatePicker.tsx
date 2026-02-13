@@ -25,7 +25,8 @@ export default function ParchmentDatePicker({
     const [open, setOpen] = React.useState(false);
 
     // Convert string to Date for the Calendar component
-    const selectedDate = date ? new Date(date) : undefined;
+    // Append T00:00:00 to prevent UTC interpretation when just YYYY-MM-DD
+    const selectedDate = date ? new Date(date + 'T00:00:00') : undefined;
 
     const handleSelect = (newDate: Date | undefined) => {
         if (newDate) {

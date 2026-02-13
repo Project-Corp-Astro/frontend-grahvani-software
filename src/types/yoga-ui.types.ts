@@ -15,5 +15,6 @@ export interface DoshaItem {
     sanskrit: string;
     description: string;
     severity: 'high' | 'medium' | 'low';
+    category: 'karmic' | 'planetary' | 'transit';
     icon: React.ReactNode;
 }
