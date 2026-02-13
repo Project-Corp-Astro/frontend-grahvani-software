@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { YogaModal } from '@/components/astrology/yoga-modal/index';
+import { ActiveDoshasLayout } from '@/components/astrology/dosha-modal/index';
 import { YogaItem, DoshaItem } from '@/types/yoga-ui.types';
-import DoshaAnalysis from '@/components/astrology/DoshaAnalysis';
 import {
     Sparkles,
     AlertTriangle,
@@ -16,12 +16,9 @@ import {
     ArrowLeft,
     Sun,
     Moon,
-    Flame,
-    LayoutDashboard
+    Flame
 } from 'lucide-react';
 import ActiveYogasLayout from '@/components/astrology/yoga-dosha/ActiveYogasLayout';
-import { Planet } from '@/components/astrology/NorthIndianChart/NorthIndianChart';
-import NorthIndianChart from '@/components/astrology/NorthIndianChart/NorthIndianChart';
 import Link from 'next/link';
 import { useDasha } from '@/hooks/queries/useCalculations';
 import { parseChartData } from '@/lib/chart-helpers';
@@ -55,13 +52,16 @@ const YOGA_TYPES: YogaItem[] = [
 ];
 
 const DOSHA_TYPES: DoshaItem[] = [
-    { id: 'kala_sarpa', name: 'Kala Sarpa Dosha', sanskrit: 'कालसर्प दोष', description: 'All planets between Rahu-Ketu — karmic restriction', severity: 'high', icon: <Flame className="w-4 h-4" /> },
-    { id: 'angarak', name: 'Angarak Dosha', sanskrit: 'अंगारक दोष', description: 'Mars-Rahu conjunction — anger, accidents & disputes', severity: 'high', icon: <Zap className="w-4 h-4" /> },
-    { id: 'guru_chandal', name: 'Guru Chandal Dosha', sanskrit: 'गुरु चण्डाल दोष', description: 'Jupiter-Rahu conjunction — misguided wisdom', severity: 'medium', icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: 'shrapit', name: 'Shrapit Dosha', sanskrit: 'श्रापित दोष', description: 'Saturn-Rahu conjunction — past-life curse patterns', severity: 'high', icon: <Shield className="w-4 h-4" /> },
-    { id: 'sade_sati', name: 'Sade Sati', sanskrit: 'साढ़े साती', description: "Saturn's 7.5 year transit over natal Moon — karmic tests", severity: 'medium', icon: <Moon className="w-4 h-4" /> },
-    { id: 'dhaiya', name: 'Dhaiya (Kantaka Shani)', sanskrit: 'ढैया', description: 'Saturn 4th/8th from Moon — challenging period', severity: 'medium', icon: <Moon className="w-4 h-4" /> },
-    { id: 'pitra', name: 'Pitra Dosha', sanskrit: 'पितृ दोष', description: 'Sun-Rahu/Saturn affliction — ancestral karmic debt', severity: 'medium', icon: <Sun className="w-4 h-4" /> },
+    // Karmic / Ancestral
+    { id: 'shrapit', name: 'Shrapit Dosha', sanskrit: 'श्रापित दोष', description: 'Saturn-Rahu conjunction — past-life curse patterns', severity: 'high', category: 'karmic', icon: <Shield className="w-4 h-4" /> },
+    { id: 'pitra', name: 'Pitra Dosha', sanskrit: 'पितृ दोष', description: 'Sun-Rahu/Saturn affliction — ancestral karmic debt', severity: 'medium', category: 'karmic', icon: <Sun className="w-4 h-4" /> },
+    { id: 'guru_chandal', name: 'Guru Chandal Dosha', sanskrit: 'गुरु चण्डाल दोष', description: 'Jupiter-Rahu conjunction — misguided wisdom', severity: 'medium', category: 'karmic', icon: <AlertTriangle className="w-4 h-4" /> },
+
+    // Planetary Afflictions
+    { id: 'angarak', name: 'Angarak Dosha', sanskrit: 'अंगारक दोष', description: 'Mars-Rahu conjunction — anger, accidents & disputes', severity: 'high', category: 'planetary', icon: <Zap className="w-4 h-4" /> },
+
+    // Periodic / Transits
+    { id: 'sade_sati', name: 'Sade Sati', sanskrit: 'साढ़े साती', description: "Saturn's 7.5 year transit over natal Moon — karmic tests", severity: 'medium', category: 'transit', icon: <Moon className="w-4 h-4" /> },
 ];
 
 type MainTab = 'yogas' | 'doshas';
@@ -74,8 +74,6 @@ export default function YogaDoshaPage() {
     const { ayanamsa } = useAstrologerStore();
     const [mainTab, setMainTab] = useState<MainTab>('yogas');
     const [yogaCategory, setYogaCategory] = useState<YogaCategory>('all');
-    const [selectedYoga, setSelectedYoga] = useState<string | null>(null);
-    const [selectedDosha, setSelectedDosha] = useState<string | null>(null);
 
     const activeAyanamsa = ayanamsa.toLowerCase();
     const clientId = clientDetails?.id || '';
@@ -203,7 +201,7 @@ export default function YogaDoshaPage() {
                 {/* Main Tabs: Yogas / Doshas */}
                 <div className="flex gap-1.5 p-1 bg-parchment rounded-full border border-antique shadow-sm w-full md:w-auto">
                     <button
-                        onClick={() => { setMainTab('yogas'); setSelectedDosha(null); }}
+                        onClick={() => setMainTab('yogas')}
                         className={cn(
                             "flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-serif font-bold transition-all whitespace-nowrap",
                             mainTab === 'yogas'
@@ -215,7 +213,7 @@ export default function YogaDoshaPage() {
                         <span>Yogas ({activeYogas.length})</span>
                     </button>
                     <button
-                        onClick={() => { setMainTab('doshas'); setSelectedYoga(null); }}
+                        onClick={() => setMainTab('doshas')}
                         className={cn(
                             "flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-serif font-bold transition-all whitespace-nowrap",
                             mainTab === 'doshas'
@@ -254,66 +252,15 @@ export default function YogaDoshaPage() {
 
             {/* ═══════════════ DOSHAS TAB ═══════════════ */}
             {mainTab === 'doshas' && (
-                <div className="space-y-3">
-                    {!selectedDosha ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {DOSHA_TYPES.map(dosha => (
-                                <button
-                                    key={dosha.id}
-                                    onClick={() => setSelectedDosha(dosha.id)}
-                                    className="group text-left p-4 rounded-xl bg-white border border-red-100 hover:border-red-300 hover:bg-red-50/20 transition-all duration-300 hover:shadow-lg"
-                                >
-                                    <div className="flex items-start gap-3.5">
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                                            dosha.severity === 'high'
-                                                ? "bg-red-100 text-red-600"
-                                                : dosha.severity === 'medium'
-                                                    ? "bg-amber-100 text-amber-600"
-                                                    : "bg-orange-50 text-orange-500"
-                                        )}>
-                                            {dosha.icon}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <h3 className="font-serif font-bold text-ink text-sm group-hover:text-red-700 transition-colors">
-                                                    {dosha.name}
-                                                </h3>
-                                                <span className={cn(
-                                                    "px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider",
-                                                    dosha.severity === 'high'
-                                                        ? "bg-red-100 text-red-700"
-                                                        : dosha.severity === 'medium'
-                                                            ? "bg-amber-100 text-amber-700"
-                                                            : "bg-orange-50 text-orange-600"
-                                                )}>
-                                                    {dosha.severity}
-                                                </span>
-                                            </div>
-                                            <p className="text-[9px] text-accent-gold/60 font-black uppercase tracking-tighter mb-1">{dosha.sanskrit}</p>
-                                            <p className="text-[11px] text-secondary leading-relaxed line-clamp-2">{dosha.description}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    ) : (
-                        /* Selected Dosha Detail View */
-                        <div className="space-y-4">
-                            <button
-                                onClick={() => setSelectedDosha(null)}
-                                className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to all doshas
-                            </button>
-                            <DoshaAnalysis
-                                clientId={clientId}
-                                doshaType={selectedDosha as any}
-                                ayanamsa="lahiri"
-                            />
-                        </div>
-                    )}
+                <div className="-mx-4 -mb-4">
+                    <ActiveDoshasLayout
+                        clientId={clientId}
+                        planets={d1Data.planets}
+                        ascendantSign={d1Data.ascendant}
+                        allDoshas={DOSHA_TYPES}
+                        ayanamsa={activeAyanamsa}
+                        className="bg-transparent"
+                    />
                 </div>
             )}
         </div>

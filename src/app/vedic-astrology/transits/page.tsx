@@ -7,6 +7,7 @@ import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { cn, formatPlanetDegree } from "@/lib/utils";
 import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart';
 import { clientApi } from '@/lib/api';
+import ParchmentDatePicker from '@/components/ui/ParchmentDatePicker';
 
 import { parseChartData, signNameToId, signIdToName } from '@/lib/chart-helpers';
 
@@ -44,7 +45,7 @@ function mapChartToTransits(chartData: any, natalAscendant: number): TransitPlan
 
 // ============ DAILY TRANSIT VIEW ============
 
-type DurationTab = 'day' | 'week' | 'month' | 'year';
+type DurationTab = 'day' | 'week' | 'month' | 'year' | 'custom';
 
 const PLANET_ORDER = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
 
@@ -67,6 +68,12 @@ function getDateRange(tab: DurationTab): { start: string; end: string } {
         start: today.toISOString().split('T')[0],
         end: end.toISOString().split('T')[0],
     };
+}
+
+function getSafeDateRange(tab: DurationTab, custom?: { start: string; end: string }): { start: string; end: string } {
+    console.log('[DailyTransit] getSafeDateRange called with:', { tab, custom });
+    if (tab === 'custom' && custom) return custom;
+    return getDateRange(tab);
 }
 
 function formatDateLabel(dateStr: string): { day: string; monthYear: string; weekday: string; isToday: boolean } {
@@ -94,6 +101,11 @@ function DailyTransitView({ clientId }: { clientId: string }) {
     const [rawResponse, setRawResponse] = useState<any>(null);
     const [showDebug, setShowDebug] = useState(false);
 
+    // Custom Date Range State
+    const [customStart, setCustomStart] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [customEnd, setCustomEnd] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [isConfirmingCustom, setIsConfirmingCustom] = useState(false);
+
     // UI State for selected date
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -103,7 +115,8 @@ function DailyTransitView({ clientId }: { clientId: string }) {
         setRawResponse(null);
         setActiveIndex(0); // Reset to today/first day
         try {
-            const { start, end } = getDateRange(tab);
+            console.log('[DailyTransit] fetchTransits state:', { customStart, customEnd, tab });
+            const { start, end } = getSafeDateRange(tab, { start: customStart, end: customEnd });
             console.log(`[DailyTransit] Fetching for ${start} to ${end}`);
             const response = await clientApi.generateDailyTransit(clientId, start, end);
             setRawResponse(response);
@@ -131,16 +144,20 @@ function DailyTransitView({ clientId }: { clientId: string }) {
             }
 
             setData(entries);
+            console.log(`[DailyTransit] Extracted ${entries.length} entries`);
         } catch (err: any) {
+            console.error('[DailyTransit] Fetch Error:', err);
             setError(err.message || 'Failed to fetch daily transit data');
             setData([]);
         } finally {
             setLoading(false);
         }
-    }, [clientId]);
+    }, [clientId, customStart, customEnd]);
 
     useEffect(() => {
-        fetchTransits(durationTab);
+        if (durationTab !== 'custom') {
+            fetchTransits(durationTab);
+        }
     }, [durationTab, fetchTransits]);
 
     // Data Helpers
@@ -260,6 +277,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
         { key: 'week', label: 'Week', icon: <Calendar className="w-3.5 h-3.5" /> },
         { key: 'month', label: 'Month', icon: <CalendarDays className="w-3.5 h-3.5" /> },
         { key: 'year', label: 'Year', icon: <CalendarRange className="w-3.5 h-3.5" /> },
+        { key: 'custom', label: 'Custom', icon: <Calendar className="w-3.5 h-3.5" /> },
     ];
 
     return (
@@ -275,7 +293,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                 "px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-2",
                                 durationTab === tab.key
                                     ? "bg-[#D08C60] text-white shadow-md shadow-[#D08C60]/20"
-                                    : "text-primary/40 hover:text-primary/70 hover:bg-white/50"
+                                    : "text-primary hover:text-primary hover:bg-white/50"
                             )}
                         >
                             {tab.icon}
@@ -287,13 +305,59 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                 <div className="flex items-center gap-4">
                     {loading && <Loader2 className="w-4 h-4 text-[#D08C60] animate-spin" />}
                     <div className="text-right">
-                        <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest leading-none">Status</p>
+                        <p className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">Status</p>
                         <p className="text-xs font-serif text-primary font-bold mt-1">
                             {loading ? "Calculating..." : "LIVE FEED"}
                         </p>
                     </div>
                 </div>
             </div>
+
+            {/* 1.5. Custom Date Range Picker (Conditional) */}
+            {durationTab === 'custom' && (
+                <div className="px-6 py-4 bg-white/40 border-b border-antique flex flex-wrap items-end gap-6 animate-in slide-in-from-top-4 duration-300">
+                    <ParchmentDatePicker
+                        label="Start Date"
+                        date={customStart}
+                        setDate={(d) => d && setCustomStart(d)}
+                        className="w-48"
+                    />
+                    <ParchmentDatePicker
+                        label="End Date"
+                        date={customEnd}
+                        setDate={(d) => d && setCustomEnd(d)}
+                        className="w-48"
+                    />
+                    <button
+                        onClick={() => fetchTransits('custom')}
+                        disabled={loading}
+                        className="bg-[#D08C60] hover:bg-[#B57A50] text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all flex items-center gap-2 mb-1 disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CalendarRange className="w-3.5 h-3.5" />}
+                        Confirm & Project
+                    </button>
+                    <p className="text-[10px] text-primary font-medium mb-2.5 max-w-[200px]">
+                        Select a range (max 365 days) to see daily movement.
+                    </p>
+                </div>
+            )}
+
+            {/* Error Message rendering */}
+            {error && (
+                <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-in fade-in duration-300">
+                    <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                    <div className="flex-1">
+                        <p className="text-xs font-bold text-red-900">Projection Error</p>
+                        <p className="text-[11px] text-red-700 mt-0.5">{error}</p>
+                    </div>
+                    <button
+                        onClick={() => fetchTransits(durationTab)}
+                        className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            )}
 
             {/* 2. Horizontal Date Slider */}
             {!loading && data.length > 0 && (
@@ -316,11 +380,11 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                             >
                                 <span className={cn(
                                     "text-[9px] font-black uppercase tracking-tighter mb-0.5",
-                                    isToday && !isSelected ? "text-[#D08C60]" : "text-primary/40"
+                                    isToday && !isSelected ? "text-[#D08C60]" : "text-primary"
                                 )}>{weekday}</span>
                                 <span className={cn(
                                     "text-lg font-black leading-none",
-                                    isSelected ? "text-primary" : "text-primary/60"
+                                    isSelected ? "text-primary" : "text-primary"
                                 )}>{day}</span>
                             </button>
                         );
@@ -334,14 +398,14 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                     <div className="flex-1 flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-12 h-12 text-[#D08C60] animate-spin mb-4" />
                         <h3 className="font-serif text-2xl text-primary font-bold">Projecting Transits</h3>
-                        <p className="text-primary/40 text-sm mt-2">Calculating planetary motions for {durationTab}...</p>
+                        <p className="text-primary text-sm mt-2">Calculating planetary motions for {durationTab}...</p>
                     </div>
                 ) : data.length > 0 ? (
                     <>
                         {/* Column 1: Gochar Chart (Visual) */}
                         <div className="lg:w-[380px] w-full border-r border-antique flex flex-col p-6 bg-white shrink-0">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em]">Gochar Chart</h3>
+                                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em]">Gochar Chart</h3>
                                 <div className="px-2 py-0.5 bg-[#D08C60]/10 rounded border border-[#D08C60]/20">
                                     <span className="text-[9px] font-black text-[#D08C60] uppercase">Lahiri</span>
                                 </div>
@@ -364,8 +428,8 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                         <Info className="w-5 h-5 text-[#D08C60]" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-primary/40 uppercase tracking-widest">Astro Tip</p>
-                                        <p className="text-xs text-primary/70 italic leading-relaxed">
+                                        <p className="text-[9px] font-black text-primary uppercase tracking-widest">Astro Tip</p>
+                                        <p className="text-xs text-primary italic leading-relaxed">
                                             Planets in the 1st, 5th, and 9th houses from Lagos exert the strongest transit influence.
                                         </p>
                                     </div>
@@ -376,7 +440,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                         {/* Column 2: Positions Table (High Density) */}
                         <div className="flex-1 bg-white/60 flex flex-col border-b lg:border-b-0">
                             <div className="px-6 py-4 border-b border-antique flex items-center justify-between shrink-0">
-                                <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em]">Planetary Coordinates</h3>
+                                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em]">Planetary Coordinates</h3>
                                 <button onClick={() => setShowDebug(!showDebug)} className="text-[9px] text-[#D08C60] font-black uppercase hover:underline">Debug Data</button>
                             </div>
 
@@ -384,11 +448,11 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                 <table className="w-full border-collapse">
                                     <thead className="sticky top-0 bg-[#FAF7F2] z-10 shadow-sm">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-[9px] font-black text-primary/30 uppercase tracking-widest border-b border-antique/10">Planet</th>
-                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary/30 uppercase tracking-widest border-b border-antique/10">Sign</th>
-                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary/30 uppercase tracking-widest border-b border-antique/10">Degree</th>
-                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary/30 uppercase tracking-widest border-b border-antique/10">Nakshatra</th>
-                                            <th className="px-6 py-3 text-right text-[9px] font-black text-primary/30 uppercase tracking-widest border-b border-antique/10">House</th>
+                                            <th className="px-6 py-3 text-left text-[9px] font-black text-primary uppercase tracking-widest border-b border-antique/10">Planet</th>
+                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary uppercase tracking-widest border-b border-antique/10">Sign</th>
+                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary uppercase tracking-widest border-b border-antique/10">Degree</th>
+                                            <th className="px-4 py-3 text-left text-[9px] font-black text-primary uppercase tracking-widest border-b border-antique/10">Nakshatra</th>
+                                            <th className="px-6 py-3 text-right text-[9px] font-black text-primary uppercase tracking-widest border-b border-antique/10">House</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-antique/5">
@@ -396,7 +460,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                             <tr key={idx} className="hover:bg-white transition-colors group">
                                                 <td className="px-6 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-lg leading-none opacity-80">{PLANET_SYMBOLS[row.name] || '●'}</span>
+                                                        <span className="text-lg leading-none">{PLANET_SYMBOLS[row.name] || '●'}</span>
                                                         <div className="flex flex-col">
                                                             <span className="text-xs font-black text-primary">{row.name}</span>
                                                             {row.isRetro && (
@@ -406,19 +470,19 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="text-xs font-serif font-bold text-primary/80">{row.sign}</span>
+                                                    <span className="text-xs font-serif font-bold text-primary">{row.sign}</span>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="text-[11px] font-mono text-primary/60">{row.degree}</span>
+                                                    <span className="text-[11px] font-mono text-primary">{row.degree}</span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs text-primary/70 font-medium">{row.nakshatra}</span>
-                                                        <span className="text-[9px] text-primary/30">Pada {row.pada}</span>
+                                                        <span className="text-xs text-primary font-medium">{row.nakshatra}</span>
+                                                        <span className="text-[9px] text-primary">Pada {row.pada}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3 text-right">
-                                                    <span className="px-2 py-1 bg-antique text-[10px] font-black text-primary/50 rounded-md">
+                                                    <span className="px-2 py-1 bg-antique text-[10px] font-black text-primary rounded-md">
                                                         H{row.house}
                                                     </span>
                                                 </td>
@@ -431,32 +495,32 @@ function DailyTransitView({ clientId }: { clientId: string }) {
 
                         {/* Column 3: Insights & Shifts (Log) */}
                         <div className="lg:w-[320px] w-full border-l border-antique bg-white p-6 flex flex-col shrink-0">
-                            <h3 className="text-xs font-black text-primary/40 uppercase tracking-[0.2em] mb-6">Daily Insights</h3>
+                            <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-6">Daily Insights</h3>
 
                             {/* Lagna Box */}
                             <div className="bg-[#D08C60]/5 rounded-2xl p-5 border border-[#D08C60]/10 mb-6">
                                 <p className="text-[9px] font-black text-[#D08C60] uppercase tracking-widest mb-3">Lagna (Ascendant)</p>
                                 <div className="flex items-baseline gap-2">
                                     <h4 className="text-2xl font-serif text-primary font-bold">{currentEntry.ascendant?.sign}</h4>
-                                    <span className="text-xs font-mono text-primary/40">{currentEntry.ascendant?.degrees}</span>
+                                    <span className="text-xs font-mono text-primary">{currentEntry.ascendant?.degrees}</span>
                                 </div>
-                                <p className="text-[10px] text-primary/40 mt-1">Starting point of planetary influence today.</p>
+                                <p className="text-[10px] text-primary mt-1">Starting point of planetary influence today.</p>
                             </div>
 
                             {/* Daily Planetary Log */}
                             <div className="flex-1 flex flex-col min-h-0">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h4 className="text-[10px] font-black text-primary/30 uppercase tracking-widest">Daily Planetary Log</h4>
+                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Daily Planetary Log</h4>
                                     <span className="text-[9px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-black border border-green-100">{insights.length} EVENTS</span>
                                 </div>
 
                                 {/* Date Header */}
                                 <div className="flex items-center gap-2 mb-4 px-1">
-                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary/60 border border-antique/20">
+                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary border border-antique/20">
                                         {formatDateLabel(currentEntry.date || currentEntry.transit_date).day} {formatDateLabel(currentEntry.date || currentEntry.transit_date).monthYear}
                                     </div>
-                                    <span className="text-primary/20">→</span>
-                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary/60 border border-antique/20">
+                                    <span className="text-primary">→</span>
+                                    <div className="px-2 py-1 bg-antique/30 rounded text-[9px] font-bold text-primary border border-antique/20">
                                         {formatDateLabel(nextEntry?.date || nextEntry?.transit_date || '').day} {formatDateLabel(nextEntry?.date || nextEntry?.transit_date || '').monthYear}
                                     </div>
                                 </div>
@@ -486,19 +550,19 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                                                     </span>
                                                 </div>
 
-                                                <p className="text-[11px] font-mono text-primary/80 leading-snug border-l-2 border-antique/20 pl-2 mb-1">
+                                                <p className="text-[11px] font-mono text-primary leading-snug border-l-2 border-antique/20 pl-2 mb-1">
                                                     {event.description}
                                                 </p>
 
                                                 <div className="flex items-center gap-2 mt-1 pl-2">
-                                                    <span className="text-[9px] text-primary/40">
-                                                        {event.from} <span className="text-primary/20">→</span> <span className="font-bold text-primary/60">{event.to}</span>
+                                                    <span className="text-[9px] text-primary">
+                                                        {event.from} <span className="text-primary">→</span> <span className="font-bold text-primary">{event.to}</span>
                                                     </span>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                                        <div className="py-12 flex flex-col items-center justify-center text-center">
                                             <div className="w-12 h-12 rounded-full bg-antique/20 flex items-center justify-center mb-2">
                                                 <span className="text-lg">—</span>
                                             </div>
@@ -511,7 +575,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
 
                             {/* Summary Footer */}
                             <div className="mt-auto pt-6 border-t border-antique/10 text-center">
-                                <p className="text-[9px] font-black text-primary/20 uppercase tracking-[0.3em] mb-2">Transit Summary</p>
+                                <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em] mb-2">Transit Summary</p>
                                 <div className="text-xs font-serif text-primary italic leading-relaxed">
                                     {currentEntry.notes?.chart_type || "Standard Daily Gochar Analysis"}
                                 </div>
@@ -520,9 +584,9 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center py-32 text-center">
-                        <Info className="w-16 h-16 text-primary/10 mb-4" />
+                        <Info className="w-16 h-16 text-primary mb-4" />
                         <h4 className="font-serif text-xl font-bold text-primary">Data Feed Interrupted</h4>
-                        <p className="text-sm text-primary/40 mt-2 max-w-md mx-6">
+                        <p className="text-sm text-primary mt-2 max-w-md mx-6">
                             We couldn't retrieve the transit feed for this duration. Please try a different tab or check back later.
                         </p>
                     </div>
@@ -654,7 +718,7 @@ export default function TransitsPage() {
                         "flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-all",
                         activeTab === 'gochar'
                             ? "bg-white text-primary shadow-sm border border-[#D08C60]/20"
-                            : "text-primary/50 hover:text-primary/80"
+                            : "text-primary hover:text-primary"
                     )}
                 >
                     Gochar
@@ -665,7 +729,7 @@ export default function TransitsPage() {
                         "flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
                         activeTab === 'daily_transit'
                             ? "bg-white text-primary shadow-sm border border-[#D08C60]/20"
-                            : "text-primary/50 hover:text-primary/80"
+                            : "text-primary hover:text-primary"
                     )}
                 >
                     Daily Transit
@@ -687,9 +751,9 @@ export default function TransitsPage() {
 
                     {!isLoadingCharts && transitData.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <Info className="w-12 h-12 text-primary/30 mb-3" />
+                            <Info className="w-12 h-12 text-primary mb-3" />
                             <p className="font-serif text-primary text-lg mb-2">Transit data unavailable</p>
-                            <p className="text-sm text-primary/60 mb-4">Charts are being generated for this client</p>
+                            <p className="text-sm text-primary mb-4">Charts are being generated for this client</p>
                             <button
                                 onClick={refreshCharts}
                                 className="px-4 py-2 bg-[#D08C60] text-white rounded-lg font-medium hover:bg-[#D08C60]/90"
@@ -709,7 +773,7 @@ export default function TransitsPage() {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-red-900 font-serif">Retrograde Alert</h3>
-                                            <p className="text-xs text-red-800/80 mt-0.5">
+                                            <p className="text-xs text-red-800 mt-0.5">
                                                 {retroPlanets.map(p => p.planet).join(', ')} {retroPlanets.length === 1 ? 'is' : 'are'} retrograde.
                                             </p>
                                         </div>
@@ -722,7 +786,7 @@ export default function TransitsPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-primary font-serif">Transit Summary</h3>
-                                        <p className="text-xs text-primary/80 mt-0.5">
+                                        <p className="text-xs text-primary mt-0.5">
                                             {debilitatedPlanets.length > 0
                                                 ? `${debilitatedPlanets.map(p => p.planet).join(', ')} in challenging positions.`
                                                 : 'No major planetary afflictions.'}
@@ -757,7 +821,7 @@ export default function TransitsPage() {
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-xs">
-                                            <thead className="bg-[#3E2A1F]/5 text-primary/70 font-black uppercase text-[9px] tracking-wider">
+                                            <thead className="bg-[#3E2A1F]/5 text-primary font-black uppercase text-[9px] tracking-wider">
                                                 <tr>
                                                     <th className="px-3 py-2 text-left">Planet</th>
                                                     <th className="px-3 py-2 text-left">Sign</th>
@@ -800,7 +864,7 @@ export default function TransitsPage() {
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                             <Info className="w-12 h-12 text-amber-400 mb-3" />
                             <p className="font-serif text-primary text-lg mb-2">Lahiri System Required</p>
-                            <p className="text-sm text-primary/60">
+                            <p className="text-sm text-primary">
                                 Daily Transit is currently available only for the <strong>Lahiri</strong> ayanamsa system.
                                 <br />Switch to Lahiri in your settings to use this feature.
                             </p>
@@ -809,9 +873,9 @@ export default function TransitsPage() {
                         <DailyTransitView clientId={clientDetails.id} />
                     ) : (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <Info className="w-12 h-12 text-primary/20 mb-3" />
+                            <Info className="w-12 h-12 text-primary mb-3" />
                             <p className="font-serif text-primary text-lg">Client ID required</p>
-                            <p className="text-sm text-primary/50 mt-1">Please select a saved client to fetch daily transit data.</p>
+                            <p className="text-sm text-primary mt-1">Please select a saved client to fetch daily transit data.</p>
                         </div>
                     )}
                 </>
