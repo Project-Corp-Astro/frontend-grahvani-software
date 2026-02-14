@@ -98,8 +98,6 @@ function DailyTransitView({ clientId }: { clientId: string }) {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [rawResponse, setRawResponse] = useState<any>(null);
-    const [showDebug, setShowDebug] = useState(false);
 
     // Custom Date Range State
     const [customStart, setCustomStart] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -112,14 +110,13 @@ function DailyTransitView({ clientId }: { clientId: string }) {
     const fetchTransits = useCallback(async (tab: DurationTab) => {
         setLoading(true);
         setError(null);
-        setRawResponse(null);
         setActiveIndex(0); // Reset to today/first day
         try {
             console.log('[DailyTransit] fetchTransits state:', { customStart, customEnd, tab });
             const { start, end } = getSafeDateRange(tab, { start: customStart, end: customEnd });
             console.log(`[DailyTransit] Fetching for ${start} to ${end}`);
             const response = await clientApi.generateDailyTransit(clientId, start, end);
-            setRawResponse(response);
+
 
             let entries: any[] = [];
             if (response?.chartData?.data?.transit_data) {
@@ -441,7 +438,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                         <div className="flex-1 bg-white/60 flex flex-col border-b lg:border-b-0">
                             <div className="px-6 py-4 border-b border-antique flex items-center justify-between shrink-0">
                                 <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em]">Planetary Coordinates</h3>
-                                <button onClick={() => setShowDebug(!showDebug)} className="text-[9px] text-[#D08C60] font-black uppercase hover:underline">Debug Data</button>
+
                             </div>
 
                             <div className="flex-1">
@@ -593,18 +590,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                 )}
             </div>
 
-            {/* Debug Console (Collapsible) */}
-            {showDebug && (
-                <div className="absolute bottom-6 right-6 w-[500px] h-[400px] bg-slate-900 text-green-400 p-4 rounded-2xl font-mono text-[10px] overflow-auto border-2 border-[#D08C60] shadow-2xl z-50">
-                    <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                        <span className="font-bold text-white uppercase">Astrologer Debug Feed</span>
-                        <button onClick={() => setShowDebug(false)} className="text-red-400 font-bold hover:underline">CLOSE</button>
-                    </div>
-                    <pre className="whitespace-pre-wrap">
-                        {rawResponse ? JSON.stringify(rawResponse, null, 2) : "No data captured"}
-                    </pre>
-                </div>
-            )}
+
         </div>
     );
 }
