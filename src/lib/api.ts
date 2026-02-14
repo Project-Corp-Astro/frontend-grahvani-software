@@ -92,6 +92,8 @@ export const CHART_METADATA: Record<string, { name: string; desc: string; catego
     'karkamsha_d1': { name: 'Karkamsha D1', desc: 'Atmakaraka in Navamsha to D1', category: 'lagna' },
     'karkamsha_d9': { name: 'Karkamsha D9', desc: 'Atmakaraka in Navamsha', category: 'lagna' },
     'shadbala': { name: 'Shadbala', desc: 'Six-fold Planetary Strength Analysis', category: 'special' },
+    'mandi': { name: 'Mandi', desc: 'Son of Saturn - Karmic Obstacles', category: 'lagna' },
+    'gulika': { name: 'Gulika', desc: 'Son of Saturn - Instant Karma', category: 'lagna' },
 };
 
 // Dasha system metadata for display
@@ -501,7 +503,7 @@ export const clientApi = {
                     // Synced with backend - removed D6 and D150 (not supported)
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
                     special: ['moon_chart', 'sun_chart', 'sudarshana', 'transit', 'shodasha_varga_signs'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
@@ -521,7 +523,7 @@ export const clientApi = {
                     // No D6 or D150 for Raman
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
                     special: ['moon', 'sun', 'sudarshan', 'transit', 'shodasha_varga_signs'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
@@ -560,7 +562,7 @@ export const clientApi = {
                 charts: {
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
                     special: ['moon_chart', 'sun_chart', 'equal_chart', 'sripathi_bhava', 'kp_bhava', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'karkamsha_d1', 'karkamsha_d9'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
+                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana', 'tribhagi', 'yogini'],

@@ -18,11 +18,11 @@ export interface ProcessedChartData {
 const planetMap: Record<string, string> = {
     'Sun': 'Su', 'Moon': 'Mo', 'Mars': 'Ma', 'Mercury': 'Me',
     'Jupiter': 'Ju', 'Venus': 'Ve', 'Saturn': 'Sa', 'Rahu': 'Ra', 'Ketu': 'Ke',
-    'Uranus': 'Ur', 'Neptune': 'Ne', 'Pluto': 'Pl'
+    'Uranus': 'Ur', 'Neptune': 'Ne', 'Pluto': 'Pl', 'Mandi': 'Man', 'Gulika': 'Gk'
 };
 
 /**
- * Standardizes chart data parsing for all chart types (D1, D9, etc.)
+ * Standardizes chart data parsing for all chart types (D1, D9, etc.)`
  * Extracts Planets and Ascendant Sign ID.
  */
 export function parseChartData(chartData: any): ProcessedChartData {
