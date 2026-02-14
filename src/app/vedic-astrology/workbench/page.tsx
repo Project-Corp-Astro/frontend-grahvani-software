@@ -63,6 +63,8 @@ const CHART_NAMES: Record<string, string> = {
     'equal_bhava': 'Equal Bhava',
     'sudarshana': 'Sudarshan Chakra',
     'transit': 'Transit Chart',
+    'mandi': 'Mandi (Karmic Obstacles)',
+    'gulika': 'Gulika (Instant Karma)',
 };
 
 export default function AnalyticalWorkbenchPage() {
