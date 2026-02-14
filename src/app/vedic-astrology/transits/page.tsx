@@ -5,7 +5,7 @@ import { RefreshCcw, AlertTriangle, ShieldAlert, Loader2, Calendar, Info, Clock,
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { cn, formatPlanetDegree } from "@/lib/utils";
-import NorthIndianChart, { Planet } from '@/components/astrology/NorthIndianChart';
+import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
 import { clientApi } from '@/lib/api';
 import ParchmentDatePicker from '@/components/ui/ParchmentDatePicker';
 
@@ -410,7 +410,7 @@ function DailyTransitView({ clientId }: { clientId: string }) {
 
                             <div className="flex-1 relative aspect-square max-w-[340px] mx-auto min-h-[300px]">
                                 {chartData && (
-                                    <NorthIndianChart
+                                    <ChartWithPopup
                                         planets={chartData.planets}
                                         ascendantSign={chartData.ascendant}
                                         className="w-full h-full"
@@ -785,7 +785,7 @@ export default function TransitsPage() {
                                 <div className="bg-[#FFFFFa] border border-antique rounded-xl p-4">
                                     <h3 className="font-serif font-bold text-primary text-sm text-center mb-3">Gochar Chart</h3>
                                     <div className="aspect-square bg-[#FDFBF7] rounded-lg border border-[#D08C60]/10 p-3 flex items-center justify-center">
-                                        <NorthIndianChart
+                                        <ChartWithPopup
                                             ascendantSign={natalAscendant}
                                             planets={transitPlanets}
                                             className="bg-transparent border-none w-full h-full"
