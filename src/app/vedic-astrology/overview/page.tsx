@@ -27,7 +27,6 @@ import { parseChartData, signIdToName } from '@/lib/chart-helpers';
 import VimshottariTreeGrid from '@/components/astrology/VimshottariTreeGrid';
 import { processDashaResponse } from '@/lib/dasha-utils';
 import BirthPanchanga from '@/components/astrology/BirthPanchanga';
-import AvakhadaChakraView from '@/components/astrology/AvakhadaChakraView';
 
 // Helper for formatting
 const formatDate = (dateStr: string) => {
@@ -78,7 +77,7 @@ export default function VedicOverviewPage() {
     const [zoomedChart, setZoomedChart] = React.useState<{ varga: string, label: string } | null>(null);
     const [dashaData, setDashaData] = useState<DashaResponse | null>(null);
     const [analysisModal, setAnalysisModal] = useState<{ type: 'yoga' | 'dosha', subType: string, label: string } | null>(null);
-    const [showAvakhada, setShowAvakhada] = useState(false);
+
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 
@@ -247,19 +246,21 @@ export default function VedicOverviewPage() {
                                         <hr className="border-antique/40 border-dashed" />
 
                                         <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="font-serif text-[10px] font-bold text-primary tracking-wider flex items-center gap-1.5">
-                                                    <Sparkle className="w-2.5 h-2.5 text-accent-gold animate-pulse" />
-                                                    Birth Panchanga
-                                                </h4>
-                                                <button
-                                                    onClick={() => setShowAvakhada(true)}
-                                                    className="px-2 py-0.5 rounded-md bg-gold-primary/10 text-[9px] font-bold text-[#D08C60] hover:bg-[#D08C60] hover:text-white transition-all flex items-center gap-1"
-                                                >
-                                                    More <ArrowRight className="w-2 h-2" />
-                                                </button>
+                                            <div className="flex items-center gap-1.5">
+                                                <Sparkle className="w-2.5 h-2.5 text-accent-gold animate-pulse" />
+                                                <h4 className="font-serif text-[10px] font-bold text-primary tracking-wider">Birth Panchanga</h4>
                                             </div>
                                             <BirthPanchanga data={birthPanchangaData} />
+
+                                            {/* Full-width CTA button */}
+                                            <Link
+                                                href="/vedic-astrology/panchanga"
+                                                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D08C60] to-[#B8733D] text-white text-[11px] font-bold tracking-wide shadow-md hover:shadow-lg hover:from-[#C07A50] hover:to-[#A6652F] active:scale-[0.98] transition-all"
+                                            >
+                                                <Sparkle className="w-3 h-3" />
+                                                View Full Panchanga Overview
+                                                <ArrowRight className="w-3 h-3" />
+                                            </Link>
                                         </div>
                                     </div>
                                 )}
@@ -374,14 +375,7 @@ export default function VedicOverviewPage() {
                 </div>
             )}
 
-            {/* AVAKHADA MODAL */}
-            {showAvakhada && (
-                <div className="fixed inset-0 z-[2200] flex items-start justify-center pt-32 px-4 pb-4 backdrop-blur-xl bg-ink/80 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="bg-parchment border border-antique rounded-[2rem] max-w-[90vw] w-full h-[85vh] overflow-hidden relative shadow-2xl border-b-8 border-gold-primary flex flex-col">
-                        <AvakhadaChakraView clientId={clientDetails?.id || ""} onClose={() => setShowAvakhada(false)} />
-                    </div>
-                </div>
-            )}
+
 
         </div>
     );
