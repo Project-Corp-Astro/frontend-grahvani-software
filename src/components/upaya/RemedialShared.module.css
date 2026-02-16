@@ -1,0 +1,38 @@
+.dashboardContainer {
+    /* Use Global Parchment Theme Variables */
+    background-color: var(--parchment);
+    color: var(--ink);
+    font-family: var(--font-inter);
+    font-size: 14px;
+    /* Fix "Zoomed In" feel */
+}
+
+/* Enforce Primary Text Only */
+.dashboardContainer h1,
+.dashboardContainer h2,
+.dashboardContainer h3,
+.dashboardContainer h4,
+.dashboardContainer h5,
+.dashboardContainer h6,
+.dashboardContainer p,
+.dashboardContainer span,
+.dashboardContainer div,
+.dashboardContainer li {
+    color: var(--ink) !important;
+    /* Override any Tailwind muted/gray classes */
+}
+
+/* Panels */
+.glassPanel {
+    background-color: rgba(254, 250, 234, 0.6);
+    /* Softwhite with opacity */
+    border: 1px solid var(--border-antique);
+    backdrop-filter: blur(8px);
+    border-radius: 1.5rem;
+    /* MATCH YANTRA ROUNDING */
+}
+
+/* Borders */
+.dashboardContainer * {
+    border-color: var(--border-antique);
+}

@@ -117,22 +117,22 @@ export default function AnalyticalWorkbenchPage() {
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gold-primary/10 flex items-center justify-center"><LayoutDashboard className="w-6 h-6 text-gold-primary" /></div>
                     <div>
-                        <h1 className="text-2xl font-serif font-bold text-ink">Analytical Workbench</h1>
+                        <h1 className="text-2xl font-serif font-bold text-primary">Analytical Workbench</h1>
                         <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted">Deep analysis tools for {clientDetails.name}</p>
-                            <span className="px-2 py-0.5 bg-gold-primary/10 text-gold-dark text-[10px] font-bold uppercase rounded-full border border-gold-primary/30">{settings.ayanamsa}</span>
+                            <p className="text-base text-muted-refined">Deep analysis tools for {clientDetails.name}</p>
+                            <span className="px-2 py-0.5 bg-gold-primary/10 text-gold-dark text-2xs font-bold uppercase rounded-full border border-gold-primary/30">{settings.ayanamsa}</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     {isGeneratingCharts && (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-2xs font-bold rounded-full border border-green-200 animate-pulse">
                             <Loader2 className="w-3 h-3 animate-spin" />
                             Generating...
                         </span>
                     )}
                     {isRefreshingCharts && !isGeneratingCharts && (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-2xs font-bold rounded-full border border-blue-200">
                             <Loader2 className="w-3 h-3 animate-spin" />
                             Refreshing...
                         </span>
@@ -236,12 +236,12 @@ export default function AnalyticalWorkbenchPage() {
                         <h3 className="font-serif font-bold text-ink mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-gold-primary" /> Analysis Context</h3>
                         <div className="space-y-3">
                             <div className="p-3 bg-parchment rounded-xl border border-antique/50">
-                                <p className="text-[10px] uppercase font-bold text-muted mb-1">Active Chart</p>
-                                <p className="text-sm font-bold text-ink">{selectedChartType} — {CHART_NAMES[selectedChartType] || 'Special'}</p>
+                                <p className="text-2xs uppercase font-bold text-muted-refined mb-1">Active Chart</p>
+                                <p className="text-base font-bold text-primary">{selectedChartType} — {CHART_NAMES[selectedChartType] || 'Special'}</p>
                             </div>
                             <div className="p-3 bg-parchment rounded-xl border border-antique/50">
-                                <p className="text-[10px] uppercase font-bold text-muted mb-1">Ascendant Significance</p>
-                                <p className="text-xs text-body leading-relaxed">
+                                <p className="text-2xs uppercase font-bold text-muted-refined mb-1">Ascendant Significance</p>
+                                <p className="text-sm text-secondary leading-relaxed">
                                     {selectedChartType === 'arudha_lagna' ? 'Perceived persona and worldly success.' :
                                         selectedChartType.includes('karkamsha') ? 'The soul\'s true desire and spiritual talent.' :
                                             'Primary physical and general destiny.'}
@@ -256,12 +256,12 @@ export default function AnalyticalWorkbenchPage() {
                     </Link>
 
                     <div className="bg-softwhite border border-antique rounded-2xl p-5">
-                        <h3 className="font-serif font-bold text-ink mb-3 text-sm">Planet Summary</h3>
-                        <div className="text-xs space-y-2 max-h-48 overflow-y-auto pr-2">
+                        <h3 className="font-serif font-bold text-primary mb-3 text-sm">Planet Summary</h3>
+                        <div className="text-sm space-y-2 max-h-48 overflow-y-auto pr-2">
                             {displayPlanets.map((p, i) => (
                                 <div key={i} className="flex justify-between items-center py-1 border-b border-antique last:border-0">
-                                    <span className="font-bold text-copper-900">{p.name}</span>
-                                    <span className="text-muted">{signIdToName[p.signId]} {p.degree}</span>
+                                    <span className="font-bold text-primary">{p.name}</span>
+                                    <span className="text-muted-refined">{signIdToName[p.signId]} {p.degree}</span>
                                 </div>
                             ))}
                         </div>
@@ -276,8 +276,8 @@ function QuickToolCard({ href, icon, title, desc, disabled = false }: { href: st
     return (
         <Link href={disabled ? '#' : href} className={cn("block group p-4 rounded-2xl border transition-all", disabled ? "opacity-50 grayscale cursor-not-allowed border-antique" : "bg-white border-antique hover:border-gold-primary hover:shadow-lg")}>
             <div className="w-10 h-10 rounded-xl bg-gold-primary/10 flex items-center justify-center mb-3 group-hover:bg-gold-primary group-hover:text-white transition-all">{icon}</div>
-            <h3 className="font-bold text-ink text-sm mb-1">{title}</h3>
-            <p className="text-[10px] text-muted leading-tight">{desc}</p>
+            <h3 className="font-bold text-primary text-sm mb-1">{title}</h3>
+            <p className="text-2xs text-muted-refined leading-tight">{desc}</p>
         </Link>
     );
 }
