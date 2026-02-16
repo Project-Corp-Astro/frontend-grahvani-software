@@ -19,6 +19,11 @@ import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
 import { clientApi } from '@/lib/api';
 import { cn } from "@/lib/utils";
+import UpayaDashboard from '@/components/upaya/UpayaDashboard';
+import YantraDashboard from '@/components/upaya/YantraDashboard';
+import LalKitabDashboard from '@/components/upaya/LalKitabDashboard';
+import VedicRemediesDashboard from '@/components/upaya/VedicRemediesDashboard';
+import MantraAnalysisDashboard from '@/components/upaya/MantraAnalysisDashboard';
 
 // ============================================================================
 // Remedy Type Definitions (Lahiri-Exclusive — 5 Endpoints)
@@ -87,6 +92,31 @@ function RemedyDataView({ data, type }: { data: any; type: string }) {
                 <p className="text-sm text-primary">No remedy data available for this type.</p>
             </div>
         );
+    }
+
+    // Special view for Gemstones (Dashboard style)
+    if (type === 'gemstone') {
+        return <UpayaDashboard data={data} />;
+    }
+
+    // Special view for Yantras (Sadhana Dashboard style)
+    if (type === 'yantra') {
+        return <YantraDashboard data={data} />;
+    }
+
+    // Special view for Lal Kitab (Remedial Dashboard style)
+    if (type === 'lal_kit_tab' || type === 'lal_kitab') {
+        return <LalKitabDashboard data={data} />;
+    }
+
+    // Special view for Vedic Remedies (Royal Purple Dashboard style)
+    if (type === 'vedic_remedies' || type === 'vedic') {
+        return <VedicRemediesDashboard data={data} />;
+    }
+
+    // Special view for Mantra Analysis (Sacred Sadhana Dashboard style)
+    if (type === 'mantra') {
+        return <MantraAnalysisDashboard data={data} />;
     }
 
     // Try to extract the actual remedy content from various response formats

@@ -168,7 +168,7 @@ export default function PanchangaOverviewPage() {
             {/* ═══════════════════════════════════════════════════════════ */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div>
-                    <div className="flex items-center gap-2 text-muted-refined text-[11px] mb-1 uppercase tracking-wider font-bold">
+                    <div className="flex items-center gap-2 text-muted-refined text-2xs mb-1 uppercase tracking-wider font-bold">
                         <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
                             <ArrowLeft className="w-3 h-3" />
                             Kundali
@@ -177,7 +177,7 @@ export default function PanchangaOverviewPage() {
                         <span>Panchanga Overview</span>
                     </div>
                     <h1 className="text-2xl font-serif font-black text-ink tracking-tight">Panchanga Overview</h1>
-                    <p className="text-[11px] text-secondary mt-0.5 font-medium italic">
+                    <p className="text-2xs text-secondary mt-0.5 font-medium italic">
                         Birth-time cosmic alignment for <span className="text-primary font-bold not-italic">{clientDetails.name}</span>
                     </p>
                 </div>
@@ -186,33 +186,29 @@ export default function PanchangaOverviewPage() {
             {/* ═══════════════════════════════════════════════════════════ */}
             {/* SECTION 1: CLIENT PROFILE BANNER                          */}
             {/* ═══════════════════════════════════════════════════════════ */}
-            <div className="bg-gradient-to-r from-[#2C1810] to-[#4A2C20] rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#D08C60]/10 rounded-full -mr-32 -mt-32 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gold-primary/5 rounded-full -ml-24 -mb-24 blur-3xl" />
-
+            <div className="bg-[#EAD8B1] border border-antique rounded-2xl p-6 shadow-sm relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
                     {/* Avatar */}
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FFD27D] to-[#D08C60] flex items-center justify-center text-white font-serif font-bold text-2xl shrink-0 shadow-lg">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D08C60] to-[#B8733D] flex items-center justify-center text-white font-serif font-bold text-2xl shrink-0 shadow-lg">
                         {clientDetails.name.charAt(0)}
                     </div>
 
                     {/* Name & Birth Details */}
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFD27D] to-[#D08C60]">
+                        <h2 className="text-xl font-serif font-bold text-primary">
                             {clientDetails.name}
                         </h2>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
-                            <div className="flex items-center gap-1.5 text-parchment/70 text-xs">
-                                <Calendar className="w-3.5 h-3.5 text-[#FFD27D]" />
+                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                                <Calendar className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{formatDate(clientDetails.dateOfBirth)}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-parchment/70 text-xs">
-                                <Clock className="w-3.5 h-3.5 text-[#FFD27D]" />
+                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                                <Clock className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{formatTime(clientDetails.timeOfBirth)}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-parchment/70 text-xs">
-                                <MapPin className="w-3.5 h-3.5 text-[#FFD27D]" />
+                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                                <MapPin className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{clientDetails.placeOfBirth.city}</span>
                             </div>
                         </div>
@@ -220,17 +216,17 @@ export default function PanchangaOverviewPage() {
 
                     {/* Quick Astro Stats */}
                     <div className="flex gap-3 shrink-0">
-                        <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-[9px] uppercase tracking-widest text-[#FFD27D] font-bold mb-1">Lagna</p>
-                            <p className="font-serif text-sm font-bold text-white">{signIdToName[(d1Data.ascendant || 1) as number] || '—'}</p>
+                        <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
+                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Lagna</p>
+                            <p className="font-serif text-sm font-bold text-primary">{signIdToName[(d1Data.ascendant || 1) as number] || '—'}</p>
                         </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-[9px] uppercase tracking-widest text-[#FFD27D] font-bold mb-1">Moon</p>
-                            <p className="font-serif text-sm font-bold text-white">{moonPlanet ? signIdToName[moonPlanet.signId] : '—'}</p>
+                        <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
+                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Moon</p>
+                            <p className="font-serif text-sm font-bold text-primary">{moonPlanet ? signIdToName[moonPlanet.signId] : '—'}</p>
                         </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-[9px] uppercase tracking-widest text-[#FFD27D] font-bold mb-1">Sun</p>
-                            <p className="font-serif text-sm font-bold text-white">{sunPlanet ? signIdToName[sunPlanet.signId] : '—'}</p>
+                        <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
+                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Sun</p>
+                            <p className="font-serif text-sm font-bold text-primary">{sunPlanet ? signIdToName[sunPlanet.signId] : '—'}</p>
                         </div>
                     </div>
                 </div>
@@ -246,7 +242,7 @@ export default function PanchangaOverviewPage() {
                     </div>
                     <div>
                         <h3 className="font-serif text-lg font-bold text-primary leading-tight tracking-wide">Birth Panchanga</h3>
-                        <p className="text-[10px] text-secondary italic font-sans">Five-fold daily cosmic markers at the moment of birth</p>
+                        <p className="text-2xs text-secondary italic font-sans">Five-fold daily cosmic markers at the moment of birth</p>
                     </div>
                 </div>
 
@@ -326,7 +322,7 @@ export default function PanchangaOverviewPage() {
                                         <Sunrise className="w-5 h-5 text-amber-500" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] uppercase tracking-widest text-secondary font-bold mb-0.5">Sunrise</p>
+                                        <p className="text-2xs uppercase tracking-widest text-secondary font-bold mb-0.5">Sunrise</p>
                                         <p className="font-serif text-lg font-bold text-primary">{times.sunrise?.time || '—'}</p>
                                     </div>
                                 </div>
@@ -335,7 +331,7 @@ export default function PanchangaOverviewPage() {
                                         <Sunset className="w-5 h-5 text-indigo-500" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] uppercase tracking-widest text-secondary font-bold mb-0.5">Sunset</p>
+                                        <p className="text-2xs uppercase tracking-widest text-secondary font-bold mb-0.5">Sunset</p>
                                         <p className="font-serif text-lg font-bold text-primary">{times.sunset?.time || '—'}</p>
                                     </div>
                                 </div>
@@ -349,15 +345,15 @@ export default function PanchangaOverviewPage() {
             {/* SECTION 3: AVAKHADA CHAKRA — Full-Width Detailed Grid      */}
             {/* ═══════════════════════════════════════════════════════════ */}
             <div className="border border-antique rounded-2xl overflow-hidden shadow-sm bg-[#FFFCF6]">
-                <div className="bg-gradient-to-r from-[#2C1810] to-[#4A2C20] px-5 py-3.5 flex items-center gap-3">
-                    <div className="p-1.5 bg-white/10 rounded-lg border border-white/10">
-                        <Star className="w-4 h-4 text-[#FFD27D]" />
+                <div className="bg-[#EAD8B1] px-5 py-3 border-b border-antique flex items-center gap-3">
+                    <div className="p-1.5 bg-white/60 rounded-lg shadow-xs">
+                        <Star className="w-4 h-4 text-[#D08C60]" />
                     </div>
                     <div>
-                        <h3 className="font-serif text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFD27D] to-[#D08C60] leading-tight tracking-wide">
+                        <h3 className="font-serif text-lg font-bold text-primary leading-tight tracking-wide">
                             Avakhada Chakra
                         </h3>
-                        <p className="text-[10px] text-parchment/50 font-sans tracking-wide">
+                        <p className="text-2xs text-secondary italic font-sans">
                             Foundational classification — compatibility & character attributes
                         </p>
                     </div>
@@ -465,8 +461,8 @@ function PanchangaCard({
         )}>
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-refined">{label}</p>
-                    <p className="text-[8px] text-muted-refined/50 font-serif">{sanskrit}</p>
+                    <p className="text-2xs font-bold uppercase tracking-widest text-muted-refined">{label}</p>
+                    <p className="text-2xs text-muted-refined/50 font-serif">{sanskrit}</p>
                 </div>
                 <div className="p-1.5 bg-white/80 rounded-lg shadow-xs group-hover:shadow-sm transition-shadow">
                     <Icon className={cn("w-4 h-4", iconColor)} />
@@ -474,9 +470,9 @@ function PanchangaCard({
             </div>
             <p className="font-serif text-lg font-bold text-primary leading-tight">{value}</p>
             {subValue && (
-                <p className="text-[10px] text-secondary font-medium mt-0.5">{subValue}</p>
+                <p className="text-2xs text-secondary font-medium mt-0.5">{subValue}</p>
             )}
-            <p className="text-[9px] text-muted-refined italic mt-2 leading-snug opacity-60 group-hover:opacity-100 transition-opacity">{description}</p>
+            <p className="text-2xs text-muted-refined italic mt-2 leading-snug opacity-60 group-hover:opacity-100 transition-opacity">{description}</p>
         </div>
     );
 }
