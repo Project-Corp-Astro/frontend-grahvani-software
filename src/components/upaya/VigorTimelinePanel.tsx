@@ -92,11 +92,11 @@ export default function VigorTimelinePanel({ strengthAnalysis, dashaDetails }: V
             <div className="space-y-6">
                 <div className="flex justify-between items-end">
                     <div className="flex-1">
-                        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Current Mahadasha</p>
+                        <p className="text-[10px] uppercase tracking-widest font-black mb-1" style={{ color: 'var(--ink)' }}>Current Mahadasha</p>
                         <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--ink)' }}>{currentMaha.planet} Dasha</h4>
                     </div>
                     <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Ends On</p>
+                        <p className="text-[10px] uppercase tracking-widest font-black mb-1" style={{ color: 'var(--ink)' }}>Ends On</p>
                         <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{new Date(currentMaha.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     </div>
                 </div>
@@ -126,7 +126,7 @@ export default function VigorTimelinePanel({ strengthAnalysis, dashaDetails }: V
                             </svg>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--text-muted)' }}>Next Cycle</p>
+                            <p className="text-[10px] uppercase tracking-widest font-black" style={{ color: 'var(--ink)' }}>Next Cycle</p>
                             <p className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{nextDasha?.planet || 'Future'} Dasha</p>
                         </div>
                     </div>

@@ -23,14 +23,14 @@ export default function LalKitabDashboard({ data, className }: LalKitabDashboard
             styles.dashboardContainer,
             className
         )}>
-            {/* Header / Title */}
-            <div className="relative z-10 w-full flex flex-col items-center mb-4 text-center">
-                <h2 className="text-xl font-bold tracking-tight mb-8" style={{ color: 'var(--ink)' }}>
-                    Personalized Lal Kitab Remedial Dashboard | User: {data.user_name || "Sadhaka"}
+            {/* Header / Title (Standardized) */}
+            <div className="relative z-10 w-full flex flex-col items-start border-b pb-4 mb-4" style={{ borderColor: 'var(--border-antique)' }}>
+                <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+                    Lal Kitab : {data.user_name || "Sadhaka"}
                 </h2>
-
-                <PriorityAlert mahadasha="Mercury" antardasha="Saturn" />
             </div>
+
+            <PriorityAlert mahadasha="Mercury" antardasha="Saturn" />
 
             {/* Remedy Grid - Responsive Horizontal Cards */}
             <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-8">

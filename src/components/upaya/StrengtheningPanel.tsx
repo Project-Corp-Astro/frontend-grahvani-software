@@ -20,7 +20,7 @@ export default function StrengtheningPanel({ planetaryStrengths }: Strengthening
 
     return (
         <div className={cn("p-6 h-full backdrop-blur-md", styles.glassPanel)}>
-            <h3 className="text-sm font-medium mb-8" style={{ color: 'var(--text-muted)' }}>2. Long-Term Strengthening (Weak Planets)</h3>
+            <h3 className="text-sm font-black mb-8" style={{ color: 'var(--ink)' }}>2. Long-Term Strengthening (Weak Planets)</h3>
 
             <div className="space-y-6">
                 {weakPlanets.map(([name, data]: [string, any], idx) => {
@@ -33,13 +33,13 @@ export default function StrengtheningPanel({ planetaryStrengths }: Strengthening
                         <div key={name} className="flex items-center justify-between group">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full overflow-hidden border flex items-center justify-center p-1 relative shadow-sm" style={{ backgroundColor: 'rgba(255,255,255,0.8)', borderColor: 'var(--border-antique)' }}>
-                                    <div className={cn("w-full h-full rounded-full opacity-60", getPlanetGradient(name))} />
+                                    <div className={cn("w-full h-full rounded-full", getPlanetGradient(name))} />
                                     {/* Icon or Symbol could go here */}
                                     <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: 'var(--ink)' }}>{name.substring(0, 1)}</span>
                                 </div>
                                 <div>
-                                    <h5 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>{name} <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>({data.strength_category})</span></h5>
-                                    <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>Target: <span style={{ color: 'var(--ink)' }}>{getTargetCount(name).toLocaleString()}</span></p>
+                                    <h5 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>{name} <span className="text-[10px] font-black" style={{ color: 'var(--ink)' }}>({data.strength_category})</span></h5>
+                                    <p className="text-[10px] font-black mt-0.5" style={{ color: 'var(--ink)' }}>Target: <span>{getTargetCount(name).toLocaleString()}</span></p>
 
                                     {/* Mini linear progress bar as shown in image */}
                                     <div className="mt-2 w-32 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>

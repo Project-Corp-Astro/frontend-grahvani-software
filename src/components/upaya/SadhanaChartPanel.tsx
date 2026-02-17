@@ -6,24 +6,18 @@ import { ShieldCheck, ShieldAlert } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import styles from './RemedialShared.module.css';
 
+import { parseChartData } from '@/lib/chart-helpers';
+
 interface SadhanaChartPanelProps {
     chartData: any;
     doshaStatus: any;
 }
 
 export default function SadhanaChartPanel({ chartData, doshaStatus }: SadhanaChartPanelProps) {
-    if (!chartData) return null;
+    const { planets, ascendant: ascendantSign } = parseChartData(chartData);
 
-    // Map planets for NorthIndianChart
-    const planets = Object.entries(chartData.planets).map(([name, data]: [string, any]) => ({
-        name: name.substring(0, 2), // Su, Mo, etc.
-        signId: data.sign_num + 1,
-        degree: `${Math.floor(data.degree)}°`,
-        isRetro: data.is_retrograde,
-        house: data.house
-    }));
-
-    const ascendantSign = chartData.ascendant.sign_num + 1;
+    // Only return null if we absolutely have no planetary data
+    if (planets.length === 0) return null;
 
     // Check if all doshas are false
     const isAllClear = Object.values(doshaStatus).every(v => v === false);

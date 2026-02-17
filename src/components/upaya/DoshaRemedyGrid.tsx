@@ -75,7 +75,7 @@ const DoshaRemedyGrid: React.FC<DoshaRemedyGridProps> = ({ doshaRemedies, doshaA
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {doshaList.map(([key, dosha], idx) => {
                 const styles = getSeverityStyles(dosha.severity);
                 const analysis = doshaAnalysis[key];
@@ -85,22 +85,22 @@ const DoshaRemedyGrid: React.FC<DoshaRemedyGridProps> = ({ doshaRemedies, doshaA
                     switch (severity.toLowerCase()) {
                         case 'high':
                             return {
-                                container: 'bg-rose-50/50 border-rose-200 hover:border-rose-300',
-                                iconBg: 'bg-rose-100 text-rose-600',
+                                container: 'bg-rose-50/20 border-rose-200/50 hover:border-rose-400/50',
+                                iconBg: 'bg-rose-100/50 text-rose-600',
                                 badge: 'bg-rose-100 text-rose-700 border-rose-200',
                                 accent: 'text-rose-700'
                             };
                         case 'medium':
                             return {
-                                container: 'bg-amber-50/50 border-amber-200 hover:border-amber-300',
-                                iconBg: 'bg-amber-100 text-amber-600',
+                                container: 'bg-amber-50/20 border-amber-200/50 hover:border-amber-400/50',
+                                iconBg: 'bg-amber-100/50 text-amber-600',
                                 badge: 'bg-amber-100 text-amber-700 border-amber-200',
                                 accent: 'text-amber-700'
                             };
                         default:
                             return {
-                                container: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-300',
-                                iconBg: 'bg-emerald-100 text-emerald-600',
+                                container: 'bg-emerald-50/20 border-emerald-200/50 hover:border-emerald-400/50',
+                                iconBg: 'bg-emerald-100/50 text-emerald-600',
                                 badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
                                 accent: 'text-emerald-700'
                             };
@@ -112,42 +112,40 @@ const DoshaRemedyGrid: React.FC<DoshaRemedyGridProps> = ({ doshaRemedies, doshaA
                 return (
                     <motion.div
                         key={idx}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + idx * 0.1 }}
+                        transition={{ delay: 0.05 + idx * 0.05 }}
                         className={cn(
-                            "group relative rounded-2xl border p-6 transition-all duration-300",
+                            "group relative rounded-2xl border p-5 transition-all duration-300",
                             lightStyles.container,
-                            "hover:shadow-md hover:bg-white/80"
+                            "hover:shadow-sm hover:bg-white"
                         )}
                     >
                         {/* Status Pin */}
-                        <div className="absolute top-4 right-4 flex items-center gap-2">
-                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border", lightStyles.badge)}>
+                        <div className="absolute top-3 right-3 flex items-center gap-2">
+                            <span className={cn("px-1.5 py-0.5 rounded-[4px] text-[8px] font-black uppercase tracking-widest border", lightStyles.badge)}>
                                 {dosha.severity}
                             </span>
                         </div>
 
-                        <div className="flex items-start gap-4 mb-6">
-                            <div className={cn("p-3 rounded-xl transition-transform group-hover:scale-105", lightStyles.iconBg)}>
-                                {styles.icon}
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className={cn("p-2 rounded-lg transition-transform group-hover:scale-105", lightStyles.iconBg)}>
+                                <div className="w-5 h-5 flex items-center justify-center">
+                                    {styles.icon}
+                                </div>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>{dosha.dosha_name}</h3>
-                                <p className="text-sm mt-1 leading-relaxed" style={{ color: 'var(--text-body)' }}>{dosha.description}</p>
+                                <h3 className="text-base font-bold tracking-tight leading-tight" style={{ color: 'var(--ink)' }}>{dosha.dosha_name}</h3>
+                                <p className="text-[11px] mt-1 leading-normal" style={{ color: 'var(--text-body)' }}>{dosha.description}</p>
                             </div>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {/* Impact Areas */}
                             <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Activity className="w-3 h-3" style={{ color: lightStyles.accent }} />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Major Impacts</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-1.5">
                                     {dosha.impact_areas.map((area, i) => (
-                                        <span key={i} className="text-[11px] px-3 py-1 bg-white/60 rounded-full border font-medium" style={{ color: 'var(--text-body)', borderColor: 'var(--border-antique)' }}>
+                                        <span key={i} className="text-[9px] px-2 py-0.5 bg-white/40 rounded-md border font-bold uppercase tracking-tight" style={{ color: 'var(--ink)', borderColor: 'var(--border-antique)' }}>
                                             {area}
                                         </span>
                                     ))}
@@ -156,22 +154,22 @@ const DoshaRemedyGrid: React.FC<DoshaRemedyGridProps> = ({ doshaRemedies, doshaA
 
                             {/* Technical Analysis / Cancellations */}
                             {analysis && (analysis.cancellation_factors?.length || analysis.positive_note) && (
-                                <div className="p-4 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.4)', borderColor: 'var(--border-antique)' }}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FileWarning className="w-3 h-3 text-indigo-600" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">Neutralizing Factors</span>
+                                <div className="p-3 rounded-xl border bg-indigo-50/20" style={{ borderColor: 'rgba(99, 102, 241, 0.1)' }}>
+                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                        <FileWarning className="w-2.5 h-2.5 text-indigo-500" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-600">Neutralizing Factors</span>
                                     </div>
-                                    <ul className="space-y-1.5">
+                                    <ul className="space-y-1">
                                         {analysis.cancellation_factors?.map((factor, i) => (
-                                            <li key={i} className="text-[11px] flex items-start gap-2" style={{ color: 'var(--text-body)' }}>
-                                                <span className="text-emerald-600 mt-0.5">•</span>
+                                            <li key={i} className="text-[10px] flex items-start gap-1.5" style={{ color: 'var(--text-body)' }}>
+                                                <span className="text-indigo-400 mt-0.5">•</span>
                                                 {factor}
                                             </li>
                                         ))}
                                         {analysis.positive_note && (
-                                            <li className="text-[11px] italic flex items-start gap-2 mt-1 text-emerald-700">
-                                                <Compass className="w-2.5 h-2.5 mt-0.5" />
-                                                {analysis.positive_note}
+                                            <li className="text-[10px] italic flex items-start gap-1.5 mt-1 text-emerald-700">
+                                                <Compass className="w-2.5 h-2.5 mt-0.5 shrink-0" />
+                                                <span>{analysis.positive_note}</span>
                                             </li>
                                         )}
                                     </ul>
@@ -179,21 +177,21 @@ const DoshaRemedyGrid: React.FC<DoshaRemedyGridProps> = ({ doshaRemedies, doshaA
                             )}
 
                             {/* Remedial Steps */}
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <HandHeart className="w-3 h-3" style={{ color: lightStyles.accent }} />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Prescribed Remedies</span>
+                            <div className="border-t pt-3" style={{ borderColor: 'rgba(0,0,0,0.03)' }}>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <HandHeart className="w-2.5 h-2.5" style={{ color: lightStyles.accent }} />
+                                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: 'var(--ink)' }}>Prescribed Action</span>
                                 </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                    {dosha.remedies.slice(0, 4).map((remedy, i) => (
-                                        <div key={i} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border border-transparent hover:border-purple-200 hover:bg-white transition-colors cursor-default">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                                            <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{remedy}</span>
+                                <div className="grid grid-cols-1 gap-1.5">
+                                    {dosha.remedies.slice(0, 3).map((remedy, i) => (
+                                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/40 rounded-md border border-transparent hover:border-purple-100 hover:bg-white transition-all cursor-default">
+                                            <div className="w-1 h-1 rounded-full bg-purple-400 shrink-0" />
+                                            <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>{remedy}</span>
                                         </div>
                                     ))}
-                                    {dosha.remedies.length > 4 && (
-                                        <button className="text-[11px] font-bold uppercase tracking-widest mt-2 flex items-center gap-1 hover:opacity-75 transition-colors ml-4" style={{ color: lightStyles.accent }}>
-                                            +{dosha.remedies.length - 4} More specific actions <ChevronRight className="w-3 h-3" />
+                                    {dosha.remedies.length > 3 && (
+                                        <button className="text-[9px] font-black uppercase tracking-widest mt-1 flex items-center gap-1 hover:opacity-75 transition-colors ml-3" style={{ color: lightStyles.accent }}>
+                                            +{dosha.remedies.length - 3} More <ChevronRight className="w-2.5 h-2.5" />
                                         </button>
                                     )}
                                 </div>
