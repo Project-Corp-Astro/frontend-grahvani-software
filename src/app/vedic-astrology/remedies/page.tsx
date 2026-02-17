@@ -303,36 +303,6 @@ export default function RemediesPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* Header */}
-            <div>
-                <div className="flex items-center gap-2 text-primary text-sm mb-1">
-                    <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
-                        <ArrowLeft className="w-3 h-3" />
-                        Kundali
-                    </Link>
-                    <span>/</span>
-                    <span>Upaya (Remedies)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-serif font-bold text-primary flex items-center gap-3">
-                            <Scroll className="w-7 h-7 text-gold-primary" />
-                            Upaya — Karmic Prescriptions
-                        </h1>
-                        <p className="text-sm text-primary mt-1">
-                            Remedial measures for <span className="font-medium">{clientDetails.name}</span> based on planetary analysis
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleRefresh}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-antique rounded-xl text-sm text-muted hover:text-ink hover:border-gold-primary/30 transition-all disabled:opacity-50"
-                    >
-                        <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                        Refresh
-                    </button>
-                </div>
-            </div>
 
             {/* Remedy Type Tabs */}
             <div className="flex flex-wrap gap-2 p-1 bg-parchment rounded-xl border border-antique">
@@ -353,19 +323,6 @@ export default function RemediesPage() {
                 ))}
             </div>
 
-            {/* Active Tab Description */}
-            <div className="bg-gold-primary/5 border border-gold-primary/15 rounded-xl px-5 py-3">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gold-primary/10 rounded-lg flex items-center justify-center text-gold-dark">
-                        {activeRemedyTab.icon}
-                    </div>
-                    <div>
-                        <h3 className="font-serif font-bold text-primary text-sm">{activeRemedyTab.name}</h3>
-                        <p className="text-[10px] text-gold-dark/60 font-medium">{activeRemedyTab.sanskrit}</p>
-                        <p className="text-xs text-primary mt-0.5">{activeRemedyTab.description}</p>
-                    </div>
-                </div>
-            </div>
 
             {/* Content Area */}
             <div className="min-h-[300px]">

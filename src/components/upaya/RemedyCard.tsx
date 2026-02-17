@@ -37,8 +37,8 @@ export default function RemedyCard({
         if (lowerRemedy.includes('tilak') || lowerRemedy.includes('forehead')) return <Hand className="w-10 h-10 text-slate-400" />;
 
         // Default planet icons
-        if (lowerPlanet === 'ketu') return <EyeOff className="w-10 h-10 text-slate-400 opacity-50" />;
-        return <Sparkles className="w-10 h-10 text-slate-400 opacity-50" />;
+        if (lowerPlanet === 'ketu') return <EyeOff className="w-10 h-10 text-slate-400" />;
+        return <Sparkles className="w-10 h-10 text-slate-400" />;
     };
 
     const isKetu = planet.toLowerCase() === 'ketu';
@@ -71,31 +71,31 @@ export default function RemedyCard({
                     <div className="grid grid-cols-1 gap-2">
                         {/* Diagnosis */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Diagnosis:</span>
+                            <span className="text-[10px] font-black uppercase text-slate-600 tracking-tighter">Diagnosis:</span>
                             <span className="text-[11px] font-bold text-slate-700 leading-tight">{diagnosis}</span>
                         </div>
 
                         {/* Remedy */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Remedy:</span>
+                            <span className="text-[10px] font-black uppercase text-slate-600 tracking-tighter">Remedy:</span>
                             <span className="text-[11px] font-bold text-blue-900 leading-tight">{remedyText}</span>
                         </div>
 
                         {/* Metadata Grid */}
                         <div className="grid grid-cols-2 gap-4 mt-1">
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Time:</span>
+                                <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">Time:</span>
                                 <span className="text-[10px] font-bold text-slate-600">{time}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Constraint:</span>
+                                <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">Constraint:</span>
                                 <span className="text-[10px] font-bold text-slate-600">{constraint}</span>
                             </div>
                         </div>
 
                         {/* Status bar */}
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Status: {status}</span>
+                            <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">Status: {status}</span>
                             {status === 'Recommended' ? (
                                 <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-sm">
                                     <Check className="w-3.5 h-3.5 stroke-[4]" />
@@ -110,7 +110,7 @@ export default function RemedyCard({
                                 </div>
                             ) : (
                                 <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                                 </div>
                             )}
                         </div>

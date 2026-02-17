@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Orbit,
     ArrowLeft,
@@ -201,7 +202,7 @@ export default function ShadbalaPage() {
     if (ayanamsa !== 'Lahiri') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <Orbit className="w-12 h-12 text-primary mb-4 opacity-20" />
+                <Orbit className="w-12 h-12 text-primary mb-4" />
                 <h2 className="text-xl font-serif font-bold text-primary mb-2">Shadbala Analysis — Lahiri Only</h2>
                 <p className="text-primary text-sm max-w-md">
                     Shadbala (Six-fold planetary strength) analysis is currently available exclusively with the <strong>Lahiri Ayanamsa</strong>.
@@ -218,28 +219,25 @@ export default function ShadbalaPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-12">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-8" style={{ borderColor: 'var(--border-antique)' }}>
                 <div>
-                    <div className="flex items-center gap-2 text-primary text-xs mb-1">
-                        <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors">Kundali</Link>
-                        <span>/</span>
-                        <span>Shadbala</span>
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="px-2 py-0.5 rounded-md bg-gold-primary/10 border border-gold-primary/20">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gold-dark">Shadbala Metric</span>
+                        </div>
                     </div>
-                    <h1 className="text-2xl font-serif font-bold text-primary flex items-center gap-3">
-                        <Orbit className="w-7 h-7 text-gold-primary" />
-                        Shadbala — Planetary Strengths
+                    <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3" style={{ color: 'var(--ink)' }}>
+                        Celestial Potency: {clientDetails.name}
                     </h1>
-                    <p className="text-sm text-primary mt-1">
-                        Comprehensive six-fold strength analysis for <span className="font-medium text-primary">{clientDetails.name}</span>
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-2">Comprehensive Six-Fold Planetary Strength Analysis</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => fetchShadbala(true)}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-antique rounded-xl text-sm font-medium text-primary hover:text-gold-dark hover:border-gold-primary/30 transition-all disabled:opacity-50 shadow-sm"
+                        className="group flex items-center gap-2 px-6 py-3 bg-white border border-antique rounded-2xl text-[11px] font-black uppercase tracking-widest text-primary hover:text-gold-dark hover:border-gold-primary/30 transition-all disabled:opacity-50 shadow-sm"
                     >
-                        <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+                        <RefreshCw className={cn("w-4 h-4 transition-transform group-hover:rotate-180 duration-500", loading && "animate-spin")} />
                         Recalculate
                     </button>
                 </div>
@@ -263,7 +261,7 @@ export default function ShadbalaPage() {
                 <ShadbalaDashboard displayData={data} rawResponse={rawResponse} />
             ) : (
                 <div className="p-10 bg-parchment/30 border border-antique rounded-3xl text-center lg:py-32">
-                    <Orbit className="w-10 h-10 text-primary mx-auto mb-4 opacity-30" />
+                    <Orbit className="w-10 h-10 text-primary mx-auto mb-4" />
                     <p className="text-sm text-primary">No Shadbala data found for this chart.</p>
                 </div>
             )}
@@ -283,106 +281,144 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
     if (!strongest || !weakest) return null;
 
     return (
-        <div className="space-y-8">
-            {/* Top Summaries */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white border border-antique p-5 rounded-2xl shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110" />
-                    <div className="relative z-10 flex flex-col h-full">
-                        <div className="flex items-center gap-2 mb-4">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <h3 className="text-[10px] font-bold text-primary uppercase tracking-widest">Strongest</h3>
+        <div className="space-y-6">
+            {/* Top Section: Quick Insights & Guide */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Summary Cards */}
+                <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white border border-antique p-4 rounded-2xl shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:scale-110" />
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className="flex items-center gap-2 mb-3">
+                                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                                <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Strongest</h3>
+                            </div>
+                            <div className="flex items-baseline gap-2 mt-auto">
+                                <span className="text-xl font-serif font-black text-primary">{strongest.planet}</span>
+                                <span className="text-xs font-black text-emerald-600">{strongest.rupaBala.toFixed(2)}</span>
+                            </div>
                         </div>
-                        <div className="flex items-baseline gap-2 mt-auto">
-                            <span className="text-2xl font-serif font-bold text-primary">{strongest.planet}</span>
-                            <span className="text-sm font-bold text-emerald-600">{strongest.rupaBala.toFixed(2)}</span>
+                    </div>
+
+                    <div className="bg-white border border-antique p-4 rounded-2xl shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:scale-110" />
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className="flex items-center gap-2 mb-3">
+                                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
+                                <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Weakest</h3>
+                            </div>
+                            <div className="flex items-baseline gap-2 mt-auto">
+                                <span className="text-xl font-serif font-black text-primary">{weakest.planet}</span>
+                                <span className="text-xs font-black text-rose-500">{weakest.rupaBala.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white border border-antique p-5 rounded-2xl shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110" />
-                    <div className="relative z-10 flex flex-col h-full">
-                        <div className="flex items-center gap-2 mb-4">
-                            <TrendingDown className="w-4 h-4 text-red-500" />
-                            <h3 className="text-[10px] font-bold text-primary uppercase tracking-widest">Weakest</h3>
-                        </div>
-                        <div className="flex items-baseline gap-2 mt-auto">
-                            <span className="text-2xl font-serif font-bold text-primary">{weakest.planet}</span>
-                            <span className="text-sm font-bold text-red-500">{weakest.rupaBala.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
-
-
-            </div>
-
-            {/* Visual Strength Bars */}
-            <div className="bg-white border border-antique rounded-3xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-antique bg-parchment/10 flex items-center justify-between">
-                    <h3 className="font-serif font-bold text-primary flex items-center gap-2 text-lg">
-                        <BarChart2 className="w-5 h-5 text-gold-primary" />
-                        Shadbala Strength Profile
-                    </h3>
-                </div>
-                <div className="p-8 space-y-8">
-                    {displayData.planets.map((p) => {
-                        const theme = PLANET_THEMES[p.planet];
-                        const scorePercentage = Math.min((p.rupaBala / 10) * 100, 100);
-                        const minRequiredRupa = p.minBalaRequired / 60;
-                        const minPercentage = (minRequiredRupa / 10) * 100;
-
-                        return (
-                            <div key={p.planet} className="relative">
-                                <div className="flex items-end justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-serif font-bold text-lg shadow-sm border", theme.bg, theme.text, theme.border)}>
-                                            {p.planet[0]}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-serif font-bold text-primary leading-none">{p.planet}</h4>
-                                            <p className="text-[10px] text-primary font-medium uppercase tracking-tighter mt-1">Rank #{p.rank} • {p.isStrong ? "POTENT" : "WEAK"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xl font-bold font-serif text-primary">{p.rupaBala.toFixed(2)}</span>
-                                        <span className="text-[10px] font-bold text-primary ml-1 uppercase">Rupas</span>
-                                    </div>
+                {/* Interpreting Guide - Compacted and moved up */}
+                <div className="lg:col-span-8">
+                    <div className="bg-gradient-to-br from-parchment/30 to-white/50 border border-antique/40 rounded-2xl p-5 h-full flex flex-col justify-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="flex gap-3">
+                                <div className="p-2 bg-emerald-50 rounded-xl h-fit border border-emerald-100">
+                                    <TrendingUp className="w-4 h-4 text-emerald-600" />
                                 </div>
-                                <div className="relative h-5 w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                                    {/* Sub-Bala segments (optional visualization) - Here we just use a gradient */}
-                                    <div
-                                        className="h-full transition-all duration-1000 ease-out flex shadow-inner shadow-black/5"
-                                        style={{ width: `${scorePercentage}%`, backgroundColor: theme.color }}
-                                    />
-
-                                    {/* Requirement Marker */}
-                                    <div
-                                        className="absolute top-0 bottom-0 w-[3px] bg-red-400/80 z-10 border-r border-white/20"
-                                        style={{ left: `${minPercentage}%` }}
-                                        title={`Required: ${minRequiredRupa}`}
-                                    />
-                                </div>
-                                <div className="flex justify-between mt-1 text-[9px] font-bold uppercase tracking-widest text-primary">
-                                    <span>Ratio: {p.ratio.toFixed(2)}x</span>
-                                    <span>Threshold: {minRequiredRupa.toFixed(2)}</span>
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black uppercase tracking-wider text-primary">Strength Ratios</h4>
+                                    <p className="text-[11px] font-medium text-primary leading-tight">A ratio {">"} 1.0 indicates cosmic potency exceeding base requirements.</p>
                                 </div>
                             </div>
-                        );
-                    })}
+                            <div className="flex gap-3">
+                                <div className="p-2 bg-indigo-50 rounded-xl h-fit border border-indigo-100">
+                                    <Layers className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black uppercase tracking-wider text-primary">Virupa Metric</h4>
+                                    <p className="text-[11px] font-medium text-primary leading-tight">Scroll to the detailed analysis matrix for the 6-fold source breakdown.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Ishta & Kashta Phala Visualization */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white border border-antique rounded-3xl shadow-sm overflow-hidden">
-                    <div className="p-5 border-b border-antique bg-parchment/10">
-                        <h3 className="font-serif font-bold text-primary flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-emerald-600" />
-                            Auspicious vs Inauspicious
-                        </h3>
+            {/* Middle Section: Main Profiles & Auspicious Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                {/* Shadbala Strength Profile - Refined to 2 Columns */}
+                <div className="lg:col-span-8 bg-white border border-antique rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-5 border-b border-antique bg-parchment/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <BarChart2 className="w-4 h-4 text-gold-primary" />
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Planetary Strength Profile</h3>
+                        </div>
                     </div>
-                    <div className="p-6 space-y-6">
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 flex-1">
+                        {displayData.planets.map((p) => {
+                            const theme = PLANET_THEMES[p.planet];
+                            const scorePercentage = Math.min((p.rupaBala / 10) * 100, 100);
+                            const minRequiredRupa = p.minBalaRequired / 60;
+                            const minPercentage = (minRequiredRupa / 10) * 100;
+
+                            return (
+                                <div key={p.planet} className="relative group p-2 rounded-xl transition-all hover:bg-parchment/5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center font-serif font-black text-base shadow-sm border transition-transform group-hover:scale-110", theme.bg, theme.text, theme.border)}>
+                                                {p.planet[0]}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black tracking-tight" style={{ color: 'var(--ink)' }}>{p.planet}</h4>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="text-[8px] font-black uppercase tracking-tighter">Rank #{p.rank}</span>
+                                                    <span className={cn(
+                                                        "text-[7px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-widest",
+                                                        p.isStrong ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
+                                                    )}>
+                                                        {p.isStrong ? "Potent" : "Weak"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-lg font-black font-serif" style={{ color: 'var(--ink)' }}>{p.rupaBala.toFixed(2)}</span>
+                                            <span className="text-[8px] font-black ml-1 uppercase">RP</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-100/50">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${scorePercentage}%` }}
+                                            transition={{ duration: 1, ease: "easeOut" }}
+                                            className="h-full shadow-inner"
+                                            style={{ backgroundColor: theme.color }}
+                                        />
+                                        <div
+                                            className="absolute top-0 bottom-0 w-[2px] bg-red-400 z-10"
+                                            style={{ left: `${minPercentage}%` }}
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between mt-1.5 text-[8px] font-black uppercase tracking-widest">
+                                        <span>Ratio: {p.ratio.toFixed(2)}x</span>
+                                        <span>Min: {minRequiredRupa.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Auspicious vs Inauspicious - Compacted into side block */}
+                <div className="lg:col-span-4 bg-white border border-antique rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-5 border-b border-antique bg-parchment/10">
+                        <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-emerald-600" />
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Ishta & Kashta</h3>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-center">
                         {displayData.planets.map(p => {
                             if (!p.ishtaKashta) return null;
                             const ishtaVal = p.ishtaKashta.ishta;
@@ -391,78 +427,56 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                             const ishtaWidth = (ishtaVal / total) * 100;
 
                             return (
-                                <div key={`phala-${p.planet}`}>
-                                    <div className="flex justify-between items-center mb-2 px-1">
-                                        <span className="text-xs font-bold text-primary font-serif">{p.planet}</span>
-                                        <div className="flex gap-4 text-[9px] font-bold uppercase">
-                                            <span className="text-emerald-600">Ishta: {ishtaVal.toFixed(1)}</span>
-                                            <span className="text-red-500">Kashta: {kashtaVal.toFixed(1)}</span>
+                                <div key={`phala-${p.planet}`} className="group">
+                                    <div className="flex justify-between items-center mb-1.5 px-0.5">
+                                        <span className="text-[10px] font-black text-primary tracking-tight uppercase">{p.planet}</span>
+                                        <div className="flex gap-2 text-[8px] font-black uppercase tracking-tighter">
+                                            <span className="text-emerald-600">I: {ishtaVal.toFixed(1)}</span>
+                                            <span className="text-rose-500">K: {kashtaVal.toFixed(1)}</span>
                                         </div>
                                     </div>
-                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                                        <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${ishtaWidth}%` }} />
-                                        <div className="h-full bg-red-500 transition-all duration-1000 flex-1" />
+                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner group-hover:scale-[1.02] transition-transform">
+                                        <div className="h-full bg-emerald-500" style={{ width: `${ishtaWidth}%` }} />
+                                        <div className="h-full bg-rose-500 flex-1" />
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
                 </div>
-
-                <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-parchment/30 to-white border border-antique rounded-3xl p-8 h-full flex flex-col justify-center">
-                        <h3 className="font-serif font-bold text-primary text-xl mb-4">Interpreting Results</h3>
-                        <div className="space-y-4">
-                            <div className="flex gap-4">
-                                <div className="p-2 bg-emerald-50 rounded-xl h-fit">
-                                    <TrendingUp className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-primary">Strength Ratios</h4>
-                                    <p className="text-xs text-primary leading-relaxed">A ratio {'>'} 1.0 means the planet has exceeded its minimum cosmic requirement. These planets act as pillars of the character.</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="p-2 bg-amber-50 rounded-xl h-fit">
-                                    <Layers className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-primary">Virupa Breakdown</h4>
-                                    <p className="text-xs text-primary leading-relaxed">Scroll down to the table to see exactly which of the 6 sources (Directional, Positional, etc.) contribute most to your planets.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            {/* Breakdown Table */}
+            {/* Bottom Section: Analytical Table breakdown */}
             <div className="bg-white border border-antique rounded-3xl shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-antique bg-parchment/5 flex items-center gap-2">
+                    <Compass className="w-4 h-4 text-indigo-500" />
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Six-Fold Virupa Breakdown</h3>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50 border-b border-antique">
-                                <th className="p-4 font-serif text-sm font-bold text-primary">Planet</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Positional</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Directional</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Temporal</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Motional</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Natural</th>
-                                <th className="p-4 text-[10px] font-bold text-primary uppercase text-center">Aspectual</th>
-                                <th className="p-4 text-[10px] font-bold text-gold-dark uppercase text-center bg-gold-primary/5">Total (V)</th>
+                            <tr className="bg-slate-50/50 border-b border-antique">
+                                <th className="p-4 font-black text-[10px] uppercase tracking-widest text-primary">Source Components</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Positional</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Directional</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Temporal</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Motional</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Natural</th>
+                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Aspectual</th>
+                                <th className="p-4 text-[10px] font-black text-gold-dark uppercase text-center bg-gold-primary/5 tracking-widest">Total Virupa</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sortedPlanets.map((p) => (
-                                <tr key={`table-${p.planet}`} className="border-b border-antique last:border-0 hover:bg-parchment/5">
-                                    <td className="p-4 font-serif font-bold text-primary">{p.planet}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.sthalaBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.digBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.kalaBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.cheshtaBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.naisargikaBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs text-center text-primary">{p.drikBala.toFixed(1)}</td>
-                                    <td className="p-4 text-xs font-bold text-center text-gold-dark bg-gold-primary/5">{p.totalBala.toFixed(1)}</td>
+                                <tr key={`table-${p.planet}`} className="border-b border-antique last:border-0 hover:bg-parchment/5 transition-colors">
+                                    <td className="p-4 font-serif font-black text-primary text-sm">{p.planet}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.sthalaBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.digBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.kalaBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.cheshtaBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.naisargikaBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-primary">{p.drikBala.toFixed(0)}</td>
+                                    <td className="p-4 text-xs font-black text-center text-gold-dark bg-gold-primary/5 tracking-tight">{p.totalBala.toFixed(1)}</td>
                                 </tr>
                             ))}
                         </tbody>

@@ -61,7 +61,7 @@ const VedicStrengthPanel: React.FC<VedicStrengthPanelProps> = ({ planetaryStreng
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {planets.map(([name, data], idx) => (
                     <motion.div
                         key={name}
@@ -69,35 +69,32 @@ const VedicStrengthPanel: React.FC<VedicStrengthPanelProps> = ({ planetaryStreng
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         className={cn(
-                            "group border rounded-xl p-4 transition-all",
-                            data.is_weak ? "border-rose-200 bg-rose-50/50" : "border-emerald-200 bg-emerald-50/50 hover:border-purple-200 hover:bg-white/60"
+                            "group border rounded-2xl p-4 transition-all",
+                            data.is_weak
+                                ? "border-rose-200 bg-rose-50/30"
+                                : "border-emerald-100 bg-emerald-50/20 hover:border-purple-200 hover:bg-white"
                         )}
                     >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex justify-between items-start mb-3">
                             <div>
-                                <h4 className="font-bold uppercase tracking-wider text-sm transition-colors" style={{ color: 'var(--ink)' }}>{name}</h4>
+                                <h4 className="font-bold uppercase tracking-wider text-xs" style={{ color: 'var(--ink)' }}>{name}</h4>
                                 <div className="flex items-center gap-1 mt-1">
-                                    {data.is_weak ? (
-                                        <TrendingDown className="w-3 h-3 text-rose-500" />
-                                    ) : (
-                                        <TrendingUp className="w-3 h-3 text-emerald-500" />
-                                    )}
                                     <span className={cn(
-                                        "text-[10px] font-bold uppercase tracking-tight",
+                                        "text-[9px] font-bold uppercase tracking-tight",
                                         data.is_weak ? "text-rose-600" : "text-emerald-600"
                                     )}>
-                                        {data.is_weak ? 'Needs Strength' : 'Stable'}
+                                        {data.is_weak ? 'Needs Vigor' : 'Stable'}
                                     </span>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className="text-2xl font-black" style={{ color: 'var(--ink)' }}>{data.strength_score}</span>
-                                <span className="text-[10px] block font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Points</span>
+                                <span className="text-xl font-black leading-none" style={{ color: 'var(--ink)' }}>{data.strength_score}</span>
+                                <span className="text-[8px] block font-bold uppercase -mt-1" style={{ color: 'var(--text-muted)' }}>Vigor</span>
                             </div>
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-4 border border-black/20">
+                        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden mb-3 border border-antique/20">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${data.strength_score}%` }}
@@ -109,36 +106,25 @@ const VedicStrengthPanel: React.FC<VedicStrengthPanelProps> = ({ planetaryStreng
                             />
                         </div>
 
-                        {/* Factors */}
-                        <div className="space-y-2">
-                            {data.benefic_factors.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {data.benefic_factors.slice(0, 2).map((factor, i) => (
-                                        <span key={i} className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-medium flex items-center gap-1">
-                                            <ShieldCheck className="w-2.5 h-2.5" /> {factor}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
+                        {/* Factors - More Compact */}
+                        <div className="flex flex-wrap gap-1">
                             {data.afflictions.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {data.afflictions.slice(0, 2).map((affliction, i) => (
-                                        <span key={i} className="text-[9px] px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded font-medium flex items-center gap-1">
-                                            <ShieldAlert className="w-2.5 h-2.5" /> {affliction}
-                                        </span>
-                                    ))}
-                                </div>
+                                <span className="text-[8px] px-1.5 py-0.5 bg-rose-500/5 text-rose-600 border border-rose-500/10 rounded font-medium flex items-center gap-0.5">
+                                    <ShieldAlert className="w-2 h-2" /> {data.afflictions[0].substring(0, 15)}...
+                                </span>
                             )}
-                            {data.benefic_factors.length === 0 && data.afflictions.length === 0 && (
-                                <span className="text-[9px] text-slate-500 italic">No significant modifiers detected</span>
+                            {data.benefic_factors.length > 0 && (
+                                <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/5 text-emerald-600 border border-emerald-500/10 rounded font-medium flex items-center gap-0.5">
+                                    <ShieldCheck className="w-2 h-2" /> {data.benefic_factors[0].substring(0, 15)}...
+                                </span>
                             )}
                         </div>
 
                         {/* Recommendation Trigger */}
                         {data.is_weak && (
-                            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                                <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Priority Remedial Goal</span>
-                                <Award className="w-3 h-3 text-purple-400 animate-pulse" />
+                            <div className="mt-3 pt-3 border-t border-antique/20 flex items-center justify-between">
+                                <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Priority Mitigation</span>
+                                <Award className="w-3 h-3 text-purple-600 animate-pulse" />
                             </div>
                         )}
                     </motion.div>

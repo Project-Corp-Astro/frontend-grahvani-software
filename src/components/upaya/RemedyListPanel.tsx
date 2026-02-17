@@ -74,16 +74,16 @@ export default function RemedyListPanel({ recommendations }: RemedyListPanelProp
                         <div className="mt-4 pt-4 border-t hidden group-hover:block animate-in fade-in slide-in-from-top-2 duration-300" style={{ borderColor: 'var(--border-divider)' }}>
                             <div className="grid grid-cols-2 gap-3 mb-3">
                                 <div>
-                                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Mantra</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--ink)' }}>Mantra</p>
                                     <p className="text-[10px] italic leading-tight line-clamp-2" style={{ color: 'var(--ink)' }}>"{rec.gemstone_info.mantra.split('(')[0]}"</p>
                                 </div>
                                 <div>
-                                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Finger & Day</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--ink)' }}>Finger & Day</p>
                                     <p className="text-[10px]" style={{ color: 'var(--ink)' }}>{rec.gemstone_info.finger} ({rec.gemstone_info.day})</p>
                                 </div>
                             </div>
                             <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
-                                <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Key Benefits</p>
+                                <p className="text-[9px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--ink)' }}>Key Benefits</p>
                                 <p className="text-[10px] leading-normal" style={{ color: 'var(--text-body)' }}>{rec.benefits}</p>
                             </div>
                         </div>

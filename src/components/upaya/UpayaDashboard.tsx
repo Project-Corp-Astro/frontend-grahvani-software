@@ -17,18 +17,12 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
 
     return (
         <div className={cn("min-h-screen p-4 lg:p-6 space-y-6 animate-in fade-in duration-700", styles.dashboardContainer, className)}>
-            {/* Main Header (Compact) */}
+            {/* Main Header (Standardized) */}
             <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--border-divider)' }}>
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center border rounded-lg bg-[#E6C97A]/20" style={{ borderColor: 'var(--gold-primary)' }}>
-                        <svg className="w-6 h-6 " style={{ color: 'var(--ink)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>{data.user_details?.name || 'Upaya Analysis'}</h2>
-                        <p className="text-xs" style={{ color: 'var(--text-body)' }}>Personalized Karmic Remedial Dashboard</p>
-                    </div>
+                    <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+                        Gemstones : {data.user_details?.name || 'Upaya Analysis'}
+                    </h2>
                 </div>
             </div>
 

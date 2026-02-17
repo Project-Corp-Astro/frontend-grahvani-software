@@ -32,8 +32,8 @@ export function parseChartData(chartData: any): ProcessedChartData {
     let positions = chartData.transit_positions ||
         chartData.planetary_positions ||
         chartData.planets ||
-        chartData.data?.transit_positions || // NEW: Support nested transit positions
-        chartData.data?.planetary_positions || // Handle nested data wrapper
+        chartData.data?.transit_positions ||
+        chartData.data?.planetary_positions ||
         chartData.data?.planets ||
         (chartData['Sun'] || chartData['Moon'] ? chartData : null);
 
@@ -42,7 +42,7 @@ export function parseChartData(chartData: any): ProcessedChartData {
         // Search first level values for something that looks like a planet map
         const potentialKey = Object.keys(chartData).find(key => {
             const val = chartData[key];
-            // Check if value is object and has planet-like properties
+            // Check if value is object and has planet-like properties (Sun/Moon are universal)
             return val && typeof val === 'object' && !Array.isArray(val) && (
                 (val.Sun && val.Moon) ||
                 (val['Sun'] && val['Moon']) ||
@@ -53,10 +53,9 @@ export function parseChartData(chartData: any): ProcessedChartData {
         if (potentialKey) {
             positions = chartData[potentialKey];
         } else {
-            // Deep fallback 2: Check standard planet keys at root even if duck typing failed
-            const isPlanetMap = Object.entries(chartData).some(([k, v]: [string, any]) =>
-                !['notes', 'birth_details', 'user_name', 'transit_time', 'natal_ascendant', 'ayanamsa', 'chart_type'].includes(k.toLowerCase()) &&
-                v && typeof v === 'object' && (v.sign || v.sign_name) && (v.degrees || v.longitude || v.degree)
+            // Check standard planet names in keys
+            const isPlanetMap = Object.keys(chartData).some(k =>
+                ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].includes(k)
             );
             if (isPlanetMap) {
                 positions = chartData;
