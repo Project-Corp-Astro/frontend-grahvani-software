@@ -223,6 +223,15 @@ export default function RemediesPage() {
     const [error, setError] = useState<string | null>(null);
     const [remedyData, setRemedyData] = useState<Record<string, any>>({});
 
+    const [selectedPlanet, setSelectedPlanet] = useState<string>('');
+    const [selectedHouse, setSelectedHouse] = useState<string>('');
+
+    const PLANETS = [
+        "Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"
+    ];
+
+    const HOUSES = Array.from({ length: 12 }, (_, i) => String(i + 1));
+
     const clientId = clientDetails?.id || '';
     const activeRemedyTab = REMEDY_TABS.find(t => t.id === activeTab)!;
 
@@ -230,17 +239,28 @@ export default function RemediesPage() {
     useEffect(() => {
         if (!clientId || !activeRemedyTab) return;
 
-        // Skip if already fetched
+        // Skip if already fetched 
         if (remedyData[activeTab]) return;
+
+        // DISABLE AUTO-FETCH FOR LAL KITAB
+        if (activeTab === 'lal_kitab') return;
 
         const fetchRemedy = async () => {
             setLoading(true);
             setError(null);
             try {
+                // Prepare options for Lal Kitab
+                const options: any = {};
+                if (activeTab === 'lal_kitab') {
+                    if (selectedPlanet) options.planet = selectedPlanet;
+                    if (selectedHouse) options.house = parseInt(selectedHouse);
+                }
+
                 const result = await clientApi.generateChart(
                     clientId,
                     activeRemedyTab.apiType,
-                    'lahiri'
+                    'lahiri',
+                    options
                 );
                 setRemedyData(prev => ({
                     ...prev,
@@ -255,7 +275,7 @@ export default function RemediesPage() {
         };
 
         fetchRemedy();
-    }, [clientId, activeTab, activeRemedyTab]);
+    }, [clientId, activeTab, activeRemedyTab]); // Removed selectedPlanet/House dependencies to prevent auto-fetch on selection change
 
     const handleRefresh = async () => {
         if (!clientId || !activeRemedyTab) return;
@@ -269,10 +289,18 @@ export default function RemediesPage() {
         setLoading(true);
         setError(null);
         try {
+            // Prepare options for Lal Kitab
+            const options: any = {};
+            if (activeTab === 'lal_kitab') {
+                if (selectedPlanet) options.planet = selectedPlanet;
+                if (selectedHouse) options.house = parseInt(selectedHouse);
+            }
+
             const result = await clientApi.generateChart(
                 clientId,
                 activeRemedyTab.apiType,
-                'lahiri'
+                'lahiri',
+                options
             );
             setRemedyData(prev => ({
                 ...prev,
@@ -323,6 +351,48 @@ export default function RemediesPage() {
                 ))}
             </div>
 
+            {/* Lal Kitab Specific Inputs */}
+            {activeTab === 'lal_kitab' && (
+                <div className="flex flex-wrap gap-4 p-4 bg-white/50 rounded-xl border border-antique shadow-sm animate-in slide-in-from-top-2">
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-serif font-medium text-primary uppercase tracking-wider">Select Planet</label>
+                        <select
+                            value={selectedPlanet}
+                            onChange={(e) => setSelectedPlanet(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-antique bg-white text-sm text-primary focus:outline-none focus:ring-2 focus:ring-gold-primary/20 min-w-[150px]"
+                        >
+                            <option value="">-- All / General --</option>
+                            {PLANETS.map(p => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-serif font-medium text-primary uppercase tracking-wider">Select House</label>
+                        <select
+                            value={selectedHouse}
+                            onChange={(e) => setSelectedHouse(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-antique bg-white text-sm text-primary focus:outline-none focus:ring-2 focus:ring-gold-primary/20 min-w-[150px]"
+                        >
+                            <option value="">-- All / General --</option>
+                            {HOUSES.map(h => (
+                                <option key={h} value={h}>{h} House</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-end">
+                        <button
+                            onClick={handleRefresh}
+                            className="px-4 py-2 bg-gold-primary text-white text-sm font-medium rounded-lg hover:bg-gold-dark transition-colors flex items-center gap-2 shadow-sm"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Update Remedies
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Content Area */}
             <div className="min-h-[300px]">
@@ -345,6 +415,14 @@ export default function RemediesPage() {
                     </div>
                 ) : remedyData[activeTab] ? (
                     <RemedyDataView data={remedyData[activeTab]} type={activeTab} />
+                ) : activeTab === 'lal_kitab' ? (
+                    <div className="flex flex-col items-center justify-center py-16 bg-parchment/30 rounded-2xl border border-antique animate-in fade-in">
+                        <Scroll className="w-10 h-10 text-gold-primary mb-4 opacity-70" />
+                        <h3 className="text-lg font-serif font-bold text-primary mb-2">Lal Kitab Remedies</h3>
+                        <p className="text-sm text-primary/70 max-w-md text-center mb-6">
+                            Lal Kitab remedies are highly specific. Please select a Planet and a House above to view the precise remedial measures.
+                        </p>
+                    </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 bg-parchment/30 rounded-2xl border border-antique">
                         <Gem className="w-8 h-8 text-primary mb-3" />

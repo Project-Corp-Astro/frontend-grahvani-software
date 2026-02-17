@@ -333,10 +333,10 @@ export const clientApi = {
     /**
      * Trigger chart generation for a client
      */
-    generateChart: (clientId: string, chartType: string = 'D1', ayanamsa: string = 'lahiri'): Promise<any> =>
+    generateChart: (clientId: string, chartType: string = 'D1', ayanamsa: string = 'lahiri', options: Record<string, any> = {}): Promise<any> =>
         apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
             method: 'POST',
-            body: JSON.stringify({ chartType, ayanamsa }),
+            body: JSON.stringify({ chartType, ayanamsa, ...options }),
         }),
 
     /**
