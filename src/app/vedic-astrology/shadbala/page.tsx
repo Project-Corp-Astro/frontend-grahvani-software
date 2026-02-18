@@ -217,29 +217,14 @@ export default function ShadbalaPage() {
     if (!clientDetails) return null;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-12">
+        <div className="-mt-2 lg:-mt-4 space-y-6 animate-in fade-in duration-500 pb-12">
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-8" style={{ borderColor: 'var(--border-antique)' }}>
                 <div>
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="px-2 py-0.5 rounded-md bg-gold-primary/10 border border-gold-primary/20">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gold-dark">Shadbala Metric</span>
-                        </div>
-                    </div>
-                    <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3" style={{ color: 'var(--ink)' }}>
-                        Celestial Potency: {clientDetails.name}
-                    </h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-2">Comprehensive Six-Fold Planetary Strength Analysis</p>
+                    <h1 className="text-2xl font-serif font-bold text-primary">Shadbala</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => fetchShadbala(true)}
-                        disabled={loading}
-                        className="group flex items-center gap-2 px-6 py-3 bg-white border border-antique rounded-2xl text-[11px] font-black uppercase tracking-widest text-primary hover:text-gold-dark hover:border-gold-primary/30 transition-all disabled:opacity-50 shadow-sm"
-                    >
-                        <RefreshCw className={cn("w-4 h-4 transition-transform group-hover:rotate-180 duration-500", loading && "animate-spin")} />
-                        Recalculate
-                    </button>
+
                 </div>
             </div>
 
@@ -291,11 +276,11 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                         <div className="relative z-10 flex flex-col h-full">
                             <div className="flex items-center gap-2 mb-3">
                                 <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                                <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Strongest</h3>
+                                <h3 className="text-[10px] font-bold text-primary tracking-wider">Strongest</h3>
                             </div>
                             <div className="flex items-baseline gap-2 mt-auto">
-                                <span className="text-xl font-serif font-black text-primary">{strongest.planet}</span>
-                                <span className="text-xs font-black text-emerald-600">{strongest.rupaBala.toFixed(2)}</span>
+                                <span className="text-xl font-serif font-bold text-primary">{strongest.planet}</span>
+                                <span className="text-xs font-bold text-emerald-600">{strongest.rupaBala.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -305,11 +290,11 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                         <div className="relative z-10 flex flex-col h-full">
                             <div className="flex items-center gap-2 mb-3">
                                 <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                                <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Weakest</h3>
+                                <h3 className="text-[10px] font-bold text-primary tracking-wider">Weakest</h3>
                             </div>
                             <div className="flex items-baseline gap-2 mt-auto">
-                                <span className="text-xl font-serif font-black text-primary">{weakest.planet}</span>
-                                <span className="text-xs font-black text-rose-500">{weakest.rupaBala.toFixed(2)}</span>
+                                <span className="text-xl font-serif font-bold text-primary">{weakest.planet}</span>
+                                <span className="text-xs font-bold text-rose-500">{weakest.rupaBala.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -324,7 +309,7 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                                     <TrendingUp className="w-4 h-4 text-emerald-600" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h4 className="text-[10px] font-black uppercase tracking-wider text-primary">Strength Ratios</h4>
+                                    <h4 className="text-[10px] font-bold tracking-wider text-primary">Strength Ratios</h4>
                                     <p className="text-[11px] font-medium text-primary leading-tight">A ratio {">"} 1.0 indicates cosmic potency exceeding base requirements.</p>
                                 </div>
                             </div>
@@ -333,7 +318,7 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                                     <Layers className="w-4 h-4 text-indigo-600" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h4 className="text-[10px] font-black uppercase tracking-wider text-primary">Virupa Metric</h4>
+                                    <h4 className="text-[10px] font-bold tracking-wider text-primary">Virupa Metric</h4>
                                     <p className="text-[11px] font-medium text-primary leading-tight">Scroll to the detailed analysis matrix for the 6-fold source breakdown.</p>
                                 </div>
                             </div>
@@ -350,7 +335,7 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                     <div className="p-5 border-b border-antique bg-parchment/10 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <BarChart2 className="w-4 h-4 text-gold-primary" />
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Planetary Strength Profile</h3>
+                            <h3 className="text-xs font-bold tracking-wider" style={{ color: 'var(--ink)' }}>Planetary Strength Profile</h3>
                         </div>
                     </div>
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 flex-1">
@@ -364,15 +349,15 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                                 <div key={p.planet} className="relative group p-2 rounded-xl transition-all hover:bg-parchment/5">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center font-serif font-black text-base shadow-sm border transition-transform group-hover:scale-110", theme.bg, theme.text, theme.border)}>
+                                            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center font-serif font-bold text-base shadow-sm border transition-transform group-hover:scale-110", theme.bg, theme.text, theme.border)}>
                                                 {p.planet[0]}
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-black tracking-tight" style={{ color: 'var(--ink)' }}>{p.planet}</h4>
+                                                <h4 className="text-sm font-bold tracking-tight" style={{ color: 'var(--ink)' }}>{p.planet}</h4>
                                                 <div className="flex items-center gap-1.5 mt-0.5">
-                                                    <span className="text-[8px] font-black uppercase tracking-tighter">Rank #{p.rank}</span>
+                                                    <span className="text-[8px] font-bold tracking-tighter">Rank #{p.rank}</span>
                                                     <span className={cn(
-                                                        "text-[7px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-widest",
+                                                        "text-[7px] font-bold px-1.5 py-0.5 rounded-md border tracking-widest",
                                                         p.isStrong ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
                                                     )}>
                                                         {p.isStrong ? "Potent" : "Weak"}
@@ -381,8 +366,8 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-lg font-black font-serif" style={{ color: 'var(--ink)' }}>{p.rupaBala.toFixed(2)}</span>
-                                            <span className="text-[8px] font-black ml-1 uppercase">RP</span>
+                                            <span className="text-lg font-bold font-serif" style={{ color: 'var(--ink)' }}>{p.rupaBala.toFixed(2)}</span>
+                                            <span className="text-[8px] font-bold ml-1">Rp</span>
                                         </div>
                                     </div>
 
@@ -400,7 +385,7 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                                         />
                                     </div>
 
-                                    <div className="flex justify-between mt-1.5 text-[8px] font-black uppercase tracking-widest">
+                                    <div className="flex justify-between mt-1.5 text-[8px] font-bold tracking-widest">
                                         <span>Ratio: {p.ratio.toFixed(2)}x</span>
                                         <span>Min: {minRequiredRupa.toFixed(1)}</span>
                                     </div>
@@ -415,7 +400,7 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                     <div className="p-5 border-b border-antique bg-parchment/10">
                         <div className="flex items-center gap-2">
                             <Activity className="w-4 h-4 text-emerald-600" />
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Ishta & Kashta</h3>
+                            <h3 className="text-xs font-bold tracking-wider" style={{ color: 'var(--ink)' }}>Ishta & Kashta</h3>
                         </div>
                     </div>
                     <div className="p-6 space-y-4 flex-1 flex flex-col justify-center">
@@ -429,8 +414,8 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
                             return (
                                 <div key={`phala-${p.planet}`} className="group">
                                     <div className="flex justify-between items-center mb-1.5 px-0.5">
-                                        <span className="text-[10px] font-black text-primary tracking-tight uppercase">{p.planet}</span>
-                                        <div className="flex gap-2 text-[8px] font-black uppercase tracking-tighter">
+                                        <span className="text-[10px] font-bold text-primary tracking-tight">{p.planet}</span>
+                                        <div className="flex gap-2 text-[8px] font-bold tracking-tighter">
                                             <span className="text-emerald-600">I: {ishtaVal.toFixed(1)}</span>
                                             <span className="text-rose-500">K: {kashtaVal.toFixed(1)}</span>
                                         </div>
@@ -450,33 +435,33 @@ function ShadbalaDashboard({ displayData, rawResponse }: { displayData: Shadbala
             <div className="bg-white border border-antique rounded-3xl shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-antique bg-parchment/5 flex items-center gap-2">
                     <Compass className="w-4 h-4 text-indigo-500" />
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Six-Fold Virupa Breakdown</h3>
+                    <h3 className="text-xs font-bold tracking-wider" style={{ color: 'var(--ink)' }}>Six-Fold Virupa Breakdown</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-antique">
-                                <th className="p-4 font-black text-[10px] uppercase tracking-widest text-primary">Source Components</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Positional</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Directional</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Temporal</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Motional</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Natural</th>
-                                <th className="p-4 text-[9px] font-black text-primary uppercase text-center">Aspectual</th>
-                                <th className="p-4 text-[10px] font-black text-gold-dark uppercase text-center bg-gold-primary/5 tracking-widest">Total Virupa</th>
+                                <th className="p-4 font-bold text-[12px] tracking-widest text-primary">Source Components</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Positional</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Directional</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Temporal</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Motional</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Natural</th>
+                                <th className="p-4 text-[12px] font-bold text-primary text-center">Aspectual</th>
+                                <th className="p-4 text-[12px] font-bold text-gold-dark text-center bg-gold-primary/5 tracking-widest">Total Virupa</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sortedPlanets.map((p) => (
                                 <tr key={`table-${p.planet}`} className="border-b border-antique last:border-0 hover:bg-parchment/5 transition-colors">
-                                    <td className="p-4 font-serif font-black text-primary text-sm">{p.planet}</td>
+                                    <td className="p-4 font-serif font-bold text-primary text-sm">{p.planet}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.sthalaBala.toFixed(0)}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.digBala.toFixed(0)}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.kalaBala.toFixed(0)}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.cheshtaBala.toFixed(0)}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.naisargikaBala.toFixed(0)}</td>
                                     <td className="p-4 text-xs font-bold text-center text-primary">{p.drikBala.toFixed(0)}</td>
-                                    <td className="p-4 text-xs font-black text-center text-gold-dark bg-gold-primary/5 tracking-tight">{p.totalBala.toFixed(1)}</td>
+                                    <td className="p-4 text-xs font-bold text-center text-gold-dark bg-gold-primary/5 tracking-tight">{p.totalBala.toFixed(1)}</td>
                                 </tr>
                             ))}
                         </tbody>

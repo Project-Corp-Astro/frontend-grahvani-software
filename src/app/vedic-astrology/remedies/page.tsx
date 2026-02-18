@@ -105,7 +105,7 @@ function RemedyDataView({ data, type }: { data: any; type: string }) {
     }
 
     // Special view for Lal Kitab (Remedial Dashboard style)
-    if (type === 'lal_kit_tab' || type === 'lal_kitab') {
+    if (type === 'lal_kitab') {
         return <LalKitabDashboard data={data} />;
     }
 
@@ -388,7 +388,7 @@ export default function RemediesPage() {
                             className="px-4 py-2 bg-gold-primary text-white text-sm font-medium rounded-lg hover:bg-gold-dark transition-colors flex items-center gap-2 shadow-sm"
                         >
                             <RefreshCw className="w-4 h-4" />
-                            Update Remedies
+                            Get Remedies
                         </button>
                     </div>
                 </div>

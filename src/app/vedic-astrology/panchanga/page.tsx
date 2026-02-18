@@ -199,15 +199,15 @@ export default function PanchangaOverviewPage() {
                             {clientDetails.name}
                         </h2>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
-                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                            <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                                 <Calendar className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{formatDate(clientDetails.dateOfBirth)}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                            <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                                 <Clock className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{formatTime(clientDetails.timeOfBirth)}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-secondary text-xs">
+                            <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                                 <MapPin className="w-3.5 h-3.5 text-accent-gold" />
                                 <span>{clientDetails.placeOfBirth.city}</span>
                             </div>
@@ -217,15 +217,15 @@ export default function PanchangaOverviewPage() {
                     {/* Quick Astro Stats */}
                     <div className="flex gap-3 shrink-0">
                         <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Lagna</p>
+                            <p className="text-2xs uppercase tracking-widest text-primary font-black mb-1">Lagna</p>
                             <p className="font-serif text-sm font-bold text-primary">{signIdToName[(d1Data.ascendant || 1) as number] || '—'}</p>
                         </div>
                         <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Moon</p>
+                            <p className="text-2xs uppercase tracking-widest text-primary font-black mb-1">Moon</p>
                             <p className="font-serif text-sm font-bold text-primary">{moonPlanet ? signIdToName[moonPlanet.signId] : '—'}</p>
                         </div>
                         <div className="bg-parchment border border-antique/50 rounded-xl px-4 py-3 text-center min-w-[80px]">
-                            <p className="text-2xs uppercase tracking-widest text-muted-refined font-bold mb-1">Sun</p>
+                            <p className="text-2xs uppercase tracking-widest text-primary font-black mb-1">Sun</p>
                             <p className="font-serif text-sm font-bold text-primary">{sunPlanet ? signIdToName[sunPlanet.signId] : '—'}</p>
                         </div>
                     </div>
@@ -242,14 +242,14 @@ export default function PanchangaOverviewPage() {
                     </div>
                     <div>
                         <h3 className="font-serif text-lg font-bold text-primary leading-tight tracking-wide">Birth Panchanga</h3>
-                        <p className="text-2xs text-secondary italic font-sans">Five-fold daily cosmic markers at the moment of birth</p>
+                        <p className="text-2xs text-primary font-bold italic font-sans">Five-fold daily cosmic markers at the moment of birth</p>
                     </div>
                 </div>
 
                 {!panchanga ? (
                     <div className="p-12 text-center">
                         <Loader2 className="w-6 h-6 text-gold-primary animate-spin mx-auto mb-3" />
-                        <p className="text-xs font-serif text-secondary italic">Loading birth panchanga data...</p>
+                        <p className="text-xs font-serif text-primary font-bold italic">Loading birth panchanga data...</p>
                     </div>
                 ) : (
                     <div className="p-5">
@@ -322,7 +322,7 @@ export default function PanchangaOverviewPage() {
                                         <Sunrise className="w-5 h-5 text-amber-500" />
                                     </div>
                                     <div>
-                                        <p className="text-2xs uppercase tracking-widest text-secondary font-bold mb-0.5">Sunrise</p>
+                                        <p className="text-2xs uppercase tracking-widest text-primary font-black mb-0.5">Sunrise</p>
                                         <p className="font-serif text-lg font-bold text-primary">{times.sunrise?.time || '—'}</p>
                                     </div>
                                 </div>
@@ -331,7 +331,7 @@ export default function PanchangaOverviewPage() {
                                         <Sunset className="w-5 h-5 text-indigo-500" />
                                     </div>
                                     <div>
-                                        <p className="text-2xs uppercase tracking-widest text-secondary font-bold mb-0.5">Sunset</p>
+                                        <p className="text-2xs uppercase tracking-widest text-primary font-black mb-0.5">Sunset</p>
                                         <p className="font-serif text-lg font-bold text-primary">{times.sunset?.time || '—'}</p>
                                     </div>
                                 </div>
@@ -353,7 +353,7 @@ export default function PanchangaOverviewPage() {
                         <h3 className="font-serif text-lg font-bold text-primary leading-tight tracking-wide">
                             Avakhada Chakra
                         </h3>
-                        <p className="text-2xs text-secondary italic font-sans">
+                        <p className="text-2xs text-primary font-bold italic font-sans">
                             Foundational classification — compatibility & character attributes
                         </p>
                     </div>
@@ -362,16 +362,15 @@ export default function PanchangaOverviewPage() {
                 {avakhadaLoading ? (
                     <div className="p-12 text-center">
                         <Loader2 className="w-6 h-6 text-gold-primary animate-spin mx-auto mb-3" />
-                        <p className="text-xs font-serif text-secondary italic">Consulting the Stars...</p>
+                        <p className="text-xs font-serif text-primary font-bold italic">Consulting the Stars...</p>
                     </div>
                 ) : avakhadaError || !avakhadaData ? (
                     <div className="p-8 text-center space-y-3">
                         <div className="bg-red-50 p-3 rounded-xl inline-block">
                             <AlertTriangle className="w-6 h-6 text-red-500" />
                         </div>
-                        <h4 className="text-md font-serif font-bold text-red-900">Unavailable</h4>
-                        <p className="text-xs text-red-600">{avakhadaError || "Data not found"}</p>
-
+                        <h4 className="font-serif font-bold text-red-900">Unavailable</h4>
+                        <p className="text-red-600">{avakhadaError || "Data not found"}</p>
                     </div>
                 ) : (
                     <div className="p-5">
@@ -392,17 +391,17 @@ export default function PanchangaOverviewPage() {
                                         {/* Header */}
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
-                                                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-refined block">{item.label}</span>
-                                                <span className="text-[8px] text-muted-refined/60 font-serif">{item.sanskrit}</span>
+                                                <span className="font-black uppercase tracking-wider text-primary block">{item.label}</span>
+                                                <span className="text-primary font-serif font-bold">{item.sanskrit}</span>
                                             </div>
-                                            <item.icon className={cn("w-4 h-4 opacity-40 group-hover:opacity-80 transition-opacity", item.accent)} />
+                                            <item.icon className={cn("w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity", item.accent)} />
                                         </div>
                                         {/* Value */}
                                         <div className="font-serif text-base font-bold text-primary leading-tight mb-1" title={value}>
                                             {value}
                                         </div>
                                         {/* Description */}
-                                        <div className="text-[9px] text-muted-refined italic leading-snug opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <div className="text-primary font-bold italic leading-snug transition-opacity">
                                             {item.desc}
                                         </div>
                                     </div>
@@ -414,15 +413,15 @@ export default function PanchangaOverviewPage() {
                                 <div className="relative bg-gradient-to-br from-sky-500/10 to-blue-500/10 p-4 rounded-xl border border-antique/30 hover:border-gold-primary/40 hover:shadow-lg transition-all group">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
-                                            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-refined block">Hamsa Swara</span>
-                                            <span className="text-[8px] text-muted-refined/60 font-serif">हंस स्वर</span>
+                                            <span className="font-black uppercase tracking-wider text-primary block">Hamsa Swara</span>
+                                            <span className="text-primary font-serif font-bold">हंस स्वर</span>
                                         </div>
-                                        <Feather className="w-4 h-4 opacity-40 group-hover:opacity-80 transition-opacity text-sky-600" />
+                                        <Feather className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity text-sky-600" />
                                     </div>
                                     <div className="font-serif text-base font-bold text-primary leading-tight mb-1">
                                         {avakhadaData.hamsa_swara}
                                     </div>
-                                    <div className="text-[9px] text-muted-refined italic leading-snug opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <div className="text-primary font-bold italic leading-snug transition-opacity">
                                         Life breath classification
                                     </div>
                                 </div>
@@ -461,8 +460,8 @@ function PanchangaCard({
         )}>
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <p className="text-2xs font-bold uppercase tracking-widest text-muted-refined">{label}</p>
-                    <p className="text-2xs text-muted-refined/50 font-serif">{sanskrit}</p>
+                    <p className="text-2xs font-black uppercase tracking-widest text-primary">{label}</p>
+                    <p className="text-2xs text-primary font-serif font-bold">{sanskrit}</p>
                 </div>
                 <div className="p-1.5 bg-white/80 rounded-lg shadow-xs group-hover:shadow-sm transition-shadow">
                     <Icon className={cn("w-4 h-4", iconColor)} />
@@ -470,9 +469,9 @@ function PanchangaCard({
             </div>
             <p className="font-serif text-lg font-bold text-primary leading-tight">{value}</p>
             {subValue && (
-                <p className="text-2xs text-secondary font-medium mt-0.5">{subValue}</p>
+                <p className="text-2xs text-primary font-black mt-0.5">{subValue}</p>
             )}
-            <p className="text-2xs text-muted-refined italic mt-2 leading-snug opacity-60 group-hover:opacity-100 transition-opacity">{description}</p>
+            <p className="text-2xs text-primary font-bold italic mt-2 leading-snug transition-opacity">{description}</p>
         </div>
     );
 }

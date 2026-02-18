@@ -83,7 +83,7 @@ export default function VimshottariTreeGrid({ data, isLoading, className }: Vims
                         navPath.length === 0 ? "text-disabled cursor-default" : "text-accent-gold hover:bg-gold-primary/10"
                     )}
                 >
-                    <Home className="w-3 h-3" />
+                    <Home className="w-3 h-3 text-primary" />
                 </button>
 
                 {navPath.map((node, i) => (

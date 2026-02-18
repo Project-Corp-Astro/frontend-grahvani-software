@@ -217,19 +217,14 @@ export default function VedicDivisionalPage() {
     }
 
     return (
-        <div className="space-y-4 animate-in fade-in duration-700 pb-20"> {/* Add padding bottom for scrolling */}
+        <div className="-mt-2 lg:-mt-4 space-y-4 animate-in fade-in duration-700 pb-20"> {/* Add padding bottom for scrolling */}
             {/* Header */}
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-serif text-[#3E2A1F] font-black tracking-tight flex items-center gap-2">
-                        <Grid3X3 className="w-5 h-5 text-[#D08C60]" />
+                    <h1 className="text-2xl font-serif font-bold text-primary">
                         Shodashvarga Matrix
                     </h1>
                     <div className="flex items-center gap-2">
-                        <p className="text-[#8B5A2B] font-serif text-sm">{clientDetails.name}'s harmonic charts</p>
-                        <span className="px-2 py-0.5 bg-[#D08C60]/10 text-[#D08C60] text-[10px] font-bold uppercase rounded-full border border-[#D08C60]/30">
-                            {settings.ayanamsa}
-                        </span>
                         {isGeneratingCharts && (
                             <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
                                 <Loader2 className="w-3 h-3 animate-spin" />

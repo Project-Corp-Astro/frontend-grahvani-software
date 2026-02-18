@@ -53,7 +53,7 @@ const VEDIC_NAV_ITEMS: NavItem[] = [
     { name: "Yogas & Doshas", path: "/yoga-dosha", icon: Sparkles, systemFilter: ['Lahiri'] },
     { name: "Ashtakavargas", path: "/ashtakavarga", icon: Shield, systemFilter: ['Lahiri', 'Raman', 'Yukteswar'] },
     { name: "Shadbala", path: "/shadbala", icon: Orbit, systemFilter: ['Lahiri'] },
-    { name: "Gochar", path: "/transits", icon: Globe },
+    { name: "Gochar", path: "/transits", icon: Globe, systemFilter: ['Lahiri'] },
     { name: "Upaya", path: "/remedies", icon: Gem, systemFilter: ['Lahiri'] },
     { name: "Sudarshan Chakra", path: "/chakras", icon: Layers },
     { name: "KP System", path: "/kp", icon: FlaskConical, systemFilter: ['KP'] },
@@ -208,20 +208,20 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
 // Main Layout Wrapper
 // ============================================================================
 export default function VedicLayout({ children }: { children: React.ReactNode }) {
-    const { isClientSet, clientDetails, setClientDetails } = useVedicClient();
+    const { isClientSet, clientDetails, setClientDetails, isInitialized } = useVedicClient();
     const { ayanamsa } = useAstrologerStore();
     const pathname = usePathname();
     const router = useRouter();
 
     // If client is not set and not on the registry page, redirect to registry
     React.useEffect(() => {
-        if (!isClientSet && pathname !== "/vedic-astrology") {
+        if (isInitialized && !isClientSet && pathname !== "/vedic-astrology") {
             router.push("/vedic-astrology");
         }
-    }, [isClientSet, pathname, router]);
+    }, [isInitialized, isClientSet, pathname, router]);
 
-    // Show nothing while redirecting
-    if (!isClientSet && pathname !== "/vedic-astrology") {
+    // Show nothing while redirecting or initializing
+    if ((!isInitialized || !isClientSet) && pathname !== "/vedic-astrology") {
         return null;
     }
 
