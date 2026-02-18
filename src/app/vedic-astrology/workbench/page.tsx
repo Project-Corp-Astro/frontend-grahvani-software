@@ -61,6 +61,7 @@ const CHART_NAMES: Record<string, string> = {
     'sripathi_bhava': 'Sripathi Bhava (House Analysis)',
     'kp_bhava': 'KP Bhava (Stellar System)',
     'equal_bhava': 'Equal Bhava',
+    'gl_chart': 'Gati Kalagna (GL Chart)',
     'mandi': 'Mandi (Karmic Obstacles)',
     'gulika': 'Gulika (Instant Karma)',
 };
@@ -169,6 +170,7 @@ export default function AnalyticalWorkbenchPage() {
                                     ) : (
                                         <optgroup label="Lagna Analysis">
                                             {lagnaCharts.map(c => <option key={c} value={c}>{CHART_NAMES[c] || c.toUpperCase() + ' Analysis'}</option>)}
+                                            <option value="gl_chart">{CHART_NAMES['gl_chart']}</option>
                                         </optgroup>
                                     )}
                                 </select>

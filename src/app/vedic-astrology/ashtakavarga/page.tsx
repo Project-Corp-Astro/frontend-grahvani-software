@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import NorthIndianChart from '@/components/astrology/NorthIndianChart/NorthIndianChart';
 import AshtakavargaChart from '@/components/astrology/AshtakavargaChart';
 import ShodashaVargaTable from '@/components/astrology/ShodashaVargaTable';
+import TemporalRelationshipTable from '@/components/astrology/TemporalRelationshipTable';
+import KarakaStrengthAnalysis from '@/components/astrology/KarakaStrengthAnalysis';
 
 const SIGN_MAP: Record<string, number> = {
     'Aries': 1, 'Taurus': 2, 'Gemini': 3, 'Cancer': 4, 'Leo': 5, 'Virgo': 6,
@@ -32,6 +34,8 @@ interface AshtakavargaData {
     sarva?: any;
     bhinna?: any;
     shodasha?: any;
+    temporal?: any;
+    karaka?: any;
     ascendant?: number;
 }
 
@@ -65,7 +69,7 @@ export default function AshtakavargaPage() {
     const { clientDetails, processedCharts, isLoadingCharts } = useVedicClient();
     const { ayanamsa, chartStyle, recentClientIds } = useAstrologerStore();
     const settings = { ayanamsa, chartStyle, recentClientIds };
-    const [activeTab, setActiveTab] = useState<'sarva' | 'bhinna' | 'shodasha'>('sarva');
+    const [activeTab, setActiveTab] = useState<'sarva' | 'bhinna' | 'shodasha' | 'temporal' | 'karaka'>('sarva');
     const [selectedPlanet, setSelectedPlanet] = useState<string>('Lagna');
 
     const activeSystem = settings.ayanamsa.toLowerCase();
@@ -81,6 +85,8 @@ export default function AshtakavargaPage() {
         const sarvaRaw = processedCharts[sarvaKey]?.chartData;
         const bhinnaRaw = processedCharts[bhinnaKey]?.chartData;
         const shodashaRaw = processedCharts[shodashaKey]?.chartData || processedCharts[shodashaKpKey]?.chartData;
+        const temporalRaw = processedCharts[`tatkalik_maitri_chakra_${activeSystem}`]?.chartData;
+        const karakaRaw = processedCharts[`karaka_strength_${activeSystem}`]?.chartData;
         const d1Raw = processedCharts[d1Key]?.chartData;
 
         // Still loading if context is empty and client is active
@@ -97,6 +103,8 @@ export default function AshtakavargaPage() {
                 sarva: sarvaRaw?.data || sarvaRaw,
                 bhinna: bhinnaRaw?.data || bhinnaRaw,
                 shodasha: shodashaRaw?.data || shodashaRaw,
+                temporal: temporalRaw?.data || temporalRaw,
+                karaka: karakaRaw?.data || karakaRaw,
                 ascendant
             }
         };
@@ -180,19 +188,22 @@ export default function AshtakavargaPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-softwhite p-1 rounded-xl border border-antique">
-                        {(['sarva', 'bhinna', 'shodasha'] as const).map((tab) => (
+                    <div className="flex bg-softwhite p-1 rounded-xl border border-antique overflow-x-auto">
+                        {(['sarva', 'bhinna', 'shodasha', 'temporal', 'karaka'] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
-                                    "px-3 py-1 rounded-lg text-sm font-semibold font-sans capitalize transition-all",
+                                    "px-3 py-1 rounded-lg text-sm font-semibold font-sans capitalize transition-all whitespace-nowrap",
                                     activeTab === tab
                                         ? "bg-gold-primary text-primary shadow-sm scale-[1.02]"
                                         : "text-secondary hover:bg-gold-primary/10 hover:text-primary"
                                 )}
                             >
-                                {tab === 'sarva' ? 'Sarvashtakavarga' : tab === 'bhinna' ? 'Bhinnashtakavarga' : 'Shodasha'}
+                                {tab === 'sarva' ? 'Sarvashtakavarga' :
+                                    tab === 'bhinna' ? 'Bhinnashtakavarga' :
+                                        tab === 'shodasha' ? 'Shodasha' :
+                                            tab === 'temporal' ? 'Tatkalik Maitri' : 'Karaka Strength'}
                             </button>
                         ))}
                     </div>
@@ -209,9 +220,8 @@ export default function AshtakavargaPage() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {activeTab !== 'shodasha' ? (
+                    {activeTab === 'sarva' || activeTab === 'bhinna' ? (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                            {/* Main Content Area: Table + Chart Side by Side */}
                             <div className="lg:col-span-12 space-y-4">
                                 <div className="bg-softwhite rounded-xl border border-antique shadow-card overflow-hidden">
                                     <div className="p-3 border-b border-antique flex flex-col md:flex-row md:items-center justify-between gap-3 bg-parchment/30">
@@ -245,7 +255,6 @@ export default function AshtakavargaPage() {
                                     </div>
 
                                     <div className="p-4 grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-4 items-start">
-                                        {/* Left: Technical Matrix */}
                                         <div className="space-y-2">
                                             <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary font-sans flex items-center gap-2">
                                                 <Grid3X3 className="w-3.5 h-3.5" /> Bindu Matrix
@@ -260,7 +269,6 @@ export default function AshtakavargaPage() {
                                             />
                                         </div>
 
-                                        {/* Right: Visual Chart - COMPACT */}
                                         <div className="space-y-2">
                                             <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary font-sans flex items-center gap-2">
                                                 <MapIcon className="w-3.5 h-3.5" /> House Distribution
@@ -275,15 +283,43 @@ export default function AshtakavargaPage() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Secondary Analytics Removed */}
                             </div>
-
-
                         </div>
-                    ) : (
+                    ) : activeTab === 'shodasha' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 min-h-[calc(100vh-220px)]">
                             <ShodashaVargaTable data={data?.shodasha} className="h-full" />
+                        </div>
+                    ) : activeTab === 'temporal' ? (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {data?.temporal ? (
+                                <TemporalRelationshipTable data={data.temporal} />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-[400px] bg-softwhite rounded-3xl border border-antique border-dashed p-12 text-center">
+                                    <h3 className="text-xl font-serif text-primary font-bold mb-4">No Temporal Relationship Data</h3>
+                                    <button
+                                        onClick={() => clientApi.generateChart(clientDetails.id!, 'tatkalik_maitri_chakra', activeSystem as any).then(() => window.location.reload())}
+                                        className="px-8 py-3 bg-gold-primary text-ink rounded-2xl font-bold hover:shadow-xl transition-all"
+                                    >
+                                        Generate Tatkalik Maitri
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {data?.karaka ? (
+                                <KarakaStrengthAnalysis data={data.karaka} />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-[400px] bg-softwhite rounded-3xl border border-antique border-dashed p-12 text-center">
+                                    <h3 className="text-xl font-serif text-primary font-bold mb-4">No Karaka Strength Data</h3>
+                                    <button
+                                        onClick={() => clientApi.generateChart(clientDetails.id!, 'karaka_strength', activeSystem as any).then(() => window.location.reload())}
+                                        className="px-8 py-3 bg-gold-primary text-ink rounded-2xl font-bold hover:shadow-xl transition-all"
+                                    >
+                                        Generate Karaka Strength
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
