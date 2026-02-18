@@ -171,14 +171,12 @@ export default function AshtakavargaPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="-mt-2 lg:-mt-4 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-lg font-serif font-semibold text-primary flex items-center gap-3">
-                        <Shield className="w-6 h-6 text-secondary" />
+                    <h1 className="text-2xl font-serif font-bold text-primary">
                         Ashtakavarga Systems
                     </h1>
-                    <p className="text-xs text-secondary font-sans mt-1">Numerical strength assessment for {clientDetails.name}</p>
                 </div>
 
                 <div className="flex items-center gap-3">

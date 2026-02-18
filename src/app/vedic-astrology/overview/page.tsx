@@ -311,30 +311,7 @@ export default function VedicOverviewPage() {
                         </div>
                     </div>
 
-                    {/* Bottom Row: Yogas & Doshas */}
-                    <div className="border border-antique rounded-lg overflow-hidden shadow-sm bg-[#FFFCF6]">
-                        <div className="bg-[#EAD8B1] px-3 py-1.5 border-b border-antique flex justify-between items-center">
-                            <h3 className="font-serif text-lg font-semibold text-primary leading-tight tracking-wide">Yogas & Doshas</h3>
-                            <Link href="/vedic-astrology/yoga-dosha" className="text-secondary hover:text-accent-gold transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
-                                Detailed Analysis <ArrowRight className="w-3 h-3" />
-                            </Link>
-                        </div>
-                        <div className="p-3">
-                            {analysisItems && analysisItems.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                    {analysisItems.map((item, i) => (
-                                        <div key={i} onClick={() => setAnalysisModal({ type: item.type as 'yoga' | 'dosha', subType: item.subType, label: item.name })}
-                                            className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-softwhite border border-antique/50 font-sans text-[10px] font-bold text-primary cursor-pointer hover:bg-gold-primary/10 hover:text-accent-gold transition-all shadow-xs group">
-                                            <span className="truncate">{item.name}</span>
-                                            <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-all text-accent-gold" />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="font-sans text-xs text-muted-refined italic p-2 text-center">No specific yogas or doshas identified for this chart.</div>
-                            )}
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

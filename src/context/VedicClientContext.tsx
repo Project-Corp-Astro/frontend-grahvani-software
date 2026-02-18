@@ -33,12 +33,14 @@ interface VedicClientContextType {
     isLoadingCharts: boolean; // True only if NO charts exist yet
     isRefreshingCharts: boolean; // True whenever a fetch is in progress
     refreshCharts: () => Promise<void>;
+    isInitialized: boolean;
 }
 
 const VedicClientContext = createContext<VedicClientContextType | undefined>(undefined);
 
 export function VedicClientProvider({ children }: { children: ReactNode }) {
     const [clientDetails, setClientDetails] = useState<VedicClientDetails | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
     const {
         data: processedCharts = {},
         isLoading: isQueryLoading,
@@ -65,6 +67,7 @@ export function VedicClientProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to parse stored client details", e);
             }
         }
+        setIsInitialized(true);
     }, []);
 
     const updateClientDetails = (details: VedicClientDetails | null) => {
@@ -98,7 +101,8 @@ export function VedicClientProvider({ children }: { children: ReactNode }) {
                 processedCharts, // Now comes from useQuery
                 isLoadingCharts,
                 isRefreshingCharts,
-                refreshCharts: async () => { await refreshCharts(); }
+                refreshCharts: async () => { await refreshCharts(); },
+                isInitialized
             }}
         >
             {children}

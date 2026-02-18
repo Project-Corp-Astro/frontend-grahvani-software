@@ -66,15 +66,13 @@ export default function ChakrasPage() {
     }
 
     return (
-        <div className="min-h-screen space-y-2 animate-in fade-in duration-700">
+        <div className="-mt-2 lg:-mt-4 min-h-screen space-y-2 animate-in fade-in duration-700">
             {/* Professional Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-copper-200 pb-4">
                 <div className="space-y-1">
-                    <h1 className="text-lg font-serif text-copper-950 font-bold tracking-tight flex items-center gap-3">
-                        <Hexagon className="w-6 h-6 text-copper-600 fill-copper-50" />
+                    <h1 className="text-2xl font-serif font-bold text-primary">
                         Sudarshan Chakra
                     </h1>
-                    <p className="text-xs text-copper-600 font-medium tracking-tight">Triple Confluence Analysis for {clientDetails.name}</p>
                 </div>
 
 

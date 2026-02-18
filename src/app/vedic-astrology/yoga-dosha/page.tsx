@@ -180,22 +180,11 @@ export default function YogaDoshaPage() {
     }
 
     return (
-        <div className="space-y-4 animate-in fade-in duration-500">
+        <div className="-mt-2 lg:-mt-4 space-y-4 animate-in fade-in duration-500">
             {/* Header: Title + Tabs */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 text-muted-refined text-[11px] mb-1 uppercase tracking-wider font-bold">
-                        <Link href="/vedic-astrology/overview" className="hover:text-gold-primary transition-colors flex items-center gap-1">
-                            <ArrowLeft className="w-3 h-3" />
-                            Kundali
-                        </Link>
-                        <span>/</span>
-                        <span>Yoga & Dosha</span>
-                    </div>
-                    <h1 className="text-xl font-serif font-black text-ink tracking-tight">Yoga & Dosha Analysis</h1>
-                    <p className="text-[11px] text-secondary mt-0.5 font-medium italic">
-                        Comprehensive planetary combinations for <span className="text-primary font-bold not-italic">{clientDetails.name}</span>
-                    </p>
+                    <h1 className="text-2xl font-serif font-bold text-primary">Yoga & Dosha Analysis</h1>
                 </div>
 
                 {/* Main Tabs: Yogas / Doshas */}

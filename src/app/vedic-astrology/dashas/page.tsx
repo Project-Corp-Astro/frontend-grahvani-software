@@ -348,10 +348,10 @@ export default function VedicDashasPage() {
     const metadata = activeAnalysis?.metadata;
 
     return (
-        <div className="min-h-screen">
+        <div className="-mt-2 lg:-mt-4 min-h-screen">
             {/* Page Heading */}
             <div className="mb-4">
-                <h1 className="text-lg font-bold text-[#3E2A1F] tracking-wider">Dasha System</h1>
+                <h1 className="text-2xl font-serif font-bold text-primary">Dasha System</h1>
             </div>
 
             {/* ================================================================= */}
