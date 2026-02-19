@@ -51,14 +51,14 @@ const AnalyzeCard = ({ icon, title, desc, color }: { icon: React.ReactNode; titl
     )}>
         <div className={cn(
             "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm",
-            color === 'amber' ? "bg-amber-100 text-amber-600" :
+            color === 'amber' ? "bg-amber-100 text-primary" :
                 color === 'rose' ? "bg-rose-100 text-rose-600" :
-                    "bg-copper-100 text-copper-600"
+                    "bg-copper-100 text-primary"
         )}>
             {icon}
         </div>
-        <h4 className="text-sm font-serif font-bold text-copper-950 mb-2">{title}</h4>
-        <p className="text-[10px] text-copper-600 leading-relaxed">{desc}</p>
+        <h4 className="text-sm font-serif font-bold text-primary mb-2">{title}</h4>
+        <p className="text-[10px] text-primary leading-relaxed">{desc}</p>
     </div>
 );
 
@@ -115,9 +115,9 @@ export default function AshtakavargaPage() {
     if (!clientDetails) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 bg-copper-50/30 rounded-2xl border border-dashed border-copper-200">
-                <Shield className="w-16 h-16 text-copper-300 mb-4 animate-pulse" />
-                <h2 className="text-lg font-serif text-copper-900 mb-2">No Client Selected</h2>
-                <p className="text-xs text-copper-600 max-w-md">Please select a client from the workbench to analyze their Ashtakavarga strengths.</p>
+                <Shield className="w-16 h-16 text-primary mb-4 animate-pulse" />
+                <h2 className="text-lg font-serif text-primary mb-2">No Client Selected</h2>
+                <p className="text-xs text-primary max-w-md">Please select a client from the workbench to analyze their Ashtakavarga strengths.</p>
             </div>
         );
     }
@@ -189,33 +189,42 @@ export default function AshtakavargaPage() {
 
                 <div className="flex items-center gap-3">
                     <div className="flex bg-softwhite p-1 rounded-xl border border-antique overflow-x-auto">
-                        {(['sarva', 'bhinna', 'shodasha', 'temporal', 'karaka'] as const).map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={cn(
-                                    "px-3 py-1 rounded-lg text-sm font-semibold font-sans capitalize transition-all whitespace-nowrap",
-                                    activeTab === tab
-                                        ? "bg-gold-primary text-primary shadow-sm scale-[1.02]"
-                                        : "text-secondary hover:bg-gold-primary/10 hover:text-primary"
-                                )}
-                            >
-                                {tab === 'sarva' ? 'Sarvashtakavarga' :
-                                    tab === 'bhinna' ? 'Bhinnashtakavarga' :
-                                        tab === 'shodasha' ? 'Shodasha' :
-                                            tab === 'temporal' ? 'Tatkalik Maitri' : 'Karaka Strength'}
-                            </button>
-                        ))}
+                        {(['sarva', 'bhinna', 'shodasha', 'temporal', 'karaka'] as const)
+                            .filter(tab => {
+                                const capabilities = clientApi.getSystemCapabilities(ayanamsa);
+                                if (tab === 'temporal') return capabilities.features.ashtakavarga.includes('temporal_maitri');
+                                if (tab === 'karaka') return capabilities.features.ashtakavarga.includes('karaka_strength');
+                                if (tab === 'shodasha') return capabilities.features.ashtakavarga.includes('shodasha_summary') || capabilities.features.ashtakavarga.includes('shodasha_varga');
+                                return true;
+                            })
+                            .map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={cn(
+                                        "px-3 py-1 rounded-lg text-sm font-semibold font-sans capitalize transition-all whitespace-nowrap",
+                                        activeTab === tab
+                                            ? "bg-gold-primary text-primary shadow-sm scale-[1.02]"
+                                            : "text-secondary hover:bg-gold-primary/10 hover:text-primary"
+                                    )}
+                                >
+                                    {tab === 'sarva' ? 'Sarvashtakavarga' :
+                                        tab === 'bhinna' ? 'Bhinnashtakavarga' :
+                                            tab === 'shodasha' ? 'Shodasha' :
+                                                tab === 'temporal' ? 'Tatkalik Maitri' : 'Karaka Strength'}
+                                </button>
+                            ))}
                     </div>
 
                 </div>
+
             </div>
 
             {loading && !data?.[activeTab] ? (
                 <div className="flex items-center justify-center h-[50vh]">
                     <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-copper-600 animate-spin mx-auto mb-4" />
-                        <p className="text-copper-400 font-serif">Compiling Bindu Matrices...</p>
+                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+                        <p className="text-primary font-serif">Compiling Bindu Matrices...</p>
                     </div>
                 </div>
             ) : (

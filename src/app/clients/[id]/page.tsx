@@ -335,11 +335,11 @@ export default function ClientProfilePage() {
 
                     {/* Breadcrumb Navigation */}
                     <div className="relative z-10 mb-4 flex items-center gap-2 text-xs font-serif uppercase tracking-widest font-bold">
-                        <Link href="/clients" className="text-[#6B4423] hover:text-[#2B1510] transition-colors">
+                        <Link href="/clients" className="text-secondary hover:text-primary transition-colors">
                             Clients
                         </Link>
-                        <ChevronRight className="w-3 h-3 text-[#6B4423]" />
-                        <span className="text-[#2B1510]">Client Profile</span>
+                        <ChevronRight className="w-3 h-3 text-secondary" />
+                        <span className="text-primary">Client Profile</span>
                     </div>
 
                     {/* Page Header - Full Width Bar */}
@@ -621,8 +621,8 @@ export default function ClientProfilePage() {
                                 {isAddingRel && (
                                     <div className="mb-6 p-5 bg-softwhite rounded-xl border border-antique">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h4 className="text-ink font-serif font-bold">Add Family Connection</h4>
-                                            <button onClick={() => { setIsAddingRel(false); setSearchRel(''); }} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button>
+                                            <h4 className="text-primary font-serif font-bold">Add Family Connection</h4>
+                                            <button onClick={() => { setIsAddingRel(false); setSearchRel(''); }} className="text-muted-refined hover:text-primary"><X className="w-5 h-5" /></button>
                                         </div>
 
                                         {/* Relationship Type Selector */}
@@ -947,12 +947,12 @@ function DetailItem({
 }) {
     return (
         <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#6B4423] font-bold mb-1">{label}</p>
+            <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-1 font-serif">{label}</p>
             {isEditing ? (
                 type === 'select' ? (
                     <select
                         onChange={(e) => onChange?.(e.target.value)}
-                        className="w-full text-base font-serif text-[#2B1510] font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                        className="w-full text-base font-serif text-primary font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                         defaultValue={value}
                     >
                         {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
@@ -972,11 +972,11 @@ function DetailItem({
                         type={type}
                         value={value}
                         onChange={(e) => onChange?.(e.target.value)}
-                        className="w-full text-base font-serif text-[#2B1510] font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
+                        className="w-full text-base font-serif text-primary font-medium border border-antique rounded-lg px-3 py-2 bg-parchment focus:outline-none focus:border-gold-primary"
                     />
                 )
             ) : (
-                <p className="text-base font-serif text-[#2B1510] font-semibold border-b border-antique pb-2">
+                <p className="text-base font-serif text-primary font-semibold border-b border-antique pb-2">
                     {type === 'select' ? (options.find(o => o.v === value)?.l || value) : value || 'N/A'}
                 </p>
             )}

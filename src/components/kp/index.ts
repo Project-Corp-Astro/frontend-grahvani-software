@@ -14,4 +14,11 @@ export { KpFocusedCuspView } from '../kp/KpFocusedCuspView';
 export { KpAdvancedSslView } from '../kp/KpAdvancedSslView';
 export { KpNakshatraNadiFocusedView } from '../kp/KpNakshatraNadiFocusedView';
 
+// KP Dashboard Components
+export { default as KpDashboardHeader } from './KpDashboardHeader';
+export { default as KpChartSummaryPanel } from './KpChartSummaryPanel';
+export { default as KpDashboardSidebar } from './KpDashboardSidebar';
+export { default as KpDashaTimeline } from './KpDashaTimeline';
+export { default as KpTransitPanel } from './KpTransitPanel';
+export { default as KpPredictionNotes } from './KpPredictionNotes';
 

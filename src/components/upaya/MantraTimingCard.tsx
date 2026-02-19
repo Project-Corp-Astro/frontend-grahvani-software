@@ -8,11 +8,9 @@ import {
     Clock,
     AlertOctagon,
     Calendar,
-    Sparkles,
-    Hourglass
+    Sparkles
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import styles from './RemedialShared.module.css';
 
 interface TimingData {
     hora: {
@@ -41,30 +39,29 @@ interface MantraTimingCardProps {
 
 const MantraTimingCard: React.FC<MantraTimingCardProps> = ({ timing }) => {
     const { hora, rahu_kaal, tithi } = timing;
-
     const isRahuKaalActive = rahu_kaal.recommendation.toLowerCase().includes("avoid");
 
     return (
-        <div className={cn("p-6 h-full relative overflow-hidden flex flex-col", styles.glassPanel)}>
-            <div className="flex items-center gap-2 mb-6">
-                <Clock className="w-4 h-4 text-purple-600" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--ink)' }}>Sacred Timing Analysis</h3>
+        <div className="p-6 rounded-[2.5rem] bg-[rgba(254,250,234,0.6)] border border-[#E7D6B8] backdrop-blur-md space-y-6">
+            <div className="flex items-center gap-2 mb-2 px-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-900/60">Sacred Timing Analysis</h3>
             </div>
 
-            <div className="space-y-4 flex-1">
+            <div className="space-y-4">
                 {/* Hora Section */}
-                <div className="border rounded-2xl p-4 relative overflow-hidden group transition-all hover:bg-white/40" style={{ backgroundColor: 'rgba(255,255,255,0.3)', borderColor: 'var(--border-antique)' }}>
+                <div className="rounded-2xl p-4 bg-white/40 border border-antique/20 group transition-all hover:bg-white/60">
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border border-orange-100/50">
+                            <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border border-orange-100">
                                 {hora.is_day ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                             </div>
                             <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--ink)' }}>Current Hora</h3>
-                                <p className="text-xs font-bold" style={{ color: 'var(--ink)' }}>{hora.hora_lord} Lord</p>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Current Hora</h3>
+                                <p className="text-xs font-bold text-ink">{hora.hora_lord} Lord</p>
                             </div>
                         </div>
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-widest bg-orange-50/50 border-orange-100 text-orange-700">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-widest bg-orange-50 text-orange-700 border-orange-200">
                             #{hora.hora_number}
                         </span>
                     </div>
@@ -76,25 +73,25 @@ const MantraTimingCard: React.FC<MantraTimingCardProps> = ({ timing }) => {
                                 className="h-full bg-orange-400"
                             />
                         </div>
-                        <span className="text-[8px] font-bold uppercase tracking-tighter">Day Cycle</span>
+                        <span className="text-[8px] font-bold uppercase tracking-tighter text-slate-400">Cycle</span>
                     </div>
                 </div>
 
                 {/* Rahu Kaal Section */}
                 <div className={cn(
-                    "rounded-2xl p-4 border relative overflow-hidden transition-all",
+                    "rounded-2xl p-4 border transition-all",
                     isRahuKaalActive
-                        ? "bg-rose-50/30 border-rose-200/50"
-                        : "bg-white/30 border-antique/30"
+                        ? "bg-rose-50 border-rose-200"
+                        : "bg-white/40 border-antique/20"
                 )}>
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-lg border", isRahuKaalActive ? "bg-rose-100/50 text-rose-600 border-rose-200" : "bg-slate-100/50 text-slate-500 border-slate-200")}>
+                            <div className={cn("p-2 rounded-lg border", isRahuKaalActive ? "bg-rose-100 text-rose-600 border-rose-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
                                 <AlertOctagon className="w-4 h-4" />
                             </div>
                             <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--ink)' }}>Rahu Kaal</h3>
-                                <p className="text-xs font-bold" style={{ color: 'var(--ink)' }}>{rahu_kaal.duration_minutes} Minutes</p>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Rahu Kaal</h3>
+                                <p className="text-xs font-bold text-ink">{rahu_kaal.duration_minutes} Minutes</p>
                             </div>
                         </div>
                         {isRahuKaalActive && (
@@ -102,28 +99,28 @@ const MantraTimingCard: React.FC<MantraTimingCardProps> = ({ timing }) => {
                         )}
                     </div>
                     <p className={cn(
-                        "text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl border",
+                        "text-[10px] font-bold leading-relaxed p-2.5 rounded-xl border",
                         isRahuKaalActive
-                            ? "bg-rose-50/50 border-rose-100 text-rose-700"
-                            : "bg-white/40 border-[#E7D6B8] text-[var(--text-body)]"
+                            ? "bg-white/60 border-rose-100 text-rose-700"
+                            : "bg-white/40 border-antique/10 text-slate-600"
                     )}>
                         {rahu_kaal.recommendation}
                     </p>
                 </div>
 
                 {/* Tithi Section */}
-                <div className="border rounded-2xl p-4 relative overflow-hidden group transition-all hover:bg-white/40" style={{ backgroundColor: 'rgba(255,255,255,0.3)', borderColor: 'var(--border-antique)' }}>
+                <div className="rounded-2xl p-4 bg-white/40 border border-antique/20 group transition-all hover:bg-white/60">
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100/50">
+                            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
                                 <Calendar className="w-4 h-4" />
                             </div>
                             <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--ink)' }}>Lunar Tithi</h3>
-                                <p className="text-xs font-bold" style={{ color: 'var(--ink)' }}>{tithi.name}</p>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Lunar Tithi</h3>
+                                <p className="text-xs font-bold text-ink">{tithi.name}</p>
                             </div>
                         </div>
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-widest bg-indigo-50/50 border-indigo-100 text-indigo-700">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-widest bg-indigo-50 text-indigo-700 border-indigo-200">
                             {tithi.paksha}
                         </span>
                     </div>
@@ -132,21 +129,16 @@ const MantraTimingCard: React.FC<MantraTimingCardProps> = ({ timing }) => {
                         {tithi.is_amavasya && <span className="text-[8px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest bg-slate-900 text-slate-100 border-slate-700">Amavasya</span>}
                         {tithi.is_purnima && <span className="text-[8px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest bg-amber-500 text-white border-amber-600">Purnima</span>}
                         {tithi.is_ekadashi && <span className="text-[8px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest bg-purple-600 text-white border-purple-700">Ekadashi</span>}
-                        {!tithi.is_amavasya && !tithi.is_purnima && !tithi.is_ekadashi && (
-                            <span className="text-[8px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest bg-white/50 text-indigo-600 border-indigo-100">Standard Phase</span>
-                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Aesthetic Detail */}
-            <div className="mt-6 pt-4 border-t border-antique/20 flex items-center justify-between">
-                <span className="text-[8px] font-black uppercase tracking-[0.3em]">Panchanga Metrics</span>
-                <Sparkles className="w-3 h-3 text-amber-400" />
+            <div className="mt-2 pt-4 border-t border-antique/20 flex items-center justify-between px-2">
+                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-900/20">Panchanga Metrics</span>
+                <Sparkles className="w-3 h-3 text-amber-400/40" />
             </div>
         </div>
     );
 };
 
 export default MantraTimingCard;
-

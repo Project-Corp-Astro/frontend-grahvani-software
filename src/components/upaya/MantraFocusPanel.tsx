@@ -1,77 +1,99 @@
 "use client";
 
 import React from 'react';
-import { Play, Volume2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import styles from './RemedialShared.module.css';
 
 interface MantraFocusPanelProps {
     currentDasha: string;
     yantras: any[];
 }
 
+const Waveform = ({ color = "amber" }: { color?: "amber" | "indigo" }) => (
+    <div className="flex items-center gap-0.5 h-6 opacity-30 group-hover:opacity-60 transition-opacity">
+        {[2, 4, 3, 5, 4, 6, 4, 7, 3, 5, 4, 2].map((h, i) => (
+            <motion.div
+                key={i}
+                animate={{ height: [h * 2, h * 4, h * 2] }}
+                transition={{ duration: 1, repeat: Infinity, delay: i * 0.1 }}
+                className={cn("w-0.5 rounded-full", color === "amber" ? "bg-amber-500" : "bg-indigo-500")}
+            />
+        ))}
+    </div>
+);
+
 export default function MantraFocusPanel({ currentDasha, yantras }: MantraFocusPanelProps) {
     // We prioritize the current Dasha and the top recommendation
-    const topRecommendation = yantras[0];
+    const topRecommendation = yantras?.[0];
 
     return (
-        <div className={cn("p-6 h-full backdrop-blur-md relative overflow-hidden", styles.glassPanel)}>
-            <h3 className="text-sm font-black mb-8" style={{ color: 'var(--ink)' }}>Today's Mantra Focus (Priority)</h3>
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-[13px] font-medium tracking-[0.05em] text-amber-900/60 px-2">1. High Priority: Dasha Period Mantras</h3>
 
-            <div className="space-y-8">
-                {/* 1. High Priority: Dasha Period Mantras */}
-                <div>
-                    <h4 className="text-[11px] uppercase tracking-widest font-black mb-4" style={{ color: 'var(--ink)' }}>1. High Priority: Dasha Period Mantras</h4>
+                {/* Mahadasha Item */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 bg-amber-500/5 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.05)]"
+                >
+                    <div className="flex items-center gap-4">
+                        <button className="w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm border bg-amber-500 text-white border-amber-600">
+                            <Play className="w-5 h-5 fill-current" />
+                        </button>
 
-                    <div className="border rounded-2xl p-5 relative overflow-hidden group transition-all duration-500" style={{ backgroundColor: 'rgba(255,255,255,0.4)', borderColor: 'var(--border-antique)' }}>
-                        {/* Fake Waveform effect */}
-                        <div className="absolute top-4 right-6 flex items-end gap-0.5 pointer-events-none" style={{ opacity: 0.2 }}>
-                            {[0.4, 0.7, 0.5, 0.9, 0.3, 0.6, 0.8, 0.5, 0.4, 0.7, 0.6].map((h, i) => (
-                                <div key={i} className="w-[3px] rounded-full" style={{ height: `${h * 40}px`, backgroundColor: 'var(--gold-dark)' }} />
-                            ))}
+                        <div className="flex-1 min-w-0">
+                            <h4 className="text-base font-medium text-ink tracking-tight">
+                                {currentDasha} <span className="opacity-40 text-[12px]">(Mahadasha)</span>
+                            </h4>
+                            <div className="flex items-baseline gap-2 overflow-hidden">
+                                <p className="text-lg font-serif text-ink tracking-tight truncate">
+                                    ॐ ब्रां ब्रीं ब्रों स: बुधाय नम:
+                                </p>
+                                <span className="text-[12px] font-medium text-amber-900/40 whitespace-nowrap">| Goal: 108</span>
+                            </div>
+                            <p className="text-[11px] text-amber-600 mt-0.5 font-medium tracking-wide italic">Om Braam Breem Braum Sah Budhaya Namah</p>
                         </div>
 
-                        <div className="flex items-center gap-5 relative z-10">
-                            <button className="w-14 h-14 rounded-full border flex items-center justify-center transition-all shadow-xl group-hover:scale-105" style={{ backgroundColor: 'var(--parchment)', borderColor: 'var(--border-antique)', color: 'var(--gold-dark)' }}>
-                                <Play className="w-6 h-6 fill-current ml-1" />
+                        <div className="hidden sm:block">
+                            <Waveform color="amber" />
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Recommended Item */}
+                {topRecommendation && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 bg-white/40 border-antique/20 hover:bg-white/60"
+                    >
+                        <div className="flex items-center gap-4">
+                            <button className="w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm border bg-white text-amber-600 border-antique/30">
+                                <Play className="w-5 h-5" />
                             </button>
 
-                            <div>
-                                <p className="text-xs mb-1 font-bold" style={{ color: 'var(--ink)' }}>{currentDasha} (Mahadasha)</p>
-                                <h5 className="text-xl font-bold mb-1" style={{ color: 'var(--ink)' }}>ॐ ब्रां ब्रीं ब्रों स: बुधाय नम:</h5>
-                                <p className="text-[10px] italic" style={{ color: 'var(--text-body)' }}>Om Braam Breem Braum Sah Budhaya Namah | <span className="font-bold" style={{ color: 'var(--gold-dark)' }}>Goal: 108</span></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Secondary Priority Box */}
-                    <div className="mt-4 border rounded-2xl p-5 group transition-all duration-500 cursor-pointer" style={{ backgroundColor: 'rgba(249, 115, 22, 0.05)', borderColor: 'rgba(249, 115, 22, 0.2)' }}>
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <button className="w-10 h-10 rounded-full border flex items-center justify-center transition-all bg-white hover:text-orange-600" style={{ borderColor: 'var(--border-antique)', color: 'var(--ink)' }}>
-                                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                                </button>
-                                <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600">{topRecommendation.planet} (Recommended)</p>
-                                    <h5 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>ॐ ह्रां ह्रीं ह्रों स: सूर्याय नम:</h5>
-                                    <p className="text-[9px] font-bold" style={{ color: 'var(--ink)' }}>Goal: 108 | <span className="text-orange-600 italic">*Best during Rahu Kaal*</span></p>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-base font-medium text-ink tracking-tight">
+                                    {topRecommendation.planet} <span className="opacity-40 text-[12px]">(Recommended)</span>
+                                </h4>
+                                <div className="flex items-baseline gap-2 overflow-hidden">
+                                    <p className="text-lg font-serif text-ink tracking-tight truncate">
+                                        ॐ ह्रां ह्रीं ह्रों स: सूर्याय नम:
+                                    </p>
+                                    <span className="text-[12px] font-medium text-amber-900/40 whitespace-nowrap">| Goal: 108</span>
                                 </div>
+                                <p className="text-[11px] text-amber-600 mt-0.5 font-medium tracking-wide italic">*Best during Rahu Kaal*</p>
                             </div>
-                            <div className="flex gap-0.5">
-                                {[0.3, 0.6, 0.4, 0.8, 0.5].map((h, i) => (
-                                    <div key={i} className="w-[2px] rounded-full" style={{ height: `${h * 20}px`, backgroundColor: 'var(--border-antique)' }} />
-                                ))}
+
+                            <div className="hidden sm:block">
+                                <Waveform color="indigo" />
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Optional Footer Action */}
-                <div className="pt-4">
-                    <button className="w-full py-4 border rounded-2xl font-bold uppercase tracking-[0.2em] text-xs transition-all shadow-sm hover:shadow-md" style={{ background: 'linear-gradient(to right, rgba(201, 162, 77, 0.1), rgba(245, 158, 11, 0.1))', borderColor: 'var(--gold-primary)', color: 'var(--gold-dark)' }}>
-                        Complete Practice
-                    </button>
-                </div>
+                    </motion.div>
+                )}
             </div>
         </div>
     );

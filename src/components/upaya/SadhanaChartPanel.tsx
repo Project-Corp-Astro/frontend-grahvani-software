@@ -27,11 +27,11 @@ export default function SadhanaChartPanel({ chartData, doshaStatus }: SadhanaCha
             {/* Chart Card */}
             <div className={cn("p-6 backdrop-blur-md relative overflow-hidden group", styles.glassPanel)}>
                 {/* Horizontal Gradient Aura for Chart - Adjusted for Light Theme */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-[60px] pointer-events-none" style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full blur-[70px] pointer-events-none" style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)' }} />
 
                 <h3 className="text-sm font-medium mb-6" style={{ color: 'var(--text-muted)' }}>Your Horoscope Snapshot</h3>
 
-                <div className="relative aspect-square w-full max-w-[280px] mx-auto filter drop-shadow-[0_0_15px_rgba(251,146,60,0.1)]">
+                <div className="relative aspect-square w-full max-w-[340px] mx-auto filter drop-shadow-[0_0_15px_rgba(251,146,60,0.1)]">
                     <NorthIndianChart
                         planets={planets}
                         ascendantSign={ascendantSign}
@@ -48,12 +48,12 @@ export default function SadhanaChartPanel({ chartData, doshaStatus }: SadhanaCha
                     }
                     .sadhana-chart text {
                         fill: #3E2A1F !important; /* var(--ink) */
-                        font-size: 15px !important;
+                        font-size: 17px !important;
                         font-weight: 600 !important;
                     }
                     .sadhana-chart text[font-weight="700"] {
                         fill: #78350F !important; /* Amber 900 */
-                        font-size: 14px !important;
+                        font-size: 16px !important;
                     }
                 `}</style>
             </div>

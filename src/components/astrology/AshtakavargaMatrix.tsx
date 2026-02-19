@@ -17,7 +17,7 @@ const SIGN_NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libr
 // House Groups for astrological analysis
 const HOUSE_GROUPS = {
     dharma: { houses: [1, 5, 9], name: 'Dharma', desc: 'Purpose & Luck', color: 'bg-purple-100 text-purple-800' },
-    artha: { houses: [2, 6, 10], name: 'Artha', desc: 'Wealth & Career', color: 'bg-amber-100 text-amber-800' },
+    artha: { houses: [2, 6, 10], name: 'Artha', desc: 'Wealth & Career', color: 'bg-amber-100 text-primary' },
     kama: { houses: [3, 7, 11], name: 'Kama', desc: 'Desires & Gains', color: 'bg-pink-100 text-pink-800' },
     moksha: { houses: [4, 8, 12], name: 'Moksha', desc: 'Liberation', color: 'bg-blue-100 text-blue-800' }
 };

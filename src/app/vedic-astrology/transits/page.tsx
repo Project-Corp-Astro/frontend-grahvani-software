@@ -605,7 +605,7 @@ export default function TransitsPage() {
     const settings = { ayanamsa, chartStyle, recentClientIds };
 
     const activeSystem = settings.ayanamsa.toLowerCase();
-    const [activeTab, setActiveTab] = useState<GocharTab>('gochar');
+    const [activeTab, setActiveTab] = useState<GocharTab>('daily_transit');
 
     const { transitData, natalAscendant, transitPlanets } = React.useMemo(() => {
         const d1Key = `D1_${activeSystem}`;
@@ -699,17 +699,6 @@ export default function TransitsPage() {
             {/* Tab Switcher */}
             <div className="flex items-center gap-1 bg-[#FAF7F2] rounded-xl p-1 border border-antique">
                 <button
-                    onClick={() => setActiveTab('gochar')}
-                    className={cn(
-                        "flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-all",
-                        activeTab === 'gochar'
-                            ? "bg-white text-primary shadow-sm border border-[#D08C60]/20"
-                            : "text-primary hover:text-primary"
-                    )}
-                >
-                    Gochar
-                </button>
-                <button
                     onClick={() => setActiveTab('daily_transit')}
                     className={cn(
                         "flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
@@ -722,6 +711,17 @@ export default function TransitsPage() {
                     {!isLahiri && (
                         <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Lahiri Only</span>
                     )}
+                </button>
+                <button
+                    onClick={() => setActiveTab('gochar')}
+                    className={cn(
+                        "flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-all",
+                        activeTab === 'gochar'
+                            ? "bg-white text-primary shadow-sm border border-[#D08C60]/20"
+                            : "text-primary hover:text-primary"
+                    )}
+                >
+                    Gochar
                 </button>
             </div>
 

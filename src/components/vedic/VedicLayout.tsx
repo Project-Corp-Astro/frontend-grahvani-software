@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useVedicClient } from "@/context/VedicClientContext";
 import { useAstrologerStore } from "@/store/useAstrologerStore";
 import { SidebarItem } from "@/components/layout/SectionSidebar";
+import { clientApi } from "@/lib/api";
 import {
     LayoutDashboard,
     Compass,
@@ -85,15 +86,35 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
     // Filter nav items based on system compatibility
     const filteredPrimaryItems = VEDIC_NAV_ITEMS.filter(item => {
         if (item.isOverflow) return false; // Skip overflow items
-        if (!item.systemFilter) return true; // No filter = show for all
-        return item.systemFilter.includes(ayanamsa);
+
+        const capabilities = clientApi.getSystemCapabilities(ayanamsa);
+
+        // Custom logic based on capabilities
+        if (item.name === "Divisional Charts" && !capabilities.hasDivisional) return false;
+        if (item.name === "Ashtakavargas" && !capabilities.hasAshtakavarga) return false;
+        if (item.name === "Shadbala" && capabilities.features.shadbala.length === 0) return false;
+        if (item.name === "Gochar" && !capabilities.charts.special.includes('transit')) return false;
+        if (item.name === "Sudarshan Chakra" && !capabilities.charts.special.includes('sudarshana')) return false;
+        if (item.name === "KP System" && (!capabilities.hasHorary && ayanamsa !== 'KP')) return false;
+
+        // Fallback to manual filter if present
+        if (item.systemFilter && !item.systemFilter.includes(ayanamsa)) return false;
+
+        return true;
     });
 
     const filteredOverflowItems = VEDIC_NAV_ITEMS.filter(item => {
         if (!item.isOverflow) return false;
-        if (!item.systemFilter) return true;
-        return item.systemFilter.includes(ayanamsa);
+
+        const capabilities = clientApi.getSystemCapabilities(ayanamsa);
+
+        if (item.name === "Compatibility" && !capabilities.hasCompatibility) return false;
+        if (item.name === "Numerology" && !capabilities.hasNumerology) return false;
+
+        if (item.systemFilter && !item.systemFilter.includes(ayanamsa)) return false;
+        return true;
     });
+
 
     return (
         <div
