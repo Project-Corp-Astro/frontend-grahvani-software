@@ -47,12 +47,12 @@ const YOGA_TYPES: YogaItem[] = [
     // Challenging Yogas
     { id: 'daridra', name: 'Daridra Yoga', sanskrit: 'दरिद्रयोग', description: 'Poverty combinations — 11th lord in 6th/8th/12th', category: 'challenging', icon: <AlertTriangle className="w-4 h-4" /> },
     { id: 'malefic', name: 'Malefic Yogas', sanskrit: 'पापयोग', description: 'Harmful planetary combinations requiring remedies', category: 'challenging', icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: 'kala_sarpa', name: 'Kala Sarpa Yoga', sanskrit: 'कालसर्पयोग', description: 'All planets hemmed between Rahu-Ketu axis', category: 'challenging', icon: <Flame className="w-4 h-4" /> },
     { id: 'special', name: 'Special Yogas', sanskrit: 'विशेषयोग', description: 'Rare and unique planetary combinations', category: 'benefic', icon: <Sparkles className="w-4 h-4" /> },
 ];
 
 const DOSHA_TYPES: DoshaItem[] = [
     // Karmic / Ancestral
+    { id: 'kala_sarpa', name: 'Kala Sarpa Dosha', sanskrit: 'कालसर्प दोष', description: 'All planets hemmed between Rahu-Ketu axis — karmic restrictions', severity: 'high', category: 'karmic', icon: <Flame className="w-4 h-4" /> },
     { id: 'shrapit', name: 'Shrapit Dosha', sanskrit: 'श्रापित दोष', description: 'Saturn-Rahu conjunction — past-life curse patterns', severity: 'high', category: 'karmic', icon: <Shield className="w-4 h-4" /> },
     { id: 'pitra', name: 'Pitra Dosha', sanskrit: 'पितृ दोष', description: 'Sun-Rahu/Saturn affliction — ancestral karmic debt', severity: 'medium', category: 'karmic', icon: <Sun className="w-4 h-4" /> },
     { id: 'guru_chandal', name: 'Guru Chandal Dosha', sanskrit: 'गुरु चण्डाल दोष', description: 'Jupiter-Rahu conjunction — misguided wisdom', severity: 'medium', category: 'karmic', icon: <AlertTriangle className="w-4 h-4" /> },
@@ -62,6 +62,7 @@ const DOSHA_TYPES: DoshaItem[] = [
 
     // Periodic / Transits
     { id: 'sade_sati', name: 'Sade Sati', sanskrit: 'साढ़े साती', description: "Saturn's 7.5 year transit over natal Moon — karmic tests", severity: 'medium', category: 'transit', icon: <Moon className="w-4 h-4" /> },
+    { id: 'dhaiya', name: 'Sani Dhaiya', sanskrit: 'ढैया', description: "Saturn's 2.5 year transit over 4th/8th house — mental pressure", severity: 'medium', category: 'transit', icon: <Moon className="w-4 h-4" /> },
 ];
 
 type MainTab = 'yogas' | 'doshas';
