@@ -94,11 +94,6 @@ export default function AnalyticalWorkbenchPage() {
     const systemCapabilities = useSystemCapabilities(settings.ayanamsa);
     const divisionalCharts = systemCapabilities.charts.divisional.filter(c => !c.toLowerCase().includes('shodasha_varga'));
     const lagnaCharts = systemCapabilities.charts.lagna;
-    const specialCharts = systemCapabilities.charts.special.filter(c =>
-        !c.toLowerCase().includes('shodasha') &&
-        !c.toLowerCase().includes('sudarshana') &&
-        !c.toLowerCase().includes('transit')
-    );
 
     const activeSystem = settings.ayanamsa.toLowerCase();
 
@@ -163,14 +158,10 @@ export default function AnalyticalWorkbenchPage() {
                                             <optgroup label="Divisional Charts (Vargas)">
                                                 {divisionalCharts.map(c => <option key={c} value={c}>{c} - {CHART_NAMES[c] || c}</option>)}
                                             </optgroup>
-                                            <optgroup label="Special Focus Charts">
-                                                {specialCharts.map(c => <option key={c} value={c}>{CHART_NAMES[c] || c.toUpperCase()}</option>)}
-                                            </optgroup>
                                         </>
                                     ) : (
                                         <optgroup label="Lagna Analysis">
                                             {lagnaCharts.map(c => <option key={c} value={c}>{CHART_NAMES[c] || c.toUpperCase() + ' Analysis'}</option>)}
-                                            <option value="gl_chart">{CHART_NAMES['gl_chart']}</option>
                                         </optgroup>
                                     )}
                                 </select>

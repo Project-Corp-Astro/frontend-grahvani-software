@@ -502,12 +502,12 @@ export const clientApi = {
                 charts: {
                     // Synced with backend - removed D6 and D150 (not supported)
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon_chart', 'sun_chart', 'sudarshana', 'transit', 'shodasha_varga_signs'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
+                    special: ['sudarshana', 'transit', 'shodasha_varga_signs'],
+                    lagna: ['moon_chart', 'sun_chart', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'gl_chart', 'mandi', 'gulika']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
-                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary', 'temporal_maitri', 'karaka_strength'],
                     shadbala: ['shadbala'],
                     compatibility: ['synastry', 'composite', 'progressed'],
                     numerology: ['chaldean', 'lo_shu']
@@ -522,8 +522,8 @@ export const clientApi = {
                 charts: {
                     // No D6 or D150 for Raman
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon', 'sun', 'sudarshan', 'transit', 'shodasha_varga_signs'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
+                    special: ['sudarshana', 'transit', 'shodasha_varga_signs'],
+                    lagna: ['moon_chart', 'sun_chart', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
@@ -561,12 +561,12 @@ export const clientApi = {
             yukteswar: {
                 charts: {
                     divisional: ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'],
-                    special: ['moon_chart', 'sun_chart', 'equal_chart', 'sripathi_bhava', 'kp_bhava', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'karkamsha_d1', 'karkamsha_d9'],
-                    lagna: ['arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'mandi', 'gulika']
+                    special: ['equal_chart', 'sripathi_bhava', 'kp_bhava', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'karkamsha_d1', 'karkamsha_d9'],
+                    lagna: ['moon_chart', 'sun_chart', 'arudha_lagna', 'bhava_lagna', 'hora_lagna', 'sripathi_bhava', 'kp_bhava', 'equal_bhava', 'karkamsha_d1', 'karkamsha_d9', 'gl_chart', 'mandi', 'gulika']
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana', 'tribhagi', 'yogini'],
-                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary'],
+                    ashtakavarga: ['bhinna', 'sarva', 'shodasha_summary', 'temporal_maitri', 'karaka_strength'],
                     shadbala: [],
                     compatibility: [],
                     numerology: []

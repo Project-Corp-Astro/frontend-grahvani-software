@@ -63,59 +63,61 @@ const MantraAnalysisDashboard: React.FC<MantraAnalysisDashboardProps> = ({ data 
                         doshaStatus={analysis?.doshas || {}}
                     />
                     <MantraTimingCard timing={timing} />
+
                 </div>
 
-                {/* Right Side: Main Panels (8/12) */}
-                <div className="lg:col-span-8 space-y-6">
-                    <DashaMantraPanel mantras={dashaMantras} />
-
-                    {weakPlanets.length > 0 ? (
-                        <WeakPlanetSadhana weakPlanets={weakPlanets} />
-                    ) : (
-                        <div className={cn("rounded-3xl p-12 flex items-center justify-center text-sm border-antique/20", styles.glassPanel)} style={{ color: 'var(--text-muted)' }}>
-                            <div className="text-center group">
-                                <Flower2 className="w-12 h-12 mb-4 mx-auto group-hover:opacity-30 transition-all duration-700 hover:rotate-45" style={{ opacity: 0.1 }} />
-                                <p className="font-black uppercase tracking-[0.3em] text-[10px]">Harmonic Balance Achieved</p>
-                                <p className="text-[11px] font-bold mt-2">No active strengthening protocols required</p>
-                            </div>
+                {/* Right Side: Main Panels (8/12) - Unified Light Glass Dashboard */}
+                <div className="lg:col-span-8">
+                    <div className="rounded-[2.5rem] bg-[rgba(254,250,234,0.6)] border border-[#E7D6B8] shadow-xl backdrop-blur-md overflow-hidden flex flex-col p-6 space-y-4 h-fit">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-2xl font-medium text-ink tracking-tight">Today's Mantra Focus (Priority)</h2>
+                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse" />
                         </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Footer: Daily Ritual Checklist - Premium Treatment */}
-            <div className="border-t pt-8 mt-12 bg-white/30 rounded-3xl p-8 border-antique/20" style={{ borderColor: 'var(--border-antique)' }}>
-                <div className="flex items-center gap-3 mb-8 px-4">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <ScrollText className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <div>
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: 'var(--ink)' }}>Daily Ritual Sequence</h2>
-                        <p className="text-[10px] font-bold uppercase tracking-wider">Systematic Sonic Alignment Checklist</p>
-                    </div>
-                </div>
+                        <div className="space-y-6">
+                            <DashaMantraPanel mantras={dashaMantras} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {recommendations.map((item: any, idx: number) => (
-                        <div
-                            key={idx}
-                            className="flex items-start gap-4 p-5 rounded-2xl border bg-white/50 backdrop-blur-sm hover:border-indigo-200 hover:bg-white transition-all group cursor-pointer shadow-sm"
-                            style={{ borderColor: 'var(--border-antique)' }}
-                        >
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full border border-antique/30 flex items-center justify-center text-[10px] font-black transition-all mt-0.5 bg-white group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600" style={{ color: 'var(--text-muted)' }}>
-                                {idx + 1}
-                            </div>
-                            <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-indigo-600 transition-colors" style={{ color: 'var(--ink)' }}>{item.category}</h3>
-                                <p className="text-xs font-bold leading-tight mb-2" style={{ color: 'var(--text-body)' }}>{item.action}</p>
-                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/60 border border-antique/10 text-[9px] font-bold italic" style={{ color: 'var(--text-muted)' }}>
-                                    <span>{item.note}</span>
+                            <div className="h-px bg-amber-900/10 mx-2" />
+
+                            {weakPlanets.length > 0 ? (
+                                <WeakPlanetSadhana weakPlanets={weakPlanets} />
+                            ) : (
+                                <div className="p-8 text-center bg-white/40 rounded-[2rem] border border-antique/20">
+                                    <Sparkles className="w-8 h-8 text-amber-300 mx-auto mb-3 opacity-50" />
+                                    <p className="text-[12px] font-medium tracking-[0.05em] text-amber-900/40">Harmonic Balance Achieved</p>
+                                </div>
+                            )}
+
+                            <div className="h-px bg-amber-900/10 mx-2" />
+
+                            <div className="space-y-4">
+                                <h3 className="text-[13px] font-medium tracking-[0.05em] text-amber-900/60 px-2">3. Daily Ritual Sequence</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {recommendations.map((item: any, idx: number) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-start gap-4 p-4 rounded-2xl border bg-white/40 backdrop-blur-sm transition-all group cursor-pointer border-antique/20 hover:bg-white/60"
+                                        >
+                                            <div className="flex-shrink-0 w-6 h-6 rounded-full border border-antique/30 flex items-center justify-center text-[12px] font-medium transition-all mt-0.5 bg-white group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600" style={{ color: 'var(--text-muted)' }}>
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="text-[11px] font-medium tracking-widest mb-1 group-hover:text-indigo-600 transition-colors text-ink">{item.category}</h3>
+                                                <p className="text-sm font-medium leading-tight mb-2 text-ink/80">{item.action}</p>
+                                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/60 border border-antique/10 text-[10px] font-medium italic text-slate-500">
+                                                    <span className="truncate">{item.note}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    </div>
                 </div>
             </div>
+
+
         </div>
     );
 };

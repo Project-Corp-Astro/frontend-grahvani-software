@@ -58,9 +58,9 @@ export default function ChakrasPage() {
     if (!clientDetails) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 bg-copper-50/30 rounded-2xl border border-dashed border-copper-200">
-                <Compass className="w-16 h-16 text-copper-300 mb-4 animate-spin-slow" />
-                <h2 className="text-lg font-serif text-copper-900 mb-2">No Client Selected</h2>
-                <p className="text-xs text-copper-600 max-w-md">Please select a client to view their Sudarshan Chakra and other esoteric diagrams.</p>
+                <Compass className="w-16 h-16 text-primary mb-4 animate-spin-slow" />
+                <h2 className="text-lg font-serif text-primary mb-2">No Client Selected</h2>
+                <p className="text-xs text-primary max-w-md">Please select a client to view their Sudarshan Chakra and other esoteric diagrams.</p>
             </div>
         );
     }
@@ -68,7 +68,7 @@ export default function ChakrasPage() {
     return (
         <div className="-mt-2 lg:-mt-4 min-h-screen space-y-2 animate-in fade-in duration-700">
             {/* Professional Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-copper-200 pb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
                 <div className="space-y-1">
                     <h1 className="text-2xl font-serif font-bold text-primary">
                         Sudarshan Chakra
@@ -94,12 +94,12 @@ export default function ChakrasPage() {
                         {loading ? (
                             <div className="flex flex-col items-center gap-6 relative z-10">
                                 <div className="relative">
-                                    <Loader2 className="w-16 h-16 text-copper-600 animate-spin" />
-                                    <Compass className="w-8 h-8 text-copper-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                                    <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                                    <Compass className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                                 </div>
                                 <div className="text-center space-y-2">
-                                    <p className="text-copper-900 font-serif text-sm font-bold animate-pulse">Drafting Celestial Map...</p>
-                                    <p className="text-copper-400 text-[10px] italic">Synchronizing Surya, Chandra, & Birth chart layers</p>
+                                    <p className="text-primary font-serif text-sm font-bold animate-pulse">Drafting Celestial Map...</p>
+                                    <p className="text-primary text-[10px] italic">Synchronizing Surya, Chandra, & Birth chart layers</p>
                                 </div>
                             </div>
                         ) : (
@@ -124,7 +124,7 @@ export default function ChakrasPage() {
                                     key={idx}
                                     onClick={ctrl.onClick}
                                     title={ctrl.label}
-                                    className="p-4 bg-white/90 backdrop-blur text-copper-600 rounded-2xl border border-copper-100 shadow-xl hover:bg-copper-950 hover:text-white transition-all transform hover:scale-110"
+                                    className="p-4 bg-white/90 backdrop-blur text-primary rounded-2xl border border-copper-100 shadow-xl hover:bg-copper-950 hover:text-white transition-all transform hover:scale-110"
                                 >
                                     <ctrl.icon className="w-5 h-5" />
                                 </button>
@@ -138,7 +138,7 @@ export default function ChakrasPage() {
                     {/* Dynamic Legend Card */}
                     <div className=" rounded-3xl border border-copper-200 p-8 shadow-sm space-y-6">
                         <div className="border-b border-copper-100 pb-4">
-                            <h3 className="text-[11px] font-black text-copper-400 uppercase tracking-[0.2em]">Chart Legend</h3>
+                            <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">Chart Legend</h3>
                         </div>
                         <div className="space-y-6">
                             {[
@@ -151,10 +151,10 @@ export default function ChakrasPage() {
                                         style={{ backgroundColor: i === 0 ? '#334155' : i === 1 ? '#64748b' : '#94a3b8' }} />
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-black text-copper-950 underline decoration-copper-200 decoration-4 underline-offset-4">{item.label}</span>
-                                            <span className="text-[10px] font-bold text-copper-400 uppercase tracking-wider">— {item.circle}</span>
+                                            <span className="text-sm font-black text-primary underline decoration-copper-200 decoration-4 underline-offset-4">{item.label}</span>
+                                            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">— {item.circle}</span>
                                         </div>
-                                        <p className="text-xs text-copper-500 mt-2 font-medium leading-relaxed italic">{item.desc}</p>
+                                        <p className="text-xs text-primary mt-2 font-medium leading-relaxed italic">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}

@@ -28,10 +28,10 @@ function PanchangaItem({ label, value, subValue, icon: Icon, color }: PanchangaI
                 <Icon className="w-3 h-3" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="text-[8px] text-primary tracking-tighter font-bold mb-0">{label}</p>
-                <p className="text-[10px] font-serif text-primary font-bold leading-none truncate">{value}</p>
+                <p className="text-[8px] text-primary tracking-normal mb-0 font-serif">{label}</p>
+                <p className="text-[10px] font-serif text-primary leading-none truncate">{value}</p>
                 {subValue && (
-                    <p className="text-[9px] text-primary leading-none truncate mt-0.5">{subValue}</p>
+                    <p className="text-[9px] text-primary leading-none truncate mt-0.5 font-serif">{subValue}</p>
                 )}
             </div>
         </div>
@@ -41,7 +41,7 @@ function PanchangaItem({ label, value, subValue, icon: Icon, color }: PanchangaI
 export default function BirthPanchanga({ data }: { data: any }) {
     if (!data || !data.panchanga) {
         return (
-            <div className="p-3 text-center border border-antique/30 rounded-lg bg-softwhite/50 italic text-muted-refined text-[10px]">
+            <div className="p-3 text-center border border-antique/30 rounded-lg bg-softwhite/50  text-primary text-[10px] font-serif">
                 Panchanga data loading...
             </div>
         );
@@ -85,21 +85,21 @@ export default function BirthPanchanga({ data }: { data: any }) {
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/40 border border-antique/20 shadow-sm">
                     <Sunrise className="w-3 h-3 text-accent-gold" />
                     <div className="min-w-0">
-                        <p className="text-[8px] text-primary tracking-tighter font-bold mb-0">Sunrise</p>
-                        <p className="text-[10px] font-bold text-primary leading-none">{times.sunrise.time}</p>
+                        <p className="text-[8px] text-primary tracking-normal mb-0 font-serif">Sunrise</p>
+                        <p className="text-[10px] text-primary leading-none font-serif">{times.sunrise.time}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/40 border border-antique/20 shadow-sm">
                     <Sunset className="w-3 h-3 text-indigo-400" />
                     <div className="min-w-0">
-                        <p className="text-[8px] text-primary tracking-tighter font-bold mb-0">Sunset</p>
-                        <p className="text-[10px] font-bold text-primary leading-none">{times.sunset.time}</p>
+                        <p className="text-[8px] text-primary tracking-normal mb-0 font-serif">Sunset</p>
+                        <p className="text-[10px] text-primary leading-none font-serif">{times.sunset.time}</p>
                     </div>
                 </div>
             </div>
 
             <div className="text-center">
-                <span className="text-[9px] font-bold text-primary tracking-widest bg-gold-primary/5 px-2 py-0.5 rounded-full border border-gold-primary/10 shadow-xs">
+                <span className="text-[9px] font-medium text-primary tracking-normal bg-gold-primary/5 px-2 py-0.5 rounded-full border border-gold-primary/10 shadow-xs font-serif">
                     Birth Vara: {vara.name}
                 </span>
             </div>
