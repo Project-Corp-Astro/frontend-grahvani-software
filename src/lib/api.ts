@@ -166,9 +166,9 @@ export const DASHA_TYPES: Record<string, { name: string; years: number; desc: st
     },
 };
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001/api/v1';
-const USER_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:3002/api/v1';
-const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_SERVICE_URL || 'http://localhost:3008/api/v1';
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8080/api/v1';
+const USER_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8080/api/v1';
+const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_SERVICE_URL || 'http://localhost:8080/api/v1';
 
 async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promise<T> {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
