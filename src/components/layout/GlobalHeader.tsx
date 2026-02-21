@@ -23,6 +23,18 @@ export default function GlobalHeader() {
         setMounted(true);
     }, []);
 
+    // Close dropdowns/modals on Escape
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (isSettingsOpen) setIsSettingsOpen(false);
+                if (isProfileOpen) setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isSettingsOpen, isProfileOpen]);
+
     // Hide header on authenticaton pages
     if (pathname === "/login" || pathname === "/register") {
         return null;
@@ -66,7 +78,7 @@ export default function GlobalHeader() {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center gap-1">
+                    <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
                         <NavLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
                         <NavLink href="/clients" label="Clients" active={isActive("/clients")} />
 
@@ -99,7 +111,7 @@ export default function GlobalHeader() {
                         <button
                             onClick={() => setIsSettingsOpen(true)}
                             className="text-white hover:text-[#FEFAEA] transition-colors relative group"
-                            title="Global Settings"
+                            aria-label="Open global settings"
                         >
                             <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
                             <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#D08C60] rounded-full border border-[#763A1F]" />
@@ -111,6 +123,9 @@ export default function GlobalHeader() {
                         <button
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
                             className="flex items-center gap-3 pl-2 border-l border-[#D08C60]/30 group"
+                            aria-haspopup="true"
+                            aria-expanded={isProfileOpen}
+                            aria-label="User menu"
                         >
                             <div className="w-8 h-8 rounded-full bg-[#2A1810] border border-[#D08C60] flex items-center justify-center text-[#FEFAEA] font-serif text-sm group-hover:bg-[#3E2A1F] transition-colors overflow-hidden">
                                 {user?.avatarUrl ? (
@@ -252,7 +267,7 @@ function GlobalSettingsModal({ isOpen, onClose, router }: { isOpen: boolean; onC
     ];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" role="dialog" aria-modal="true" aria-label="Global Settings">
             {/* Modal Content */}
             <div className="w-full max-w-2xl bg-[#FFF9F0] rounded-[2rem] shadow-2xl overflow-hidden border border-[#D08C60]/30 animate-in zoom-in-95 duration-500 flex flex-col max-h-[90vh]">
 
@@ -262,7 +277,7 @@ function GlobalSettingsModal({ isOpen, onClose, router }: { isOpen: boolean; onC
                         <h2 className="text-2xl font-serif text-white font-bold tracking-wide">Global Preference Matrix</h2>
                         <p className="text-[#FFD27D]/80 text-[11px] uppercase tracking-widest mt-1">System-wide Astronomical Constants</p>
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+                    <button onClick={onClose} aria-label="Close settings" className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
                         <ChevronDown className="w-6 h-6 rotate-90" />
                     </button>
                 </div>

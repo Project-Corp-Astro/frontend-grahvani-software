@@ -14,15 +14,27 @@ import { DASHA_TYPES, clientApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useDasha, useOtherDasha } from '@/hooks/queries/useCalculations';
 import { useQueryClient } from "@tanstack/react-query";
-import TribhagiDasha from '@/components/astrology/TribhagiDasha';
-import ShodashottariDasha from '@/components/astrology/ShodashottariDasha';
-import DwadashottariDasha from '@/components/astrology/DwadashottariDasha';
-import PanchottariDasha from '@/components/astrology/PanchottariDasha';
-import ChaturshitisamaDasha from '@/components/astrology/ChaturshitisamaDasha';
-import SatabdikaDasha from '@/components/astrology/SatabdikaDasha';
-import DwisaptatiDasha from '@/components/astrology/DwisaptatiDasha';
-import ShasthihayaniDasha from '@/components/astrology/ShasthihayaniDasha';
-import ShattrimshatsamaDasha from '../../../components/astrology/ShattrimshatsamaDasha';
+import dynamic from 'next/dynamic';
+
+const TribhagiDasha = dynamic(() => import('@/components/astrology/TribhagiDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const ShodashottariDasha = dynamic(() => import('@/components/astrology/ShodashottariDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const DwadashottariDasha = dynamic(() => import('@/components/astrology/DwadashottariDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const PanchottariDasha = dynamic(() => import('@/components/astrology/PanchottariDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const ChaturshitisamaDasha = dynamic(() => import('@/components/astrology/ChaturshitisamaDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const SatabdikaDasha = dynamic(() => import('@/components/astrology/SatabdikaDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const DwisaptatiDasha = dynamic(() => import('@/components/astrology/DwisaptatiDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const ShasthihayaniDasha = dynamic(() => import('@/components/astrology/ShasthihayaniDasha'), { loading: () => <DashaLoadingSkeleton /> });
+const ShattrimshatsamaDasha = dynamic(() => import('@/components/astrology/ShattrimshatsamaDasha'), { loading: () => <DashaLoadingSkeleton /> });
+
+function DashaLoadingSkeleton() {
+    return (
+        <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-700" />
+        </div>
+    );
+}
+
+import { PLANET_COLORS } from '@/lib/astrology-constants';
 import {
     findActiveDashaPath,
     processDashaResponse,
@@ -56,18 +68,6 @@ function getDaysRemaining(endDateStr: string): number {
     return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-// Exact colors from demo
-const PLANET_COLORS_DEMO: Record<string, string> = {
-    Sun: 'bg-orange-100 text-orange-800 border-orange-300',
-    Moon: 'bg-slate-100 text-slate-700 border-slate-300',
-    Mars: 'bg-red-100 text-red-800 border-red-300',
-    Mercury: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    Jupiter: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    Venus: 'bg-pink-100 text-pink-800 border-pink-300',
-    Saturn: 'bg-gray-200 text-gray-800 border-gray-400',
-    Rahu: 'bg-purple-100 text-purple-800 border-purple-300',
-    Ketu: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-};
 
 // Level configuration for parity
 const DASHA_LEVELS = [
@@ -434,7 +434,7 @@ export default function VedicDashasPage() {
                                             onClick={() => handleBreadcrumbClick(idx)}
                                             className={cn(
                                                 "text-sm font-bold px-2 py-0.5 rounded border",
-                                                PLANET_COLORS_DEMO[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
+                                                PLANET_COLORS[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
                                             )}
                                         >
                                             {period.planet || period.lord} {DASHA_LEVELS[idx].short}
@@ -549,7 +549,7 @@ export default function VedicDashasPage() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className={cn(
                                                                     "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border shadow-sm min-w-[60px] justify-center",
-                                                                    PLANET_COLORS_DEMO[period.planet] || "bg-white"
+                                                                    PLANET_COLORS[period.planet] || "bg-white"
                                                                 )}>
                                                                     {period.planet}
                                                                 </span>

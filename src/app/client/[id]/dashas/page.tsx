@@ -18,6 +18,7 @@ import {
     getSublevels
 } from '@/lib/dasha-utils';
 import { cn } from '@/lib/utils';
+import { PLANET_COLORS } from '@/lib/astrology-constants';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -42,18 +43,6 @@ function getDaysRemaining(endDateStr: string): number {
     return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-// Exact colors from demo
-const PLANET_COLORS_DEMO: Record<string, string> = {
-    Sun: 'bg-orange-100 text-orange-800 border-orange-300',
-    Moon: 'bg-slate-100 text-slate-700 border-slate-300',
-    Mars: 'bg-red-100 text-red-800 border-red-300',
-    Mercury: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    Jupiter: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    Venus: 'bg-pink-100 text-pink-800 border-pink-300',
-    Saturn: 'bg-gray-200 text-gray-800 border-gray-400',
-    Rahu: 'bg-purple-100 text-purple-800 border-purple-300',
-    Ketu: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-};
 
 // Level configuration for parity
 const DASHA_LEVELS = [
@@ -428,7 +417,7 @@ export default function VedicDashasPage() {
                                         onClick={() => handleBreadcrumbClick(idx)}
                                         className={cn(
                                             "text-sm font-bold px-2 py-0.5 rounded border",
-                                            PLANET_COLORS_DEMO[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
+                                            PLANET_COLORS[period.planet || period.lord || 'Jupiter'] || "bg-white border-gray-100"
                                         )}
                                     >
                                         {period.planet || period.lord} {DASHA_LEVELS[idx].short}
@@ -476,7 +465,7 @@ export default function VedicDashasPage() {
                                                     <div className="flex items-center gap-3">
                                                         <div className={cn(
                                                             "w-10 h-10 rounded-xl flex items-center justify-center border font-bold text-xs shadow-sm",
-                                                            PLANET_COLORS_DEMO[period.planet] || "bg-white border-gray-100"
+                                                            PLANET_COLORS[period.planet] || "bg-white border-gray-100"
                                                         )}>
                                                             {period.planet.slice(0, 2)}
                                                         </div>
@@ -542,7 +531,7 @@ export default function VedicDashasPage() {
                                     <div key={i} className="flex flex-col items-center gap-2 min-w-[80px]">
                                         <div className={cn(
                                             "w-12 h-12 rounded-xl border flex items-center justify-center text-[10px] font-black shadow-sm",
-                                            PLANET_COLORS_DEMO[d.planet || d.lord] || "bg-white border-gray-100"
+                                            PLANET_COLORS[d.planet || d.lord] || "bg-white border-gray-100"
                                         )}>
                                             {d.planet?.slice(0, 2) || d.lord?.slice(0, 2)}
                                         </div>

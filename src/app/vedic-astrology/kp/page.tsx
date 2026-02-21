@@ -16,30 +16,34 @@ import {
     useKpFortuna,
 } from '@/hooks/queries/useKP';
 import { useAshtakavarga } from '@/hooks/queries/useCalculations';
+import dynamic from 'next/dynamic';
 import {
-    KpPlanetaryTable,
-    KpCuspalChart, // Replaces KpCuspTable
-    SignificationMatrix,
-    RulingPlanetsWidget,
-    HoraryPanel,
-    BhavaDetailsTable,
-    KpInterlinksTable,
-    KpAdvancedSslTable,
-    KpFortunaView,
-    KpNakshatraNadiView,
-    KpFocusedCuspView,
-    KpAdvancedSslView,
-    KpNakshatraNadiFocusedView,
+    KpDashboardHeader,
     KpChartSummaryPanel,
     KpDashboardSidebar,
-    KpDashaTimeline,
-    KpTransitPanel,
-    KpPredictionNotes,
 } from '@/components/kp';
 import type { KpSection } from '@/components/kp/KpDashboardSidebar';
-import HouseSignificatorsTable from '@/components/kp/HouseSignificatorsTable';
 import ShodashaVargaTable from '@/components/astrology/ShodashaVargaTable';
 import { ChartWithPopup } from '@/components/astrology/NorthIndianChart';
+
+// Dynamically import tab-specific KP components (only one tab renders at a time)
+const KpPlanetaryTable = dynamic(() => import('@/components/kp/KpPlanetaryTable'));
+const KpCuspalChart = dynamic(() => import('@/components/kp/KpCuspalChart'));
+const SignificationMatrix = dynamic(() => import('@/components/kp/SignificationMatrix'));
+const RulingPlanetsWidget = dynamic(() => import('@/components/kp/RulingPlanetsWidget'));
+const HoraryPanel = dynamic(() => import('@/components/kp/HoraryPanel'));
+const BhavaDetailsTable = dynamic(() => import('@/components/kp/BhavaDetailsTable'));
+const HouseSignificatorsTable = dynamic(() => import('@/components/kp/HouseSignificatorsTable'));
+const KpInterlinksTable = dynamic(() => import('@/components/kp/KpInterlinksTable').then(m => ({ default: m.KpInterlinksTable })));
+const KpAdvancedSslTable = dynamic(() => import('@/components/kp/KpAdvancedSslTable').then(m => ({ default: m.KpAdvancedSslTable })));
+const KpFortunaView = dynamic(() => import('@/components/kp/KpFortunaView').then(m => ({ default: m.KpFortunaView })));
+const KpNakshatraNadiView = dynamic(() => import('@/components/kp/KpNakshatraNadiView').then(m => ({ default: m.KpNakshatraNadiView })));
+const KpFocusedCuspView = dynamic(() => import('@/components/kp/KpFocusedCuspView').then(m => ({ default: m.KpFocusedCuspView })));
+const KpAdvancedSslView = dynamic(() => import('@/components/kp/KpAdvancedSslView').then(m => ({ default: m.KpAdvancedSslView })));
+const KpNakshatraNadiFocusedView = dynamic(() => import('@/components/kp/KpNakshatraNadiFocusedView').then(m => ({ default: m.KpNakshatraNadiFocusedView })));
+const KpDashaTimeline = dynamic(() => import('@/components/kp/KpDashaTimeline'));
+const KpTransitPanel = dynamic(() => import('@/components/kp/KpTransitPanel'));
+const KpPredictionNotes = dynamic(() => import('@/components/kp/KpPredictionNotes'));
 import { parseChartData, signNameToId } from '@/lib/chart-helpers';
 import { KpHouseSignification } from '@/types/kp.types';
 import { cn } from '@/lib/utils';

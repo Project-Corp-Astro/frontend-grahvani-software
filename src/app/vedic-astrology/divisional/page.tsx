@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Grid3X3, RefreshCw, Loader2, Plus, X, Maximize2, Minimize2, Settings2, House, ChevronDown, LayoutGrid, Columns2, Columns3, Rows3, Palette, BookOpen, Eye, EyeOff } from 'lucide-react';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { useAstrologerStore } from '@/store/useAstrologerStore';
+import dynamic from 'next/dynamic';
 import NorthIndianChart, { ChartWithPopup, Planet } from '@/components/astrology/NorthIndianChart';
 import SouthIndianChart, { ChartColorMode } from '@/components/astrology/SouthIndianChart';
-import DivisionalChartZoomModal from '@/components/astrology/DivisionalChartZoomModal';
-import DivisionalChartInsights from '@/components/astrology/DivisionalChartInsights';
 import ChartCustomizationPanel from '@/components/astrology/ChartCustomizationPanel';
+
+const DivisionalChartZoomModal = dynamic(() => import('@/components/astrology/DivisionalChartZoomModal'));
+const DivisionalChartInsights = dynamic(() => import('@/components/astrology/DivisionalChartInsights'));
 import { cn } from "@/lib/utils";
 import { clientApi, CHART_METADATA } from '@/lib/api';
 import { useSystemCapabilities } from "@/hooks/queries/useCalculations";

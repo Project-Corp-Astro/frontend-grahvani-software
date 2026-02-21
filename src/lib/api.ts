@@ -170,8 +170,91 @@ const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8
 const USER_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8080/api/v1';
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_SERVICE_URL || 'http://localhost:8080/api/v1';
 
+// Token management helpers — use in-memory store with localStorage fallback for refresh token
+import { useAuthTokenStore } from '@/store/useAuthTokenStore';
+
+function getAccessToken(): string | null {
+    // Prefer in-memory store, fall back to localStorage for initial page load
+    const storeToken = useAuthTokenStore.getState().accessToken;
+    if (storeToken) return storeToken;
+    if (typeof window !== 'undefined') {
+        const lsToken = localStorage.getItem('accessToken');
+        if (lsToken) {
+            // Migrate to in-memory store
+            useAuthTokenStore.getState().setAccessToken(lsToken);
+            return lsToken;
+        }
+    }
+    return null;
+}
+
+function decodeJwtExp(token: string): number | null {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp || null;
+    } catch {
+        return null;
+    }
+}
+
+function isTokenExpiringSoon(token: string, thresholdSeconds: number = 60): boolean {
+    const exp = decodeJwtExp(token);
+    if (!exp) return false;
+    return (exp * 1000 - Date.now()) < thresholdSeconds * 1000;
+}
+
+// Refresh mutex — prevents concurrent refresh requests
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+        try {
+            const store = useAuthTokenStore.getState();
+            const refreshToken = store.refreshToken ||
+                (typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null);
+
+            if (!refreshToken) return null;
+
+            store.setIsRefreshing(true);
+
+            const response = await fetch(`${AUTH_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            const newAccessToken = data.tokens?.accessToken || data.accessToken;
+            const newRefreshToken = data.tokens?.refreshToken || data.refreshToken;
+
+            if (newAccessToken) {
+                store.setTokens(newAccessToken, newRefreshToken || refreshToken);
+                return newAccessToken;
+            }
+            return null;
+        } catch {
+            return null;
+        } finally {
+            useAuthTokenStore.getState().setIsRefreshing(false);
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
+}
+
 async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promise<T> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    let token = getAccessToken();
+
+    // Proactive refresh: if token expires within 60 seconds, refresh first
+    if (token && isTokenExpiringSoon(token)) {
+        const newToken = await refreshAccessToken();
+        if (newToken) token = newToken;
+    }
 
     const headers = {
         'Content-Type': 'application/json',
@@ -188,7 +271,7 @@ async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promis
             const response = await fetch(url, { ...options, headers });
 
             if (!response.ok) {
-                // Should retry on 5xx server errors or 429 too many requests
+                // Retry on 5xx server errors or 429
                 if (response.status >= 500 || response.status === 429) {
                     if (attempt < maxRetries - 1) {
                         const delay = Math.pow(2, attempt) * 1000;
@@ -200,11 +283,23 @@ async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promis
 
                 const errorData = await response.json().catch(() => ({}));
 
-                // Handle Session Expiration (401)
+                // Handle 401: attempt token refresh before giving up
                 if (response.status === 401 && typeof window !== 'undefined') {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('user');
-                    // Redirect to login if not already there
+                    const newToken = await refreshAccessToken();
+                    if (newToken) {
+                        // Retry the original request with the new token
+                        const retryHeaders = {
+                            ...headers,
+                            'Authorization': `Bearer ${newToken}`,
+                        };
+                        const retryResponse = await fetch(url, { ...options, headers: retryHeaders });
+                        if (retryResponse.ok) {
+                            if (retryResponse.status === 204) return {} as T;
+                            return retryResponse.json();
+                        }
+                    }
+                    // Refresh failed — clear tokens and redirect
+                    useAuthTokenStore.getState().clearTokens();
                     if (!window.location.pathname.includes('/login')) {
                         window.location.href = '/login?expired=true';
                     }
@@ -222,7 +317,7 @@ async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promis
 
             return response.json();
         } catch (error: any) {
-            // Network errors (fetch throws) should be retried
+            // Network errors should be retried
             const isNetworkError = error.message === 'Failed to fetch' || error.message.includes('Network request failed');
             if (isNetworkError && attempt < maxRetries - 1) {
                 const delay = Math.pow(2, attempt) * 1000;
@@ -233,7 +328,7 @@ async function apiFetch<T = any>(url: string, options: RequestInit = {}): Promis
             throw error;
         }
     }
-    throw new Error('Max retries exceeded'); // Should not reach here
+    throw new Error('Max retries exceeded');
 }
 
 // ============ AUTH API ============
@@ -248,6 +343,10 @@ export const authApi = {
     }),
     logout: () => apiFetch(`${AUTH_URL}/auth/logout`, {
         method: 'POST',
+    }),
+    refresh: (refreshToken: string) => apiFetch(`${AUTH_URL}/auth/refresh`, {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
     }),
 };
 

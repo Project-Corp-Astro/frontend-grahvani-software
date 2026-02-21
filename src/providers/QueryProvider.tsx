@@ -1,18 +1,31 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 
 export default function QueryProvider({ children }: { children: ReactNode }) {
     const [queryClient] = useState(
         () =>
             new QueryClient({
+                queryCache: new QueryCache({
+                    onError: (error) => {
+                        // Global query error handler — log non-401 errors
+                        if (!error.message.includes("401")) {
+                            console.error("[QueryCache] Query failed:", error.message);
+                        }
+                    },
+                }),
+                mutationCache: new MutationCache({
+                    onError: (error) => {
+                        console.error("[MutationCache] Mutation failed:", error.message);
+                    },
+                }),
                 defaultOptions: {
                     queries: {
-                        staleTime: 60 * 1000 * 60, // 1 hour default stale time as per architecture
-                        retry: 3, // Retry failed queries 3 times
-                        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-                        refetchOnWindowFocus: false, // Prevent aggressive refetching on tab switch
+                        staleTime: 60 * 1000 * 60, // 1 hour
+                        retry: 3,
+                        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+                        refetchOnWindowFocus: false,
                     },
                 },
             })

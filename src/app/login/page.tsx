@@ -127,12 +127,13 @@ export default function LoginPage() {
                                 <div className="space-y-5">
                                     {/* Inputs - Designed to look like lines on a ledger */}
                                     <div className="relative group">
-                                        <label className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
+                                        <label htmlFor="login-email" className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
                                             Cosmic Identity
                                         </label>
                                         <div className="relative flex items-center">
                                             <Mail className="absolute left-0 w-4 h-4 text-gold-primary" />
                                             <input
+                                                id="login-email"
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -144,12 +145,13 @@ export default function LoginPage() {
                                     </div>
 
                                     <div className="relative group">
-                                        <label className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
+                                        <label htmlFor="login-password" className="block text-[10px] font-bold font-serif text-gold-dark uppercase tracking-widest mb-1">
                                             Password
                                         </label>
                                         <div className="relative flex items-center">
                                             <Lock className="absolute left-0 w-4 h-4 text-gold-primary" />
                                             <input
+                                                id="login-password"
                                                 type="password"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}

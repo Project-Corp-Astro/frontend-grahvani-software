@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useAuthTokenStore } from "@/store/useAuthTokenStore";
 
 export function useAuthMutations() {
     const queryClient = useQueryClient();
@@ -10,9 +11,12 @@ export function useAuthMutations() {
         mutationFn: (credentials: any) => authApi.login(credentials),
         onSuccess: (data) => {
             if (data.tokens?.accessToken) {
-                localStorage.setItem("accessToken", data.tokens.accessToken);
-                localStorage.setItem("user", JSON.stringify(data.user));
-                queryClient.setQueryData(['userProfile'], data.user);
+                // Store tokens in in-memory Zustand store (XSS mitigation)
+                useAuthTokenStore.getState().setTokens(
+                    data.tokens.accessToken,
+                    data.tokens.refreshToken || "",
+                );
+                queryClient.setQueryData(["userProfile"], data.user);
                 router.push("/dashboard");
             }
         },
@@ -21,10 +25,9 @@ export function useAuthMutations() {
     const logoutMutation = useMutation({
         mutationFn: () => authApi.logout(),
         onSettled: () => {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("user");
-            queryClient.setQueryData(['userProfile'], null);
-            queryClient.clear(); // Clear all cache on logout
+            useAuthTokenStore.getState().clearTokens();
+            queryClient.setQueryData(["userProfile"], null);
+            queryClient.clear();
             router.push("/login");
         },
     });
