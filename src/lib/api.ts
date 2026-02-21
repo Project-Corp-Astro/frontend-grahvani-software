@@ -483,6 +483,21 @@ export const clientApi = {
     },
 
     /**
+     * Get Pushkara Navamsha Analysis (Lahiri exclusive)
+     * Identifies auspicious navamsha divisions for each planet
+     */
+    getPushkaraNavamsha: (clientId: string): Promise<any> => {
+        console.log(`[api.ts] getPushkaraNavamsha requested for: ${clientId}`);
+        return apiFetch(`${CLIENT_URL}/clients/${clientId}/charts/generate`, {
+            method: 'POST',
+            body: JSON.stringify({ chartType: 'pushkara_navamsha', ayanamsa: 'lahiri' }),
+        }).then(res => {
+            console.log(`[api.ts] getPushkaraNavamsha response:`, res);
+            return res;
+        });
+    },
+
+    /**
      * Get Avakhada Chakra
      * Universal endpoint
      */
@@ -547,7 +562,7 @@ export const clientApi = {
                 },
                 features: {
                     dasha: ['mahadasha', 'antardasha', 'pratyantardasha', 'sookshma', 'prana'],
-                    ashtakavarga: [],
+                    ashtakavarga: ['shodasha_varga'],
                     shadbala: [],
                     compatibility: [],
                     numerology: []

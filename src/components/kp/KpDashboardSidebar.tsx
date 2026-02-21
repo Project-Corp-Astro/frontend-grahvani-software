@@ -21,6 +21,11 @@ export type KpSection =
     | 'cusps'
     | 'significators'
     | 'ruling-planets'
+    | 'interlinks'
+    | 'advanced-ssl'
+    | 'nakshatra-nadi'
+    | 'fortuna'
+    | 'bhava-details'
     | 'dashas'
     | 'transit'
     | 'events'
@@ -34,14 +39,19 @@ interface KpDashboardSidebarProps {
 
 const SIDEBAR_ITEMS: { id: KpSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'kp-analysis', label: 'KP Analysis', icon: FlaskConical },
+    { id: 'kp-analysis', label: 'Planets', icon: FlaskConical },
     { id: 'cusps', label: 'Cusps', icon: Compass },
     { id: 'significators', label: 'Significators', icon: Grid3x3 },
     { id: 'ruling-planets', label: 'Ruling Planets', icon: Layers },
+    { id: 'bhava-details', label: 'Bhava Details', icon: History },
+    { id: 'interlinks', label: 'Interlinks', icon: LayoutDashboard },
+    { id: 'advanced-ssl', label: 'Advanced SSL', icon: FlaskConical },
+    { id: 'nakshatra-nadi', label: 'Nakshatra Nadi', icon: Compass },
+    { id: 'fortuna', label: 'Pars Fortuna', icon: Clock },
     { id: 'dashas', label: 'Dashas', icon: History },
     { id: 'transit', label: 'Transit', icon: Globe },
-    { id: 'events', label: 'Events', icon: HelpCircle },
-    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'events', label: 'Horary', icon: HelpCircle },
+    { id: 'reports', label: 'Notes', icon: FileText },
 ];
 
 /**

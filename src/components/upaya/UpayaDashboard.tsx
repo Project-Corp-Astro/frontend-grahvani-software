@@ -23,7 +23,7 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
         <div className={cn("min-h-screen p-4 lg:p-6 space-y-8 animate-in fade-in duration-700 pb-20", className)}>
 
             {/* 1. Meta Context Banner */}
-            <div className="bg-gradient-to-r from-parchment to-white border-2 border-antique rounded-[2.5rem] p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-gradient-to-r from-parchment to-white border border-antique rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-5">
                 <div className="flex items-center gap-5">
                     <div className="w-16 h-16 rounded-full bg-gold-primary/10 border-2 border-gold-primary/20 flex items-center justify-center text-gold-dark">
                         <User className="w-8 h-8" />
@@ -42,11 +42,11 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
                 </div>
 
                 <div className="flex gap-4">
-                    <div className="text-center px-4 py-2 bg-white/50 rounded-2xl border border-antique">
+                    <div className="text-center px-4 py-2 bg-white/50 rounded-xl border border-antique">
                         <p className="text-[9px] font-black text-muted uppercase mb-0.5">Lagna Lord</p>
                         <p className="text-sm font-bold text-ink">{meta.lagna_lord}</p>
                     </div>
-                    <div className="text-center px-4 py-2 bg-white/50 rounded-2xl border border-antique">
+                    <div className="text-center px-4 py-2 bg-white/50 rounded-xl border border-antique">
                         <p className="text-[9px] font-black text-muted uppercase mb-0.5">Analysis Type</p>
                         <p className="text-sm font-bold text-gold-dark capitalize">{meta.life_concern}</p>
                     </div>
@@ -62,7 +62,7 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
                 </div>
 
                 {recommended.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {recommended.map((gem: any, idx: number) => (
                             <GemstoneAnalysisCard
                                 key={gem.planet}
@@ -73,7 +73,7 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
                         ))}
                     </div>
                 ) : (
-                    <div className="p-12 text-center bg-parchment/30 rounded-[3rem] border-2 border-dashed border-antique/50">
+                    <div className="p-12 text-center bg-parchment/30 rounded-2xl border-2 border-dashed border-antique/50">
                         <Sparkles className="w-12 h-12 text-gold-primary/30 mx-auto mb-4" />
                         <p className="text-sm font-medium text-muted italic">No specific gemstones required for current karma.</p>
                     </div>
@@ -89,7 +89,7 @@ export default function UpayaDashboard({ data, className }: UpayaDashboardProps)
                         <div className="h-px flex-1 bg-gradient-to-r from-red-100 to-transparent ml-4" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
                         {notRecommended.map((gem: any) => (
                             <GemstoneAnalysisCard
                                 key={gem.planet}
