@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { useVedicClient } from "@/context/VedicClientContext";
 import { useAstrologerStore } from "@/store/useAstrologerStore";
@@ -28,7 +28,8 @@ import {
     Sparkles,
     FlaskConical,
     Hash,
-    Heart
+    Heart,
+    HelpCircle
 } from "lucide-react";
 
 // ============================================================================
@@ -58,9 +59,12 @@ const VEDIC_NAV_ITEMS: NavItem[] = [
     { name: "Upaya", path: "/remedies", icon: Gem, systemFilter: ['Lahiri'] },
     { name: "Sudarshan Chakra", path: "/chakras", icon: Layers },
     { name: "KP System", path: "/kp", icon: FlaskConical, systemFilter: ['KP'] },
+    { name: "Ashtakavarga", path: "/kp?tab=ashtakavarga", icon: Shield, systemFilter: ['KP'] },
+    { name: "Horary", path: "/kp?tab=horary", icon: HelpCircle, systemFilter: ['KP'] },
 
     // ── Overflow Navigation (inside "More" dropdown) ──
     { name: "Compatibility", path: "/comparison", icon: Heart, isOverflow: true },
+    { name: "Pushkara Navamsha", path: "/pushkara-navamsha", icon: Sparkles, isOverflow: true, systemFilter: ['Lahiri'] },
     { name: "Phala Jyotish", path: "/reports", icon: FileText, isOverflow: true },
     { name: "Notes", path: "/notes", icon: NotebookPen, isOverflow: true },
 ];
@@ -69,6 +73,7 @@ const VEDIC_NAV_ITEMS: NavItem[] = [
 // Sub-Header Navigation Bar
 // ============================================================================
 function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, ayanamsa }: any) {
+    const searchParams = useSearchParams();
     const [isMoreOpen, setIsMoreOpen] = React.useState(false);
     const moreRef = React.useRef<HTMLDivElement>(null);
 
@@ -130,7 +135,32 @@ function VedicSubHeader({ clientDetails, setClientDetails, pathname, router, aya
             <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar h-full">
                 {filteredPrimaryItems.map((item) => {
                     const href = item.path === "" ? "/vedic-astrology" : `/vedic-astrology${item.path}`;
-                    const isActive = pathname === href;
+
+                    // Improved active check to handle query parameters
+                    let isActive = pathname === href;
+
+                    if (item.path.includes('?')) {
+                        const [purePath, queryString] = item.path.split('?');
+                        const fullPurePath = `/vedic-astrology${purePath}`;
+                        const itemParams = new URLSearchParams(queryString);
+
+                        // Check if path matches and all defined params match current URL
+                        const pathMatches = pathname === fullPurePath;
+                        let paramsMatch = true;
+                        itemParams.forEach((value, key) => {
+                            if (searchParams.get(key) !== value) paramsMatch = false;
+                        });
+
+                        isActive = pathMatches && paramsMatch;
+                    } else if (pathname === href) {
+                        // If current URL has params but item path doesn't, it's not active
+                        // (e.g. /kp?tab=ashtakavarga should not highlight /kp)
+                        if (Array.from(searchParams.keys()).length > 0 && pathname === href) {
+                            isActive = false;
+                        } else {
+                            isActive = true;
+                        }
+                    }
 
                     return (
                         <Link
