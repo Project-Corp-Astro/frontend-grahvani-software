@@ -403,6 +403,41 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                                     setShowSuggestions(true);
                                 }}
                                 onFocus={() => setShowSuggestions(true)}
+                                onBlur={() => {
+                                    setTimeout(() => {
+                                        setShowSuggestions(false);
+                                        // Use setFormData callback to ensure we read the latest state,
+                                        // avoiding the closure trap if selectLocation was clicked
+                                        setFormData(prev => {
+                                            if (locationQuery.trim().length > 0 && prev.birthLatitude === undefined && !manualCoordinates) {
+                                                setManualCoordinates(true);
+                                                return {
+                                                    ...prev,
+                                                    birthLatitude: 0,
+                                                    birthLongitude: 0,
+                                                    birthTimezone: 'Asia/Kolkata'
+                                                };
+                                            }
+                                            return prev;
+                                        });
+                                    }, 200);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === 'Tab') {
+                                        setFormData(prev => {
+                                            if (locationQuery.trim().length > 0 && prev.birthLatitude === undefined && !manualCoordinates) {
+                                                setManualCoordinates(true);
+                                                return {
+                                                    ...prev,
+                                                    birthLatitude: 0,
+                                                    birthLongitude: 0,
+                                                    birthTimezone: 'Asia/Kolkata'
+                                                };
+                                            }
+                                            return prev;
+                                        });
+                                    }
+                                }}
                                 className="w-full bg-transparent border-b border-[#C9A24D]/50 py-2 pl-10 pr-10 text-[#2A1810] font-serif placeholder:text-[#8B6914] placeholder:opacity-80 focus:outline-none focus:border-[#9C7A2F] transition-colors"
                                 required
                             />
