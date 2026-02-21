@@ -17,6 +17,7 @@ import {
     Sun,
     Moon
 } from 'lucide-react';
+import DebugConsole from '@/components/debug/DebugConsole';
 
 interface LalKitabDashboardProps {
     data: any; // Lal Kitab JSON data
@@ -203,6 +204,13 @@ export default function LalKitabDashboard({ data, className }: LalKitabDashboard
                         </div>
                     </div>
                 </div>
+            </div>
+            {/* Debugging Console */}
+            <div className="px-8 pb-10">
+                <DebugConsole
+                    title="Lal Kitab Raw Data"
+                    data={data}
+                />
             </div>
         </div>
     );

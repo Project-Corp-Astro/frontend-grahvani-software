@@ -11,7 +11,9 @@ import {
     ScrollText,
     Flower2,
     Calendar,
-    Sunrise
+    Sunrise,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import MantraTimingCard from '@/components/upaya/MantraTimingCard';
@@ -20,6 +22,7 @@ import WeakPlanetSadhana from '@/components/upaya/WeakPlanetSadhana';
 import SadhanaChartPanel from '@/components/upaya/SadhanaChartPanel';
 import { useVedicClient } from '@/context/VedicClientContext';
 import styles from './RemedialShared.module.css';
+import DebugConsole from '@/components/debug/DebugConsole';
 
 interface MantraAnalysisDashboardProps {
     data: any;
@@ -116,8 +119,11 @@ const MantraAnalysisDashboard: React.FC<MantraAnalysisDashboardProps> = ({ data 
                     </div>
                 </div>
             </div>
-
-
+            {/* Debugging Console */}
+            <DebugConsole
+                title="Mantra Analysis Raw Data"
+                data={data}
+            />
         </div>
     );
 };

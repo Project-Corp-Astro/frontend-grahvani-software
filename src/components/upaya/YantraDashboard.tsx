@@ -8,6 +8,7 @@ import StrengtheningPanel from '@/components/upaya/StrengtheningPanel';
 import styles from './RemedialShared.module.css';
 import { useVedicClient } from '@/context/VedicClientContext';
 import { Sparkles } from 'lucide-react';
+import DebugConsole from '@/components/debug/DebugConsole';
 
 interface YantraDashboardProps {
     data: any; // Full yantra JSON data
@@ -87,6 +88,11 @@ export default function YantraDashboard({ data, className }: YantraDashboardProp
                     </div>
                 </div>
             </div>
+            {/* Debugging Console */}
+            <DebugConsole
+                title="Yantra Raw Data"
+                data={data}
+            />
         </div>
     );
 }
