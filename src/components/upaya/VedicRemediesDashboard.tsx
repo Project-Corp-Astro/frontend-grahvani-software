@@ -18,6 +18,7 @@ import VedicStrengthPanel from '@/components/upaya/VedicStrengthPanel';
 import SadhanaChartPanel from '@/components/upaya/SadhanaChartPanel';
 import styles from './RemedialShared.module.css';
 import { useVedicClient } from '@/context/VedicClientContext';
+import DebugConsole from '@/components/debug/DebugConsole';
 
 interface VedicRemediesDashboardProps {
     data: any;
@@ -108,6 +109,11 @@ const VedicRemediesDashboard: React.FC<VedicRemediesDashboardProps> = ({ data })
                     ))}
                 </div>
             </div>
+            {/* Debugging Console */}
+            <DebugConsole
+                title="Vedic Remedies Raw Data"
+                data={data}
+            />
         </div>
     );
 };
