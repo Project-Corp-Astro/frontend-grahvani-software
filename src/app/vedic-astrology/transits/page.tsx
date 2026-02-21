@@ -589,8 +589,6 @@ function DailyTransitView({ clientId }: { clientId: string }) {
                     </div>
                 )}
             </div>
-
-
         </div>
     );
 }
@@ -606,13 +604,37 @@ export default function TransitsPage() {
 
     const activeSystem = settings.ayanamsa.toLowerCase();
     const [activeTab, setActiveTab] = useState<GocharTab>('daily_transit');
+    const [liveTransitChart, setLiveTransitChart] = useState<any>(null);
+    const [isLiveLoading, setIsLiveLoading] = useState(false);
+
+    const fetchLiveTransit = useCallback(async () => {
+        if (!clientDetails?.id) return;
+        setIsLiveLoading(true);
+        try {
+            console.log(`[TransitsPage] Fetching live transit for ${activeSystem}...`);
+            const res = await clientApi.generateChart(clientDetails.id, 'transit', activeSystem);
+            setLiveTransitChart(res);
+        } catch (err) {
+            console.error("[TransitsPage] Failed to fetch live transit:", err);
+        } finally {
+            setIsLiveLoading(false);
+        }
+    }, [clientDetails?.id, activeSystem]);
+
+    // Reset live transit when system changes or client changes
+    useEffect(() => {
+        setLiveTransitChart(null);
+        if (activeTab === 'gochar') {
+            fetchLiveTransit();
+        }
+    }, [activeSystem, clientDetails?.id, activeTab, fetchLiveTransit]);
+
 
     const { transitData, natalAscendant, transitPlanets } = React.useMemo(() => {
         const d1Key = `D1_${activeSystem}`;
-        const transitKey = `transit_${activeSystem}`;
-
         const d1Chart = processedCharts[d1Key];
-        const transitChart = processedCharts[transitKey];
+        // Prefer live fetched transit, fallback to context (though context likely empty for transit)
+        const transitChart = liveTransitChart || processedCharts[`transit_${activeSystem}`];
 
         if (!d1Chart?.chartData || !transitChart?.chartData) {
             return { transitData: [], natalAscendant: 1, transitPlanets: [] };
@@ -632,7 +654,7 @@ export default function TransitsPage() {
         }));
 
         return { transitData: transits, natalAscendant: ascSign, transitPlanets: planets };
-    }, [processedCharts, activeSystem]);
+    }, [processedCharts, activeSystem, liveTransitChart]);
 
     useEffect(() => {
         if (clientDetails?.id && Object.keys(processedCharts).length === 0) {
@@ -667,13 +689,13 @@ export default function TransitsPage() {
                         <span className="px-2 py-0.5 bg-[#D08C60]/10 text-[#D08C60] text-[10px] font-bold uppercase rounded-full border border-[#D08C60]/30">
                             {settings.ayanamsa}
                         </span>
-                        {isGeneratingCharts && (
+                        {(isGeneratingCharts || isLiveLoading) && (
                             <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100/80 text-green-700 text-[10px] font-bold rounded-full border border-green-200 animate-pulse">
                                 <Loader2 className="w-3 h-3 animate-spin" />
-                                Generating...
+                                {isGeneratingCharts ? 'Generating...' : 'Fetching Live Gochar...'}
                             </span>
                         )}
-                        {isRefreshingCharts && !isGeneratingCharts && (
+                        {isRefreshingCharts && !isGeneratingCharts && !isLiveLoading && (
                             <span className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100/80 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Refreshing...
@@ -683,11 +705,11 @@ export default function TransitsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={refreshCharts}
-                        disabled={isLoadingCharts}
+                        onClick={() => activeTab === 'gochar' ? fetchLiveTransit() : refreshCharts()}
+                        disabled={isLoadingCharts || isLiveLoading}
                         className="p-2 rounded-lg bg-white border border-[#D08C60]/30 hover:bg-[#D08C60]/10 text-[#8B5A2B] disabled:opacity-50"
                     >
-                        <RefreshCcw className={cn("w-4 h-4", isRefreshingCharts && "animate-spin")} />
+                        <RefreshCcw className={cn("w-4 h-4", (isRefreshingCharts || isLiveLoading) && "animate-spin")} />
                     </button>
                     <div className="bg-green-100 px-2 py-1 rounded-lg border border-green-200 flex items-center gap-1.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -728,14 +750,14 @@ export default function TransitsPage() {
             {/* ========== GOCHAR TAB ========== */}
             {activeTab === 'gochar' && (
                 <>
-                    {isLoadingCharts && Object.keys(processedCharts).length === 0 && (
+                    {(isLiveLoading || (isLoadingCharts && Object.keys(processedCharts).length === 0)) && (
                         <div className="flex flex-col items-center justify-center py-16">
                             <Loader2 className="w-8 h-8 text-[#D08C60] animate-spin mb-3" />
                             <p className="font-serif text-primary">Calculating transit positions...</p>
                         </div>
                     )}
 
-                    {!isLoadingCharts && transitData.length === 0 && (
+                    {!isLiveLoading && !isLoadingCharts && transitData.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                             <Info className="w-12 h-12 text-primary mb-3" />
                             <p className="font-serif text-primary text-lg mb-2">Transit data unavailable</p>
@@ -866,6 +888,7 @@ export default function TransitsPage() {
                     )}
                 </>
             )}
+
         </div>
     );
 }
