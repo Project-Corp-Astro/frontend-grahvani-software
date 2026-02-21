@@ -399,6 +399,7 @@ export default function ClientForm({ mode = 'create', initialData, onSuccess }: 
                                 value={locationQuery}
                                 onChange={(e) => {
                                     setLocationQuery(e.target.value);
+                                    handleChange('birthPlace', e.target.value);
                                     setShowSuggestions(true);
                                 }}
                                 onFocus={() => setShowSuggestions(true)}
